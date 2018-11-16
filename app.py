@@ -1,7 +1,9 @@
 # This file contains the definition of the RESTful API. It's responsible for
 # receiving requests, parsing query string parameters, and encoding responses.
 from aiohttp import web
+import aiohttp_cors
 import json
+# local
 import db
 import query_string_parser as qsp
 
@@ -127,6 +129,21 @@ async def getChromosomeAsFamilies(request):
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
 app.router.add_get('/macro/get-chromosome-as-families', getChromosomeAsFamilies)
+
+
+# Configure default CORS settings.
+cors = aiohttp_cors.setup(app, defaults={
+  '*': aiohttp_cors.ResourceOptions(
+        allow_credentials=True,
+        expose_headers='*',
+        allow_headers='*',
+      )
+})
+
+
+# Configure CORS on all routes.
+for route in app.router.routes():
+  cors.add(route)
 
 
 if __name__ == '__main__':
