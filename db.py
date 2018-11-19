@@ -61,6 +61,25 @@ def formatGene(id, g):
   }
 
 
+def removePrefix(prefix, string):
+  return string[len(prefix):]
+
+
+def cleanGenes(genes):
+  for g in genes:
+    g['id'] = removePrefix('gene:', g['id'])
+    g['family'] = removePrefix('family:', g['family'])
+
+
+def cleanTrack(track):
+  track['chromosome_id'] = removePrefix('chromosome:', track['chromosome_id'])
+  cleanGenes(track['genes'])
+
+
+def cleanMacro():
+  pass
+
+
 # creates a track for the given gene by flanking it with neighbors on either
 # side.
 # gene - id of the gene at the center of the query context
@@ -90,6 +109,7 @@ async def geneToTrack(gene, neighbors):
     'chromosome_id': chromosome_id,
     'genes': list(map(lambda e: formatGene(*e), zip(gene_ids, genes)))
   }
+  cleanTrack(track)
   return track
 
 
@@ -234,6 +254,7 @@ async def searchMicroSyntenyTracks(families, min_matched, max_intermediate):
         'chromosome_id': c,
         'genes': list(map(lambda e: formatGene(*e), zip(gene_ids, genes)))
       }
+      cleanTrack(track)
       families.update(map(lambda g: g['family'], track['genes']))
       tracks['groups'].append(track)
   families.discard('')
@@ -328,6 +349,7 @@ async def globalPlot(chromosome, families):
     pipeline.hgetall(g)
   genes = await pipeline.execute()
   group_genes = list(map(lambda e: formatGene(*e), zip(chromosome_gene_ids, genes)))
+  cleanGenes(group_genes)
   return group_genes
 
 
