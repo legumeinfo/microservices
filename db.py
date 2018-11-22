@@ -344,7 +344,7 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
         if begin[1] < end[1] else (end[1], begin[1], '-')
       begin_loc = chromosome_as_locations[begin[0]]
       end_loc = chromosome_as_locations[end[0]]
-      start = min(splitLocation(begin_loc)
+      start = min(splitLocation(begin_loc))
       stop = max(splitLocation(end_loc))
       block.append({
         'query_start': query_start,
