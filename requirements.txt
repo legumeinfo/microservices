@@ -7,4 +7,5 @@ chardet==3.0.4
 hiredis==0.2.0
 idna==2.7
 multidict==4.4.2
+psycopg2==2.7.6.1
 yarl==1.2.6

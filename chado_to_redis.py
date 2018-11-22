@@ -186,8 +186,10 @@ def transferData(p_connection, r, minchromosomes=-1, mingenes=-1):
     r.sadd('chromosomes', *chromosomes)
     for c, c_data in chromosomes.items():
       pipeline.hmset(c, c_data)
-      pipeline.rpush(c + ':genes', *chromosome_genes[c + ':genes'])
-      pipeline.rpush(c + ':families', *map(lambda g: genes[g]['family'], chromosome_genes[c + ':genes']))
+      c_genes = chromosome_genes[c + ':genes']
+      pipeline.rpush(c + ':genes', *c_genes)
+      pipeline.rpush(c + ':locations', *map(lambda g: "{}:{}".format(genes[g]['begin'], genes[g]['end']), c_genes))
+      pipeline.rpush(c + ':families', *map(lambda g: genes[g]['family'], c_genes))
     for g, g_data in genes.items():
       pipeline.hmset(g, g_data)
     for f, f_data in families.items():

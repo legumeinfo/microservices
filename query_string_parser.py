@@ -39,10 +39,10 @@ class Parser(object):
         raise ValueError("invalid literal for non-empty str(): '%r'" % string)
       return string
     elif self.type == Type.STRING_LIST or self.type == Type.NON_EMPTY_STRING_LIST:
-      l = string.split(',')
-      if self.type == Type.STRING_LIST:
+      l = string if isinstance(string, list) else string.split(',')
+      if self.type == Type.NON_EMPTY_STRING_LIST:
         l = list(filter(lambda s: s != '', l))
-      if not l:
+      if not l and self.default is None:
         raise ValueError("invalid literal for string list(): '%r'" % string)
       return l
 

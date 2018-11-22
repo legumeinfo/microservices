@@ -61,8 +61,22 @@ def formatGene(id, g):
   }
 
 
+def splitLocation(l):
+  fmin, fmax = l.split(":")
+  return int(fmin), int(fmax)
+
+
+def formatLocation(l):
+  fmin, fmax = splitLocation(l)
+  return {'fmin': fmin, 'fmax': fmax}
+
+
 def removePrefix(prefix, string):
   return string[len(prefix):]
+
+
+def removeSuffix(suffix, string):
+  return string[:-len(suffix)]
 
 
 def cleanGenes(genes):
@@ -133,7 +147,7 @@ def macroSyntenyTraceback(path_ends, pointers, scores, minsize):
 
 # "constructs" a DAG and computes longest forward (f_) and reverse (r_) oriented
 # paths (blocks) using a recurrence relation similar to that of DAGchainer
-def positionPairsToSyntenyBlocks(pairs, maxinsert, minsize):
+def positionPairsToBlockPositions(pairs, maxinsert, minsize):
   f_path_ends = []  # orders path end nodes longest to shortest
   f_pointers = {}  # points to the previous node (pair) in a path
   f_scores = {}  # the length of the longest path ending at each node
@@ -284,25 +298,29 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
   #chromosomes = map(lambda r: 'chromosome:'+r+':families', results) if results else r.keys('chromosome:*:families')
   chromosomes = []
   if results:
-    chromosomes = map(lambda r: 'chromosome:' + r + ':families', results)
+    chromosomes = map(lambda r: 'chromosome:', results)
   else:
-    chromosomes = list(map(lambda c: c + ':families', await r.smembers('chromosomes')))
+    chromosomes =  await r.smembers('chromosomes')
   # NOTE: This pipeline is slower than pyredis...
   pipeline = r.pipeline()
   for c in chromosomes:
-    pipeline.llen(c)
+    pipeline.llen(c + ':families')
   lengths = await pipeline.execute()
   filtered_chromosomes = []
-  pipeline = r.pipeline()
+  family_pipeline = r.pipeline()
+  location_pipeline = r.pipeline()
   for c, l in zip(chromosomes, lengths):
     if l < matched:
       continue
     filtered_chromosomes.append(c)
-    pipeline.lrange(c, 0, -1)
-  chromosomes_as_families = await pipeline.execute()
+    family_pipeline.lrange(c + ':families', 0, -1)
+    location_pipeline.lrange(c + ':locations', 0, -1)
+  chromosomes_as_families = await family_pipeline.execute()
+  chromosomes_as_locations = await locations_pipeline.execute()
 
   # generate gene position pairs based on matching families and compute blocks
-  for c, families in zip(filtered_chromosomes, chromosomes_as_families):
+  tracks = []
+  for c, families, locations in zip(filtered_chromosomes, chromosomes_as_families, chromosome_as_locations):
     # count each family's occurrence in the chromosome
     c_family_counts = defaultdict(int)
     for f in families:
@@ -315,15 +333,37 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
       pairs.extend(map(lambda n: (i, n), family_num_map[f]))
     if len(pairs) < matched:
       continue
-    blocks = positionPairsToSyntenyBlocks(pairs, maxinsert, matched)
+    block_positionss = positionPairsToBlockPositions(pairs, maxinsert, matched)
+    blocks = []
     paths = []
     end_genes = []
     trivial_catcher = []
-    # TODO: update to fetch specific genes by interval
-    #for begin, end in blocks:
-    #  paths.append((begin, end))
-    #  end_genes.append(chromosome_as_genes[begin[0]])
-    #  end_genes.append(chromosome_as_genes[end[0]])
+    # convert the block positions into blocks
+    for begin, end in block_positions:
+      query_start, query_stop, orientation = (begin[1], end[1], '+') \
+        if begin[1] < end[1] else (end[1], begin[1], '-')
+      begin_loc = chromosome_as_locations[begin[0]]
+      end_loc = chromosome_as_locations[end[0]]
+      start = min(splitLocation(begin_loc)
+      stop = max(splitLocation(end_loc))
+      block.append({
+        'query_start': query_start,
+        'query_stop': query_stop,
+        'start': start,
+        'stop': stop,
+        'orientation': orientation
+      })
+    if len(blocks) == 0:
+      continue
+    chromosome = await r.hgetall(removeSuffix(':families', c))
+    genus, species = removePrefix('organism:', chromosome['organism']).split(":")
+    tracks.append({
+      'chromosome': c['name'],
+      'genus': genus,
+      'species': species,
+      'blocks': blocks
+    })
+  return tracks
 
 
 # chromosome - id of the chromosome you want to find genes on
@@ -353,6 +393,19 @@ async def globalPlot(chromosome, families):
   return group_genes
 
 
+# chromosome - id of the chromosome you want to get
 @requires_r
-async def chromosomeAsFamilies(chromosome):
-  return await r.lrange('chromosome:' + chromosome + ':families', 0, -1)
+async def getChromosome(chromosome):
+  chromosome = 'chromosome:' + chromosome
+  length = await r.hget(chromosome, 'length')
+  if length is None:
+    return None
+  genes = await r.lrange(chromosome + ':genes', 0, -1)
+  families = await r.lrange(chromosome + ':families', 0, -1)
+  locations = await r.lrange(chromosome + ':locations', 0, -1)
+  return {
+    'length': int(length),
+    'genes': list(map(lambda g: removePrefix('gene:', g), genes)),
+    'families': list(map(lambda f: removePrefix('family:', f), families)),
+    'locations': list(map(lambda l: formatLocation(l), locations))
+  }

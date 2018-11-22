@@ -1,6 +1,7 @@
 # This file contains the definition of the RESTful API. It's responsible for
 # receiving requests, parsing query string parameters, and encoding responses.
 from aiohttp import web
+import asyncio
 import aiohttp_cors
 import json
 # local
@@ -34,8 +35,8 @@ async def genesToTracks(request):
 app.router.add_get('/micro/genes-to-tracks', genesToTracks)
 
 
-#micro/get-syntenic-tracks?families&minmatched&maxinsert
-async def getSyntenicTracks(request):
+#micro/find-similar-tracks?families&minmatched&maxinsert
+async def findSimilarTracks(request):
   try:
     # parse the query string parameters
     params = qsp.validate(
@@ -57,7 +58,7 @@ async def getSyntenicTracks(request):
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
-app.router.add_get('/micro/get-syntenic-tracks', getSyntenicTracks)
+app.router.add_get('/micro/find-similar-tracks', findSimilarTracks)
 
 
 #macro/compute-syntenic-blocks?chromosome&minmatched&maxinsert&familymask&targets
@@ -65,11 +66,11 @@ async def computeSyntenicBlocks(request):
   try:
     # parse the query string parameters
     params = qsp.validate(
-      request.query,
+      await request.json(),
       {
         'chromosome': qsp.Parser(qsp.Type.STRING_LIST),
         'minmatched': qsp.Parser(qsp.Type.NATURAL_NUMBER, 20),
-        'maxinsertion': qsp.Parser(qsp.Type.WHOLE_NUMBER, 10),
+        'maxinsert': qsp.Parser(qsp.Type.WHOLE_NUMBER, 10),
         'familymask': qsp.Parser(qsp.Type.WHOLE_NUMBER, 10),
         'targets': qsp.Parser(qsp.Type.NON_EMPTY_STRING_LIST, []),
       }
@@ -87,7 +88,7 @@ async def computeSyntenicBlocks(request):
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
-app.router.add_get('/macro/compute-syntenic-blocks', computeSyntenicBlocks)
+app.router.add_post('/macro/compute-syntenic-blocks', computeSyntenicBlocks)
 
 
 #macro/get-homologous-genes?chromosome&families  # global plots
@@ -111,8 +112,8 @@ async def getHomologousGenes(request):
 app.router.add_get('/macro/get-homologous-genes', getHomologousGenes)
 
 
-#macro/get-chromosome-as-families?chromosome
-async def getChromosomeAsFamilies(request):
+#macro/get-chromosome?chromosome
+async def getChromosome(request):
   try:
     # parse the query string parameters
     params = qsp.validate(
@@ -122,22 +123,22 @@ async def getChromosomeAsFamilies(request):
       }
     )
     # process the request
-    response = await db.chromosomeAsFamilies(params['chromosome'])
+    response = await db.getChromosome(params['chromosome'])
     # encode and send the response
     return web.Response(text=json.dumps(response), status=200)
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
-app.router.add_get('/macro/get-chromosome-as-families', getChromosomeAsFamilies)
+app.router.add_get('/macro/get-chromosome', getChromosome)
 
 
 # Configure default CORS settings.
 cors = aiohttp_cors.setup(app, defaults={
   '*': aiohttp_cors.ResourceOptions(
-        allow_credentials=True,
-        expose_headers='*',
-        allow_headers='*',
-      )
+         allow_credentials=True,
+         expose_headers='*',
+         allow_headers='*',
+       )
 })
 
 
@@ -148,5 +149,4 @@ for route in app.router.routes():
 
 if __name__ == '__main__':
   # TODO: make host, port, etc configurable at runtime
-  # TODO: set max_line_size so that macro synteny requests can be made via GET
   web.run_app(app, port=1234)
