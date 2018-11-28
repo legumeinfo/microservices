@@ -40,7 +40,7 @@ async def findSimilarTracks(request):
   try:
     # parse the query string parameters
     params = qsp.validate(
-      request.query,
+      await request.json(),
       {
         'families': qsp.Parser(qsp.Type.STRING_LIST),
         'minmatched': qsp.Parser(qsp.Type.NATURAL_NUMBER, 4),
@@ -58,7 +58,7 @@ async def findSimilarTracks(request):
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
-app.router.add_get('/micro/find-similar-tracks', findSimilarTracks)
+app.router.add_post('/micro/find-similar-tracks', findSimilarTracks)
 
 
 #macro/compute-syntenic-blocks?chromosome&minmatched&maxinsert&familymask&targets
