@@ -316,11 +316,11 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
     family_pipeline.lrange(c + ':families', 0, -1)
     location_pipeline.lrange(c + ':locations', 0, -1)
   chromosomes_as_families = await family_pipeline.execute()
-  chromosomes_as_locations = await locations_pipeline.execute()
+  chromosomes_as_locations = await location_pipeline.execute()
 
   # generate gene position pairs based on matching families and compute blocks
   tracks = []
-  for c, families, locations in zip(filtered_chromosomes, chromosomes_as_families, chromosome_as_locations):
+  for c, families, locations in zip(filtered_chromosomes, chromosomes_as_families, chromosomes_as_locations):
     # count each family's occurrence in the chromosome
     c_family_counts = defaultdict(int)
     for f in families:
@@ -333,7 +333,7 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
       pairs.extend(map(lambda n: (i, n), family_num_map[f]))
     if len(pairs) < matched:
       continue
-    block_positionss = positionPairsToBlockPositions(pairs, maxinsert, matched)
+    block_positions = positionPairsToBlockPositions(pairs, maxinsert, matched)
     blocks = []
     paths = []
     end_genes = []
@@ -342,11 +342,11 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
     for begin, end in block_positions:
       query_start, query_stop, orientation = (begin[1], end[1], '+') \
         if begin[1] < end[1] else (end[1], begin[1], '-')
-      begin_loc = chromosome_as_locations[begin[0]]
-      end_loc = chromosome_as_locations[end[0]]
+      begin_loc = locations[begin[0]]
+      end_loc = locations[end[0]]
       start = min(splitLocation(begin_loc))
       stop = max(splitLocation(end_loc))
-      block.append({
+      blocks.append({
         'query_start': query_start,
         'query_stop': query_stop,
         'start': start,
@@ -355,10 +355,10 @@ async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], f
       })
     if len(blocks) == 0:
       continue
-    chromosome = await r.hgetall(removeSuffix(':families', c))
+    chromosome = await r.hgetall(c)
     genus, species = removePrefix('organism:', chromosome['organism']).split(":")
     tracks.append({
-      'chromosome': c['name'],
+      'chromosome': chromosome['name'],
       'genus': genus,
       'species': species,
       'blocks': blocks
