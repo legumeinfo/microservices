@@ -4,6 +4,7 @@ aioredis==1.2.0
 async-timeout==3.0.1
 attrs==18.2.0
 chardet==3.0.4
+-e core
 hiredis==0.2.0
 idna==2.7
 multidict==4.4.2
