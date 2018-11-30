@@ -37,17 +37,29 @@ To do so, use `chado_to_redis.py`. For example:
     (venv) $ python chado_to_redis.py 
 
 
-## Running the Server
-To run the server, activate the virtual environment and then run the application
-script:
+## Running the Server(s)
+To run the GCV microservices, first activate the virtual environment and then
+navigate to the `microservices` directory:
 
-    (venv) $ python app.py
+    $ . ./venv/bin/activate
+    (venv) $ cd microservices/
 
-Currently, the port is hard coded the `1234` and the application is configured
-to connect to the Redis database via the Unix socket `/run/redis/redis.sock`.
+From here you can run each of the microservices individually using the `-m`
+switch. For example:
+
+    (venv) microservices/ $ python -m genes_to_tracks.app
+
+You can also run all the microservices as a single monolithic web app as follows:
+
+    (venv) microservices/ $ python -m app
+
+Currently, each microservice as well as the monolith are hard coded to use port
+`1234`.
+Also, the database adapter is hard coded to connect to Redis via the Unix socket
+`/run/redis/redis.sock`.
 These settings will be made configurable in the future.
 
 When you are done using the application, you can exit the Python virtual
-environment you closing your terminal or with the following command:
+environment by closing your terminal or with the following command:
 
     (venv) $ deactivate
