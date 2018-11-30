@@ -1,10 +1,10 @@
-from core.database import *
+import core.database as db
 from core.utils import formatLocation, removePrefix
 
 
 # chromosome - id of the chromosome you want to get
-@requires_r
 async def getChromosome(chromosome):
+  r = db.getInterface()
   chromosome = 'chromosome:' + chromosome
   length = await r.hget(chromosome, 'length')
   if length is None:

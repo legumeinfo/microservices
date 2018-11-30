@@ -2,8 +2,13 @@ import aioredis
 import functools
 
 
-# the database driver
+# the database interface
 r = None
+
+
+# make the interface effectively a singleton to other modules
+def getInterface():
+  return r
 
 
 # sets up and takes down the database connection
@@ -14,14 +19,3 @@ async def db_engine(*args):
   r.close()
   await r.wait_closed()
   r = None
-
-
-# a decorator that ensures that the database driver has been setup before the
-# decorated function attempts to use it.
-def requires_r(func):
-  @functools.wraps(func)
-  async def wrapper(*args, **kwargs):
-    if r is None:
-      raise NameError("Database driver undefined.")
-    return await func(*args, **kwargs)
-  return wrapper

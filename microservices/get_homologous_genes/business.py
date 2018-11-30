@@ -1,12 +1,21 @@
-from core.database import *
+import core.database as db
 from core.utils import cleanGenes, formatGene
 from itertools import chain
 
 
+# families - a set of family ids to retrieve gene identifiers for
+async def getFamilyGenes(families):
+  r = db.getInterface()
+  pipeline = r.pipeline()
+  for f in families:
+    pipeline.smembers(f)
+  return await pipeline.execute()
+
+
 # chromosome - id of the chromosome you want to find genes on
 # families - a list of gene family ids that you want to find all occurrences of on the chromosome
-@requires_r
 async def globalPlot(chromosome, families):
+  r = db.getInterface()
   families = list(map(lambda f: 'family:' + f, families))
   # get all genes of the query families
   family_gene_ids = await getFamilyGenes(set(families))

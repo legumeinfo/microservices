@@ -1,13 +1,22 @@
-from core.database import *
+import core.database as db
 from core.utils import cleanTrack, formatGene
 from collections import defaultdict
+
+
+# families - a set of family ids to retrieve gene identifiers for
+async def getFamilyGenes(families):
+  r = db.getInterface()
+  pipeline = r.pipeline()
+  for f in families:
+    pipeline.smembers(f)
+  return await pipeline.execute()
 
 
 # families - an ordered list of gene family ids representing the query context
 # min_matched - the number of families that must match in each block
 # max_intermediate - the max number of intermediate genes allowed between any two matched genes
-@requires_r
 async def searchMicroSyntenyTracks(families, min_matched, max_intermediate):
+  r = db.getInterface()
   # get all genes of the query families
   families = list(map(lambda f: 'family:' + f, families))
   family_gene_ids = await getFamilyGenes(set(families))

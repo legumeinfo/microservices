@@ -1,4 +1,4 @@
-from core.database import *
+import core.database as db
 from core.utils import cleanTrack, formatGene
 
 
@@ -6,8 +6,8 @@ from core.utils import cleanTrack, formatGene
 # side.
 # gene - id of the gene at the center of the query context
 # neighbors - the number of neighbors that should flank the query gene on either side
-@requires_r
 async def geneToTrack(gene, neighbors):
+  r = db.getInterface()
   # fetch the data
   i, chromosome_id = await r.hmget('gene:' + gene, 'number', 'chromosome')
   if i is None or chromosome_id is None:

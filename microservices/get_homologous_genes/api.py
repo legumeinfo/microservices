@@ -1,19 +1,13 @@
-from aiohttp import web
 import json
+from aiohttp import web
 # local
-from core.cors import corsFactory
 from core import query_string_parser as qsp
-import business
+import get_homologous_genes.business as business
 
 
-# the web application
-app = web.Application()
-app.cleanup_ctx.append(business.db_engine)
-cors = corsFactory(app)
-
-
-#/get-homologous-genes?chromosome&families  # global plots
-async def getHomologousGenes(request):
+method = 'GET'
+path = '/macro/get-homologous-genes'#?chromosome&families  # global plots
+async def handler(request):
   try:
     # parse the query string parameters
     params = qsp.validate(
@@ -30,9 +24,6 @@ async def getHomologousGenes(request):
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
     return web.Response(text=json.dumps(response_obj), status=500)
-route = app.router.add_get('/macro/get-homologous-genes', getHomologousGenes)
-cors.add(route)
 
 
-if __name__ == '__main__':
-  web.run_app(app, port=1234)
+route = method, path, handler
