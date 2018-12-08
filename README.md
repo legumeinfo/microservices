@@ -10,6 +10,10 @@ for a description of the schema).
 
 
 ## Installation
+The server uses [Redis](https://redis.io/) for its database and
+[RabbitMQ](https://www.rabbitmq.com/) for inter-service communication (RPC).
+These will need to be installed and running before proceeding.
+
 The server is implement in [Python 3](https://www.python.org/).
 As such, the easiest way to install the server is inside of a
 [Python Virtual Environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/).

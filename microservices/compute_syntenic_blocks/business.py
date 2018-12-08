@@ -1,4 +1,3 @@
-import core.database as db
 from core.utils import removePrefix, splitLocation
 from collections import defaultdict
 from itertools import chain
@@ -72,8 +71,7 @@ def positionPairsToBlockPositions(pairs, maxinsert, minsize):
 
 # chromosome - the id of the query chromosome
 # results - the ids of the chromosomes that the we want results for
-async def macroSyntenyTracks(chromosome, matched=20, maxinsert=10, results=[], familymask=10):
-  r = db.getInterface()
+async def macroSyntenyTracks(r, chromosome, matched=20, maxinsert=10, results=[], familymask=10):
 
   # make a dictionary that maps families to query gene numbers
   family_num_map = defaultdict(list)

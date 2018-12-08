@@ -2,7 +2,7 @@ import json
 from aiohttp import web
 # local
 from core import query_string_parser as qsp
-import find_similar_tracks.business as business
+import get_family_genes.business as business
 
 
 async def handler(app, raw_params):
@@ -11,26 +11,20 @@ async def handler(app, raw_params):
     raw_params,
     {
       'families': qsp.Parser(qsp.Type.STRING_LIST),
-      'minmatched': qsp.Parser(qsp.Type.NATURAL_NUMBER, 4),
-      'maxinsert': qsp.Parser(qsp.Type.WHOLE_NUMBER, 5),
     }
   )
   # process the request
-  return await business.searchMicroSyntenyTracks(
-    app['r_engine'],
-    app['rpc'],
-    params['families'],
-    params['minmatched'],
-    params['maxinsert']
-  )
+  r = app['r_engine']
+  families = params['families']
+  return await business.getFamilyGenes(r, families)
 
 
-method = 'POST'
-path = '/micro/find-similar-tracks'#?families&minmatched&maxinsert
+method = 'GET'
+path = '/family/get-family-genes'#?family
 async def webHandler(request):
   try:
     params = await request.json()
-    response = await handler(request.app, params)
+    response = handler(request.app, params)
     return web.Response(text=json.dumps(response), status=200)
   except Exception as e:
     response_obj = {'status' : 'failed', 'reason': str(e)}
