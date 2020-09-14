@@ -102,7 +102,12 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     _replacePreviousPrintLine(msg.format('done'))
   except Exception as e:
     print(e)
-  fields = [redisearch.TextField('name')]
+  fields = [
+      redisearch.TextField('name'),
+      redisearch.NumericField('length'),
+      redisearch.TextField('genus'),
+      redisearch.TextField('species'),
+    ]
   chromosome_index.create_index(fields)
   indexer = chromosome_index.batch_indexer(chunk_size=chunk_size)
 
@@ -115,11 +120,22 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     supercontig_id = _getCvterm(c, 'supercontig', 'sequence')
     _replacePreviousPrintLine(msg.format('done'))
 
+    # get all the organisms
+    msg = '\tLoading organisms... {}'
+    print(msg.format(''))
+    i = 0
+    query = ('SELECT organism_id, genus, species '
+             'FROM organism;')
+    c.execute(query)
+    organism_id_map = {}
+    for (o_id, o_genus, o_species,) in c:
+      organism_id_map[o_id] = {'genus': o_genus, 'species': o_species}
+    _replacePreviousPrintLine(msg.format('done'))
+
     # get all the chromosomes
     msg = '\tLoading chromosomes... {}'
     print(msg.format(''))
-    i = 0
-    query = ('SELECT feature_id, name '
+    query = ('SELECT feature_id, name, organism_id, seqlen '
              'FROM feature '
              'WHERE type_id=' + str(chromosome_id) + ' '
              'OR type_id=' + str(supercontig_id) + ';')
@@ -130,9 +146,17 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     msg = '\tIndexing chromosomes... {}'
     print(msg.format(''))
     chromosome_id_name_map = {}
-    for (chr_id, chr_name,) in c:
+    i = 0
+    for (chr_id, chr_name, chr_organism_id, chr_length,) in c:
       chromosome_id_name_map[chr_id] = chr_name
-      indexer.add_document(f'{indexName}_{i}', name=chr_name)
+      organism = organism_id_map[chr_organism_id]
+      indexer.add_document(
+        f'{indexName}_{i}',
+        name=chr_name,
+        length=chr_length,
+        genus=organism['genus'],
+        species=organism['species'],
+      )
       i += 1
     indexer.commit()
     _replacePreviousPrintLine(msg.format('done'))
@@ -161,7 +185,7 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
   fields = [
       redisearch.TextField('chromosome'),
       redisearch.TextField('name'),
-      redisearch.NumericField('fmin'),
+      redisearch.NumericField('fmin', sortable=True),
       redisearch.NumericField('fmax'),
       redisearch.TextField('annotation'),
       redisearch.TextField('strand'),
