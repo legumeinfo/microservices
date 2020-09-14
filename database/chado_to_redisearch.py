@@ -62,12 +62,14 @@ def parseArgs():
   return parser.parse_args()
 
 
-def _getCvterm(c, name):
+def _getCvterm(c, name, cv=None):
   # get the cvterm
   query = ('SELECT cvterm_id '
            'FROM cvterm '
-           'WHERE name=\'' + name + '\' '
-           'AND cv_id = (select cv_id from cv where name=\'sequence\');')
+           'WHERE name=\'' + name + '\'')
+  if cv is not None:
+    query += ' AND cv_id = (select cv_id from cv where name=\'' + cv + '\')'
+  query += ';'
   c.execute(query)
   # does it exist?
   if not c.rowcount:
@@ -109,8 +111,8 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     # get cvterms
     msg = '\tLoading cvterms... {}'
     print(msg.format(''))
-    chromosome_id = _getCvterm(c, 'chromosome')
-    supercontig_id = _getCvterm(c, 'supercontig')
+    chromosome_id = _getCvterm(c, 'chromosome', 'sequence')
+    supercontig_id = _getCvterm(c, 'supercontig', 'sequence')
     _replacePreviousPrintLine(msg.format('done'))
 
     # get all the chromosomes
@@ -161,6 +163,8 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
       redisearch.TextField('name'),
       redisearch.NumericField('fmin'),
       redisearch.NumericField('fmax'),
+      redisearch.TextField('annotation'),
+      redisearch.TextField('strand'),
     ]
   interval_index.create_index(fields)
   indexer = interval_index.batch_indexer(chunk_size=chunk_size)
@@ -170,13 +174,24 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     # get cvterms
     msg = '\tLoading cvterms... {}'
     print(msg.format(''))
-    gene_id = _getCvterm(c, 'gene')
+    gene_id = _getCvterm(c, 'gene', 'sequence')
+    genefamily_id = _getCvterm(c, 'gene family')
+    _replacePreviousPrintLine(msg.format('done'))
+
+    # get all the gene annotations
+    msg = '\tLoading gene annotations... {}'
+    print(msg.format(''))
+    query = ('SELECT feature_id, value '
+             'FROM featureprop '
+             'WHERE type_id=' + str(genefamily_id) + ';')
+    c.execute(query)
+    gene_id_family_map = dict((g_id, g_family) for (g_id, g_family,) in c)
     _replacePreviousPrintLine(msg.format('done'))
 
     # get all the genes
     msg = '\tLoading genes... {}'
     print(msg.format(''))
-    query = ('SELECT fl.srcfeature_id, f.name, fl.fmin, fl.fmax '
+    query = ('SELECT fl.srcfeature_id, f.feature_id, f.name, fl.fmin, fl.fmax, fl.strand '
              'FROM featureloc fl, feature f '
              'WHERE fl.feature_id=f.feature_id '
              'AND f.type_id=' + str(gene_id) + ';')
@@ -187,7 +202,7 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     msg = '\tIndexing genes... {}'
     print(msg.format(''))
     i = 0
-    for (chr_id, g_name, g_fmin, g_fmax,) in c:
+    for (chr_id, g_id, g_name, g_fmin, g_fmax, g_strand,) in c:
       if chr_id in chromosome_id_name_map:
         chr_name = chromosome_id_name_map[chr_id]
         indexer.add_document(
@@ -196,6 +211,8 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
           name=g_name,
           fmin=g_fmin,
           fmax=g_fmax,
+          strand= g_strand,
+          family=gene_id_family_map.get(g_id, ''),
         )
         i += 1
     indexer.commit()
