@@ -19,6 +19,15 @@ class RequestHandler:
   def __init__(self, redis_connection):
     self.redis_connection = redis_connection
 
+  def parseArguments(self, query_track, matched, intermediate):
+    if type(query) is not list:
+      raise ValueError('query must be a list')
+    matched = float(matched)  # ValueError
+    intermediate = float(intermediate)  # ValueError
+    if matched <= 0 or intermediate <= 0:
+      raise ValueError('matched and intermediate must be positive')
+    return query_track, matched, intermediate
+
   # TODO: use aioredis and call redisearch via .execute to prevent blocking
   # https://redislabs.com/blog/beyond-the-cache-with-python/
   async def process(self, query_track, matched, intermediate):

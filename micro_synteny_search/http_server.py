@@ -9,19 +9,11 @@ async def http_post_handler(request):
   query = data.get('query')
   matched = data.get('matched')
   intermediate = data.get('intermediate')
-  try:
-    if type(query) is not list:
-      raise ValueError('query must be a list')
-    matched = float(matched)
-    intermediate = float(intermediate)
-    if matched <= 0 or intermediate <= 0:
-      raise ValueError('matched and intermediate must be positive')
-  except:
-    matched = None
-    intermediate = None
-  if query is None or matched is None or intermediate is None:
-    return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
   handler = request.app['handler']
+  try:
+    handler.parseArguments(query, matched, intermediate)
+  except e:
+    return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
   tracks = await handler.process(query, matched, intermediate)
   return web.json_response({'tracks': tracks})
 
