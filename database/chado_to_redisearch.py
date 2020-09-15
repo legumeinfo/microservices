@@ -3,6 +3,7 @@
 # Python
 import argparse
 import os
+import re
 import sys
 from collections import defaultdict
 # dependencies
@@ -84,6 +85,12 @@ def _replacePreviousPrintLine(newline):
   print(newline)
 
 
+# adapted from re.escape in cpython re.py to escape RediSearch special characters
+_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
+def _escapeSpecialCharacters(s):
+  return s.translate(_special_chars_map)
+
+
 def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload):
 
   print('Loading chromosomes...')
@@ -148,11 +155,11 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     chromosome_id_name_map = {}
     i = 0
     for (chr_id, chr_name, chr_organism_id, chr_length,) in c:
-      chromosome_id_name_map[chr_id] = chr_name
+      chromosome_id_name_map[chr_id] = _escapeSpecialCharacters(chr_name)
       organism = organism_id_map[chr_organism_id]
       indexer.add_document(
         f'{indexName}_{i}',
-        name=chr_name,
+        name=chromosome_id_name_map[chr_id],
         length=chr_length,
         genus=organism['genus'],
         species=organism['species'],
@@ -185,10 +192,11 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
   fields = [
       redisearch.TextField('chromosome'),
       redisearch.TextField('name'),
-      redisearch.NumericField('fmin', sortable=True),
+      redisearch.NumericField('fmin'),
       redisearch.NumericField('fmax'),
-      redisearch.TextField('annotation'),
-      redisearch.TextField('strand'),
+      redisearch.TextField('family'),
+      redisearch.NumericField('strand'),
+      redisearch.NumericField('index', sortable=True),
     ]
   interval_index.create_index(fields)
   indexer = interval_index.batch_indexer(chunk_size=chunk_size)
@@ -209,7 +217,7 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
              'FROM featureprop '
              'WHERE type_id=' + str(genefamily_id) + ';')
     c.execute(query)
-    gene_id_family_map = dict((g_id, g_family) for (g_id, g_family,) in c)
+    gene_id_family_map = dict((g_id, _escapeSpecialCharacters(g_family)) for (g_id, g_family,) in c)
     _replacePreviousPrintLine(msg.format('done'))
 
     # get all the genes
@@ -222,21 +230,40 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     c.execute(query)
     _replacePreviousPrintLine(msg.format('done'))
 
+    # prepare genes for indexing
+    msg = '\tProcessing genes... {}'
+    print(msg.format(''))
+    chromosome_genes = defaultdict(list)
+    for (chr_id, g_id, g_name, g_fmin, g_fmax, g_strand,) in c:
+      if chr_id in chromosome_id_name_map:
+        chr_name = chromosome_id_name_map[chr_id]
+        gene = {
+            'chromosome': chr_name,
+            'name': _escapeSpecialCharacters(g_name),
+            'fmin': g_fmin,
+            'fmax': g_fmax,
+            'strand': g_strand,
+            'family': gene_id_family_map.get(g_id, ''),
+          }
+        chromosome_genes[chr_id].append(gene)
+    _replacePreviousPrintLine(msg.format('done'))
+
     # index the genes
     msg = '\tIndexing genes... {}'
     print(msg.format(''))
     i = 0
-    for (chr_id, g_id, g_name, g_fmin, g_fmax, g_strand,) in c:
-      if chr_id in chromosome_id_name_map:
-        chr_name = chromosome_id_name_map[chr_id]
+    for genes in chromosome_genes.values():
+      genes.sort(key=lambda g: g['fmin'])
+      for (j, gene) in enumerate(genes):
         indexer.add_document(
           f'{indexName}_{i}',
-          chromosome=chr_name,
-          name=g_name,
-          fmin=g_fmin,
-          fmax=g_fmax,
-          strand= g_strand,
-          family=gene_id_family_map.get(g_id, ''),
+          chromosome=gene['chromosome'],
+          name=gene['name'],
+          fmin=gene['fmin'],
+          fmax=gene['fmax'],
+          strand= gene['strand'],
+          family=gene['family'],
+          index=j,
         )
         i += 1
     indexer.commit()

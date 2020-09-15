@@ -1,7 +1,8 @@
-# Genome Context Viewer genes microservice
+# Genome Context Viewer micro-synteny search microservice
 
-This directory contains the genes microservice.
-This microservice takes a list of gene names and returns the gene objects corresponding to the names.
+This directory contains the micro-synteny search microservice.
+This microservice takes a track as an ordered list of functional annotations and returns tracks that have similar annotation content.
+The minimum number (or percentage) of matching annotations and maximum number (or percentage) of intermediate genes between any two matches in a result track must also be provided.
 
 ## Setup
 
@@ -36,13 +37,15 @@ For more information about the microservice, run
 
 ## Use
 
-The microservice can be queried via HTTP POST or gRPC.
+The microservice can be queried via HTTP GET or gRPC.
 
-The default request URL is `localhost:8080/genes`.
+The defualt request URL is `localhost:8080/micro-synteny-search`.
 The following is an example HTTP POST data
 
     {
-      genes: [somegenename, anothergenename, andsoon]
+      query: [afunctionalannotation, anotherannotation, andsoon],
+      matched: 0.6,
+      intermediate: 3,
     }
 
-See the `genes.proto` file and its auto-generated stubs for gRPC requests.
+See the `microsyntenysearch.proto` file and its auto-generated stubs for gRPC requests.

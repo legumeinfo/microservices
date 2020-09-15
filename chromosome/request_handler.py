@@ -2,6 +2,16 @@
 from redisearch import Client, Query
 
 
+# adapted from re.escape in cpython re.py to escape RediSearch special characters
+_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
+def _escapeSpecialCharacters(s):
+  return s.translate(_special_chars_map)
+
+
+def _stripEscapeCharacters(s):
+  return s.replace('\\', '')
+
+
 class RequestHandler:
 
   def __init__(self, redis_connection):
@@ -14,7 +24,8 @@ class RequestHandler:
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
     gene_index = Client('geneIdx', conn=self.redis_connection)
     # get the chromosome
-    query = Query(name)\
+    escaped_name = _escapeSpecialCharacters(name)
+    query = Query(escaped_name)\
               .limit_fields('name')\
               .verbatim()
     result = chromosome_index.search(query)
@@ -29,24 +40,21 @@ class RequestHandler:
         'families': [],
       }
     # count how many genes are on the chromosome
-    query = Query(name)\
+    query = Query(escaped_name)\
               .limit_fields('chromosome')\
               .verbatim()\
               .paging(0, 0)
     result = gene_index.search(query)
     num_genes = result.total
     # get the chromosome genes
-    query = Query(name)\
+    query = Query(escaped_name)\
               .limit_fields('chromosome')\
               .verbatim()\
-              .sort_by('fmin')\
+              .sort_by('index')\
               .return_fields('name', 'family')\
               .paging(0, num_genes)
     result = gene_index.search(query)
-    # TODO: query.sort_by('fmin') doesn't work
-    #gene_docs = sorted(result.docs, key=lambda doc: int(doc.fmin))
-    #for doc in gene_docs:
     for doc in result.docs:
-      chromosome['genes'].append(doc.name)
-      chromosome['families'].append(doc.family)
+      chromosome['genes'].append(_stripEscapeCharacters(doc.name))
+      chromosome['families'].append(_stripEscapeCharacters(doc.family))
     return chromosome
