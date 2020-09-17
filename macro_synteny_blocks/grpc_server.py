@@ -1,0 +1,34 @@
+# dependencies
+from grpc.experimental import aio
+# module
+import macrosyntenyblocks_pb2
+import macrosyntenyblocks_pb2_grpc
+
+
+class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer):
+
+  def __init__(self, handler):
+    self.handler = handler
+
+  async def Compute(self, request, context):
+    chromosome = request.chromosome
+    matched = request.matched
+    intermediate = request.intermediate
+    mask = request.mask
+    targets = request.targets
+    try:
+      self.handler.parseArguments(chromosome, matched, intermediate, mask, targets)
+    except:
+      # raise a gRPC INVALID ARGUMENT error
+      await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or given arguments have invalid values')
+    blocks = await self.handler.process(chromosome, matched, intermediate, mask, targets)
+    return macrosyntenyblocks_pb2.ComputeReply(blocks=blocks)
+
+
+async def run_grpc_server(host, port, handler):
+  server = aio.server()
+  server.add_insecure_port(f'{host}:{port}')
+  servicer = MacroSyntenyBlocks(handler)
+  macrosyntenyblocks_pb2_grpc.add_MacroSyntenyBlocksServicer_to_server(servicer, server)
+  await server.start()
+  await server.wait_for_termination()

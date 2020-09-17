@@ -4,18 +4,23 @@ from aiohttp import web
 
 
 async def http_post_handler(request):
-  # parse the query from the POST data
+  # parse the chromosome and parameters from the POST data
   data = await request.json()
-  query = data.get('query')
+  chromosome = data.get('chromosome')
   matched = data.get('matched')
   intermediate = data.get('intermediate')
+  mask = data.get('mask')
+  targets = data.get('targets')
   handler = request.app['handler']
   try:
-    query, matched, intermediate = handler.parseArguments(query, matched, intermediate)
+    chromosome, matched, intermediate, mask, targets = \
+      handler.parseArguments(chromosome, matched, intermediate, mask, targets)
   except:
     return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
-  tracks = await handler.process(query, matched, intermediate)
-  return web.json_response({'tracks': tracks})
+  blocks = await handler.process(chromosome, matched, intermediate, mask, targets)
+  if blocks is None:
+    return web.HTTPNotFound(text='Chromosome not found')
+  return web.json_response({'blocks': blocks})
 
 
 async def run_http_server(host, port, handler):
@@ -30,7 +35,7 @@ async def run_http_server(host, port, handler):
            allow_headers='*',
          )
   })
-  route = app.router.add_post('/micro-synteny-search', http_post_handler)
+  route = app.router.add_post('/macro-synteny-blocks', http_post_handler)
   cors.add(route)
   # run the app
   runner = web.AppRunner(app)

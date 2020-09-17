@@ -124,7 +124,7 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     msg = '\tLoading cvterms... {}'
     print(msg.format(''))
     chromosome_id = _getCvterm(c, 'chromosome', 'sequence')
-    supercontig_id = _getCvterm(c, 'supercontig', 'sequence')
+    #supercontig_id = _getCvterm(c, 'supercontig', 'sequence')
     _replacePreviousPrintLine(msg.format('done'))
 
     # get all the organisms
@@ -144,8 +144,8 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     print(msg.format(''))
     query = ('SELECT feature_id, name, organism_id, seqlen '
              'FROM feature '
-             'WHERE type_id=' + str(chromosome_id) + ' '
-             'OR type_id=' + str(supercontig_id) + ';')
+             'WHERE type_id=' + str(chromosome_id) + ';')
+    #         'OR type_id=' + str(supercontig_id) + ';')
     c.execute(query)
     _replacePreviousPrintLine(msg.format('done'))
 
