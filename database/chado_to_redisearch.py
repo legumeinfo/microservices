@@ -45,6 +45,8 @@ def parseArgs():
   parser.add_argument('--phost', action=EnvArg, envvar=phost_envvar, type=str, default='localhost', help=f'The PostgreSQL host (can also be specified using the {phost_envvar} environment variable).')
   pport_envvar = 'POSTGRES_PORT'
   parser.add_argument('--pport', action=EnvArg, envvar=pport_envvar, type=int, default=5432, help=f'The PostgreSQL port (can also be specified using the {pport_envvar} environment variable).')
+  parser.add_argument('--uniquename', action='store_true', help='Load names from the uniquename field of the Chado feature table, otherwise use the name field.')
+  parser.set_defaults(uniquename=False)
 
   # Redis args
   rdb_envvar = 'REDIS_DB'
@@ -85,7 +87,7 @@ def _replacePreviousPrintLine(newline):
   print(newline)
 
 
-def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload):
+def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, uniquename):
 
   print('Loading chromosomes...')
   # prepare RediSearch
@@ -136,7 +138,8 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     # get all the chromosomes
     msg = '\tLoading chromosomes... {}'
     print(msg.format(''))
-    query = ('SELECT feature_id, name, organism_id, seqlen '
+    name = 'uniquename' if uniquename else 'name'
+    query = (f'SELECT feature_id, {name}, organism_id, seqlen '
              'FROM feature '
              'WHERE type_id=' + str(chromosome_id) + ';')
     #         'OR type_id=' + str(supercontig_id) + ';')
@@ -163,7 +166,7 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     return chromosome_id_name_map
 
 
-def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map):
+def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map, uniquename):
 
   print('Loading genes...')
   # prepare RediSearch
@@ -215,7 +218,8 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     # get all the genes
     msg = '\tLoading genes... {}'
     print(msg.format(''))
-    query = ('SELECT fl.srcfeature_id, f.feature_id, f.name, fl.fmin, fl.fmax, fl.strand '
+    name = 'uniquename' if uniquename else 'name'
+    query = (f'SELECT fl.srcfeature_id, f.feature_id, f.{name}, fl.fmin, fl.fmax, fl.strand '
              'FROM featureloc fl, feature f '
              'WHERE fl.feature_id=f.feature_id '
              'AND f.type_id=' + str(gene_id) + ';')
@@ -272,10 +276,10 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     _replacePreviousPrintLine(msg.format('done'))
 
 
-def transferData(postgres_connection, redis_connection, chunk_size, noreload):
+def transferData(postgres_connection, redis_connection, chunk_size, noreload, uniquename):
 
-  chromosome_id_name_map = transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload)
-  transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map)
+  chromosome_id_name_map = transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, uniquename)
+  transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map, uniquename)
 
 
 if __name__ == '__main__':
@@ -301,7 +305,7 @@ if __name__ == '__main__':
   _replacePreviousPrintLine(msg.format('done'))
   # transfer the relevant data from Chado to Redis
   try:
-    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload)
+    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload, args.uniquename)
   except Exception as e:
     print(e)
   # disconnect from the database
