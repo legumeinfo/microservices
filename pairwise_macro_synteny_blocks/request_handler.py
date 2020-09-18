@@ -2,17 +2,7 @@
 from collections import defaultdict
 from itertools import chain
 # dependencies
-from redisearch import Client, NumericFilter, Query
-
-
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
-def _stripEscapeCharacters(s):
-  return s.replace('\\', '')
+from redisearch import Client
 
 
 class RequestHandler:
@@ -136,43 +126,27 @@ class RequestHandler:
   # https://redislabs.com/blog/beyond-the-cache-with-python/
   async def process(self, query_chromosome, target, matched, intermediate, mask):
 
+    start_time  = time.time()
+
     # connect to the indexes
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
     gene_index = Client('geneIdx', conn=self.redis_connection)
 
     # check if the target chromosome exists
-    escaped_target = _escapeSpecialCharacters(target)
-    query = Query(escaped_target)\
-              .limit_fields('name')\
-              .verbatim()\
-              .paging(0, 0)
-    result = chromosome_index.search(query)
-
+    target_doc_id = f'chromosome:{target}'
+    target_doc = chromosome_index.load_document(target_doc_id)
     # exit if the target chromosome wasn't found
-    if result.total == 0:
+    if not hasattr(target_doc, 'name'):
       return None
 
     # count how many genes are on the target chromosome
-    query = Query(escaped_target)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .paging(0, 0)
-    result = gene_index.search(query)
-    num_genes = result.total
-
+    num_genes = self.redis_connection.llen(f'{target_doc_id}:genes')
     # exit if there aren't enough genes to construct even a single block
     if num_genes < matched:
       return []
 
     # get the functional annotations of the genes on the target chromosome
-    query = Query(escaped_target)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .sort_by('index')\
-              .return_fields('family')\
-              .paging(0, num_genes)
-    result = gene_index.search(query)
-    target_chromosome = list(map(lambda d: _stripEscapeCharacters(d.family), result.docs))
+    target_chromosome = self.redis_connection.lrange(f'{target_doc_id}:families', 0, -1)
 
     # compute gene index pairs based on matching annotations
     index_pairs = self._chromosomesToIndexPairs(query_chromosome, target_chromosome, mask)
@@ -196,24 +170,15 @@ class RequestHandler:
           (end_pair[1], begin_pair[1], '-')
       # get the physical locations of the target start gene
       begin_target_index = begin_pair[0]
-      query = Query(escaped_target)\
-                .limit_fields('chromosome')\
-                .verbatim()\
-                .add_filter(NumericFilter('index', begin_target_index, begin_target_index))\
-                .return_fields('fmin', 'fmax')
-      result = gene_index.search(query)
-      start_doc = result.docs[0]
-      fmin = min(int(start_doc.fmin), int(start_doc.fmax))
+      l = self.redis_connection.llen(f'{target_doc_id}:fmins')
+      start_fmin = self.redis_connection.lindex(f'{target_doc_id}:fmins', begin_target_index)
+      start_fmax = self.redis_connection.lindex(f'{target_doc_id}:fmaxs', begin_target_index)
+      fmin = min(int(start_fmin), int(start_fmax))
       # get the physical locations of the target end gene
       end_target_index = begin_pair[0]
-      query = Query(escaped_target)\
-                .limit_fields('chromosome')\
-                .verbatim()\
-                .add_filter(NumericFilter('index', end_target_index, end_target_index))\
-                .return_fields('fmin', 'fmax')
-      result = gene_index.search(query)
-      end_doc = result.docs[0]
-      fmax = max(int(end_doc.fmin), int(end_doc.fmax))
+      end_fmin = self.redis_connection.lindex(f'{target_doc_id}:fmins', end_target_index)
+      end_fmax = self.redis_connection.lindex(f'{target_doc_id}:fmaxs', end_target_index)
+      fmax = max(int(end_fmin), int(end_fmax))
       # make and save the block
       block = {
           'i': query_start_index,
@@ -223,5 +188,8 @@ class RequestHandler:
           'orientation': orientation
         }
       blocks.append(block)
+
+    end_time = time.time()
+    print(f'total: {end_time-start_time}')
 
     return blocks

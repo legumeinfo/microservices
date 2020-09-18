@@ -1,15 +1,5 @@
 # dependencies
-from redisearch import Client, Query
-
-
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
-def _stripEscapeCharacters(s):
-  return s.replace('\\', '')
+from redisearch import Client
 
 
 class RequestHandler:
@@ -20,41 +10,23 @@ class RequestHandler:
   # TODO: use aioredis and call redisearch via .execute to prevent blocking
   # https://redislabs.com/blog/beyond-the-cache-with-python/
   async def process(self, name):
-    # connect to the indexes
+    # connect to the index
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
-    gene_index = Client('geneIdx', conn=self.redis_connection)
     # get the chromosome
-    escaped_name = _escapeSpecialCharacters(name)
-    query = Query(escaped_name)\
-              .limit_fields('name')\
-              .verbatim()
-    result = chromosome_index.search(query)
-    if result.total == 0:
+    chromosome_doc = chromosome_index.load_document(f'chromosome:{name}')
+    if not hasattr(chromosome_doc, 'name'):
       return None
-    chromosome_doc = result.docs[0]
+    # TODO: make these requests asynchronously
+    # get the chromosome gene names
+    genes = self.redis_connection.lrange(f'chromosome:{name}:genes', 0, -1)
+    # get the chromosome gene families
+    families = self.redis_connection.lrange(f'chromosome:{name}:families', 0, -1)
+    # build the chromosome
     chromosome = {
         'length': chromosome_doc.length,
         'genus': chromosome_doc.genus,
         'species': chromosome_doc.species,
-        'genes': [],
-        'families': [],
+        'genes': genes,
+        'families': families,
       }
-    # count how many genes are on the chromosome
-    query = Query(escaped_name)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .paging(0, 0)
-    result = gene_index.search(query)
-    num_genes = result.total
-    # get the chromosome genes
-    query = Query(escaped_name)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .sort_by('index')\
-              .return_fields('name', 'family')\
-              .paging(0, num_genes)
-    result = gene_index.search(query)
-    for doc in result.docs:
-      chromosome['genes'].append(_stripEscapeCharacters(doc.name))
-      chromosome['families'].append(_stripEscapeCharacters(doc.family))
     return chromosome

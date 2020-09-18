@@ -6,16 +6,6 @@ from redisearch import Client, Query
 from grpc_client import computePairwiseMacroSyntenyBlocks
 
 
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
-def _stripEscapeCharacters(s):
-  return s.replace('\\', '')
-
-
 def _grpcBlockToDictBlock(grpc_block):
   dict_block = {
       'i': grpc_block.i,
@@ -67,7 +57,7 @@ class RequestHandler:
                 .return_fields('name')\
                 .paging(0, num_chromosomes)
       result = chromosome_index.search(query)
-      targets = list(map(lambda doc: _stripEscapeCharacters(doc.name), result.docs))
+      targets = list(map(lambda doc: doc.name, result.docs))
     # compute blocks for each chromosome
     blocks = await asyncio.gather(*[
         computePairwiseMacroSyntenyBlocks(chromosome, name, matched, intermediate, mask, self.pairwise_address)
@@ -78,13 +68,7 @@ class RequestHandler:
     for i, i_blocks in enumerate(blocks):
       if i_blocks:  # false for None or []
         name = targets[i]
-        escaped_name = _escapeSpecialCharacters(name)
-        query = Query(escaped_name)\
-                  .limit_fields('name')\
-                  .verbatim()\
-                  .return_fields('genus', 'species')
-        result = chromosome_index.search(query)
-        doc = result.docs[0]
+        doc = chromosome_index.load_document(f'chromosome:{name}')
         i_chromosome_blocks = {
             'chromosome': name,
             'genus': doc.genus,

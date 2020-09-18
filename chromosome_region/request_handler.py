@@ -1,15 +1,7 @@
+# Python
+import bisect
 # dependencies
-from redisearch import Client, NumericFilter, Query
-
-
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
-def _stripEscapeCharacters(s):
-  return s.replace('\\', '')
+from redisearch import Client
 
 
 class RequestHandler:
@@ -21,28 +13,21 @@ class RequestHandler:
   # https://redislabs.com/blog/beyond-the-cache-with-python/
   async def process(self, chromosome, start, stop):
     # connect to the index
-    gene_index = Client('geneIdx', conn=self.redis_connection)
-    # count how many genes fall into the chromosome interval
-    escaped_chromosome = _escapeSpecialCharacters(chromosome)
-    query = Query(escaped_chromosome)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .add_filter(NumericFilter('fmin', start, stop))\
-              .add_filter(NumericFilter('fmax', start, stop))\
-              .paging(0, 0)
-    result = gene_index.search(query)
-    if result.total == 0:
+    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    # get the chromosome
+    chromosome_doc_id = f'chromosome:{chromosome}'
+    chromosome_doc = chromosome_index.load_document(chromosome_doc_id)
+    if not hasattr(chromosome_doc, 'name'):
       return None
+    # TODO: make these requests asynchronously
+    # get the chromosome gene locations
+    fmins = list(map(int, self.redis_connection.lrange(f'{chromosome_doc_id}:fmins', 0, -1)))
+    fmaxs = list(map(int, self.redis_connection.lrange(f'{chromosome_doc_id}:fmaxs', 0, -1)))
+    # find the index bounds using binary search
+    i = bisect.bisect_left(fmins, start)
+    j = bisect.bisect_right(fmaxs, stop)
     # compute the number of flanking genes and retrieve only the center gene
-    neighbors = result.total//2
-    query = Query(escaped_chromosome)\
-              .limit_fields('chromosome')\
-              .verbatim()\
-              .add_filter(NumericFilter('fmin', start, stop))\
-              .add_filter(NumericFilter('fmax', start, stop))\
-              .sort_by('fmin')\
-              .return_fields('name')\
-              .paging(neighbors, 1)
-    result = gene_index.search(query)
-    gene = _stripEscapeCharacters(result.docs[0].name)
+    neighbors = j-i
+    center = (i+j)//2
+    gene = self.redis_connection.lindex(f'{chromosome_doc_id}:genes', center)
     return {'gene': gene, 'neighbors': neighbors}

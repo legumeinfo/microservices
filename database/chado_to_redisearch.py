@@ -85,12 +85,6 @@ def _replacePreviousPrintLine(newline):
   print(newline)
 
 
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
 def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload):
 
   print('Loading chromosomes...')
@@ -153,18 +147,16 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     msg = '\tIndexing chromosomes... {}'
     print(msg.format(''))
     chromosome_id_name_map = {}
-    i = 0
     for (chr_id, chr_name, chr_organism_id, chr_length,) in c:
-      chromosome_id_name_map[chr_id] = _escapeSpecialCharacters(chr_name)
+      chromosome_id_name_map[chr_id] = chr_name
       organism = organism_id_map[chr_organism_id]
       indexer.add_document(
-        f'{indexName}_{i}',
-        name=chromosome_id_name_map[chr_id],
+        f'chromosome:{chr_name}',
+        name=chr_name,
         length=chr_length,
         genus=organism['genus'],
         species=organism['species'],
       )
-      i += 1
     indexer.commit()
     _replacePreviousPrintLine(msg.format('done'))
 
@@ -217,7 +209,7 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
              'FROM featureprop '
              'WHERE type_id=' + str(genefamily_id) + ';')
     c.execute(query)
-    gene_id_family_map = dict((g_id, _escapeSpecialCharacters(g_family)) for (g_id, g_family,) in c)
+    gene_id_family_map = dict((g_id, g_family) for (g_id, g_family,) in c)
     _replacePreviousPrintLine(msg.format('done'))
 
     # get all the genes
@@ -236,10 +228,8 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     chromosome_genes = defaultdict(list)
     for (chr_id, g_id, g_name, g_fmin, g_fmax, g_strand,) in c:
       if chr_id in chromosome_id_name_map:
-        chr_name = chromosome_id_name_map[chr_id]
         gene = {
-            'chromosome': chr_name,
-            'name': _escapeSpecialCharacters(g_name),
+            'name': g_name,
             'fmin': g_fmin,
             'fmax': g_fmax,
             'strand': g_strand,
@@ -251,13 +241,16 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     # index the genes
     msg = '\tIndexing genes... {}'
     print(msg.format(''))
-    i = 0
-    for genes in chromosome_genes.values():
+    pipeline = redis_connection.pipeline()
+    for chr_id, genes in chromosome_genes.items():
+      chr_name = chromosome_id_name_map[chr_id]
       genes.sort(key=lambda g: g['fmin'])
+      # RediSearch
       for (j, gene) in enumerate(genes):
+        gene_name = gene['name']
         indexer.add_document(
-          f'{indexName}_{i}',
-          chromosome=gene['chromosome'],
+          f'gene:{gene_name}',
+          chromosome=chr_name,
           name=gene['name'],
           fmin=gene['fmin'],
           fmax=gene['fmax'],
@@ -265,8 +258,17 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
           family=gene['family'],
           index=j,
         )
-        i += 1
+      # Redis
+      pipeline.delete(f'chromosome:{chr_name}:genes')
+      pipeline.rpush(f'chromosome:{chr_name}:genes', *map(lambda g: g['name'], genes))
+      pipeline.delete(f'chromosome:{chr_name}:families')
+      pipeline.rpush(f'chromosome:{chr_name}:families', *map(lambda g: g['family'], genes))
+      pipeline.delete(f'chromosome:{chr_name}:fmins')
+      pipeline.rpush(f'chromosome:{chr_name}:fmins', *map(lambda g: g['fmin'], genes))
+      pipeline.delete(f'chromosome:{chr_name}:fmaxs')
+      pipeline.rpush(f'chromosome:{chr_name}:fmaxs', *map(lambda g: g['fmax'], genes))
     indexer.commit()
+    pipeline.execute()
     _replacePreviousPrintLine(msg.format('done'))
 
 
