@@ -1,20 +1,10 @@
 # Python
 import asyncio
 # dependencies
-from redisearch import Client, Query
+from redisearch import Query
 # module
+from aioredisearch import Client
 from grpc_client import computePairwiseMacroSyntenyBlocks
-
-
-def _grpcBlockToDictBlock(grpc_block):
-  dict_block = {
-      'i': grpc_block.i,
-      'j': grpc_block.j,
-      'fmin': grpc_block.fmin,
-      'fmax': grpc_block.fmax,
-      'orientation': grpc_block.orientation,
-    }
-  return dict_block
 
 
 class RequestHandler:
@@ -40,43 +30,60 @@ class RequestHandler:
       mask = float('inf')
     return chromosome, matched, intermediate, mask, targets
 
-  # TODO: use aioredis and call redisearch via .execute to prevent blocking
-  # https://redislabs.com/blog/beyond-the-cache-with-python/
+  def _grpcBlockToDictBlock(self, grpc_block):
+    dict_block = {
+        'i': grpc_block.i,
+        'j': grpc_block.j,
+        'fmin': grpc_block.fmin,
+        'fmax': grpc_block.fmax,
+        'orientation': grpc_block.orientation,
+      }
+    return dict_block
+
+  async def _getTargets(self, targets, chromosome_index):
+    if targets:
+      return targets
+    # count how many chromosomes there are
+    query = Query('*').paging(0, 0)
+    result = await chromosome_index.search(query)
+    num_chromosomes = result.total
+    # get all the chromosomes
+    query = Query('*')\
+              .return_fields('name')\
+              .paging(0, num_chromosomes)
+    result = await chromosome_index.search(query)
+    return list(map(lambda doc: doc.name, result.docs))
+
+
+  async def _computePairwiseBlocks(self, chromosome, target, matched, intermediate, mask, chromosome_index, grpc_decode):
+    # compute the blocks for the target chromosome
+    blocks = await computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, self.pairwise_address)
+    if not blocks:  # true for None or []
+      return None
+    # fetch the chromosome object
+    doc = await chromosome_index.load_document(f'chromosome:{target}')
+    blocks_object = {
+        'chromosome': target,
+        'genus': doc.genus,
+        'species': doc.species,
+      }
+    # decode the blocks if not outputting gRPC
+    if grpc_decode:
+      blocks_object['blocks'] = list(map(self._grpcBlockToDictBlock, blocks))
+    else:
+      blocks_object['blocks'] = blocks
+    return blocks_object
+
   async def process(self, chromosome, matched, intermediate, mask, targets, grpc_decode=False):
     # connect to the index
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
     # get all chromosome names if no targets are specified
-    # TODO: is it worth just pulling in all the chromosome objects now?
-    if not targets:
-      # count how many chromosomes there are
-      query = Query('*').paging(0, 0)
-      result = chromosome_index.search(query)
-      num_chromosomes = result.total
-      # get all the chromosomes
-      query = Query('*')\
-                .return_fields('name')\
-                .paging(0, num_chromosomes)
-      result = chromosome_index.search(query)
-      targets = list(map(lambda doc: doc.name, result.docs))
+    targets = await self._getTargets(targets, chromosome_index)
     # compute blocks for each chromosome
-    blocks = await asyncio.gather(*[
-        computePairwiseMacroSyntenyBlocks(chromosome, name, matched, intermediate, mask, self.pairwise_address)
+    target_blocks = await asyncio.gather(*[
+        self._computePairwiseBlocks(chromosome, name, matched, intermediate, mask, chromosome_index, grpc_decode)
         for name in targets
       ])
-    target_blocks = []
-    # get the chromosome for each chromosome that returned blocks
-    for i, i_blocks in enumerate(blocks):
-      if i_blocks:  # false for None or []
-        name = targets[i]
-        doc = chromosome_index.load_document(f'chromosome:{name}')
-        i_chromosome_blocks = {
-            'chromosome': name,
-            'genus': doc.genus,
-            'species': doc.species,
-          }
-        if grpc_decode:
-          i_chromosome_blocks['blocks'] = list(map(_grpcBlockToDictBlock, i_blocks))
-        else:
-          i_chromosome_blocks['blocks'] = i_blocks
-        target_blocks.append(i_chromosome_blocks)
-    return target_blocks
+    # remove the targets that didn't return any blocks
+    filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
+    return filtered_target_blocks

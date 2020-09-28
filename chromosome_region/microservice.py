@@ -54,7 +54,7 @@ def parseArgs():
   rdb_envvar = 'REDIS_DB'
   parser.add_argument('--rdb', action=EnvArg, envvar=rdb_envvar, type=int, default=0, help=f'The Redis database (can also be specified using the {rdb_envvar} environment variable).')
   rpassword_envvar = 'REDIS_PASSWORD'
-  parser.add_argument('--rpassword', action=EnvArg, envvar=rpassword_envvar, type=str, default='', help=f'The Redis password (can also be specified using the {rpassword_envvar} environment variable).')
+  parser.add_argument('--rpassword', action=EnvArg, envvar=rpassword_envvar, type=str, help=f'The Redis password (can also be specified using the {rpassword_envvar} environment variable).')
   rhost_envvar = 'REDIS_HOST'
   parser.add_argument('--rhost', action=EnvArg, envvar=rhost_envvar, type=str, default='localhost', help=f'The Redis host (can also be specified using the {rhost_envvar} environment variable).')
   rport_envvar = 'REDIS_PORT'
@@ -63,16 +63,28 @@ def parseArgs():
   return parser.parse_args()
 
 
+# the main coroutine that starts the various program tasks
+async def main(args):
+  redis_connection = await connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
+  handler = RequestHandler(redis_connection)
+  tasks = []
+  if not args.nohttp:
+    http_task = asyncio.create_task(run_http_server(args.hhost, args.hport, handler))
+    tasks.append(http_task)
+  if not args.nogrpc:
+    grpc_task = asyncio.create_task(run_grpc_server(args.ghost, args.gport, handler))
+    tasks.append(grpc_task)
+  await asyncio.gather(*tasks)
+
+
 if __name__ == '__main__':
+  # parse the command line arguments / environment variables
   args = parseArgs()
   if args.nohttp and args.nogrpc:
     exit('--no-http and --no-grpc can\'t both be given')
-  redis_connection = connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
-  handler = RequestHandler(redis_connection)
+  # initialize asyncio
   uvloop.install()
   loop = asyncio.get_event_loop()
-  if not args.nohttp:
-    loop.create_task(run_http_server(args.hhost, args.hport, handler))
-  if not args.nogrpc:
-    loop.create_task(run_grpc_server(args.ghost, args.gport, handler))
+  # run the program
+  loop.create_task(main(args))
   loop.run_forever()

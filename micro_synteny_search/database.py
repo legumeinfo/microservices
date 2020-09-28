@@ -1,11 +1,10 @@
 # dependencies
-import redis
+import aioredis
 
 
-def connectToRedis(host='localhost', port=6379, db=0, password=''):
+async def connectToRedis(host='localhost', port=6379, db=0, password=None):
   # connect to database
-  pool = redis.ConnectionPool(host=host, port=port, db=db, password=password)
-  connection = redis.Redis(connection_pool=pool)
+  connection = await aioredis.create_redis_pool((host, port), db=db, password=password, encoding='utf-8')
   # ping to force connection, preventing errors downstream
-  connection.ping()
+  await connection.ping()
   return connection

@@ -1,17 +1,11 @@
 # Python
+import asyncio
 from collections import defaultdict
+from itertools import chain
 # dependencies
-from redisearch import Client, NumericFilter, Query
-
-
-# adapted from re.escape in cpython re.py to escape RediSearch special characters
-_special_chars_map = {i: '\\' + chr(i) for i in b'-'}
-def _escapeSpecialCharacters(s):
-  return s.translate(_special_chars_map)
-
-
-def _stripEscapeCharacters(s):
-  return s.replace('\\', '')
+from redisearch import NumericFilter, Query
+# module
+from aioredisearch import Client
 
 
 class RequestHandler:
@@ -20,7 +14,7 @@ class RequestHandler:
     self.redis_connection = redis_connection
 
   def parseArguments(self, query_track, matched, intermediate):
-    if type(query) is not list:
+    if type(query_track) is not list:
       raise ValueError('query must be a list')
     matched = float(matched)  # ValueError
     intermediate = float(intermediate)  # ValueError
@@ -28,15 +22,33 @@ class RequestHandler:
       raise ValueError('matched and intermediate must be positive')
     return query_track, matched, intermediate
 
-  # TODO: use aioredis and call redisearch via .execute to prevent blocking
-  # https://redislabs.com/blog/beyond-the-cache-with-python/
-  async def process(self, query_track, matched, intermediate):
-    # connect to the index
-    gene_index = Client('geneIdx', conn=self.redis_connection)
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
-    # search the gene index
-    # TODO: is there a way to query for all genes exactly at once?
-    families = set(map(_escapeSpecialCharacters, query_track))
+  async def _blockToTrack(self, chromosome_doc, block):
+    first = block[0]
+    last = block[-1]
+    genes, families = await asyncio.gather(
+      self.redis_connection.lrange(f'{chromosome_doc.id}:genes', first, last),
+      self.redis_connection.lrange(f'{chromosome_doc.id}:families', first, last)
+    )
+    # format and return
+    track = {
+        'name': chromosome_doc.name,
+        'genus': chromosome_doc.genus,
+        'species': chromosome_doc.species,
+        'genes': genes,
+        'families': families,
+      }
+    return track
+
+  async def _chromosomeBlocksToTracks(self, chromosome_name, blocks, chromosome_index):
+    chromosome_doc = await chromosome_index.load_document(f'chromosome:{chromosome_name}')
+    tracks = await asyncio.gather(*[
+      self._blockToTrack(chromosome_doc, block)
+      for block in blocks
+    ])
+    return tracks
+
+  async def _queryToChromosomeGeneMatchIndexes(self, query_track, gene_index):
+    families = set(query_track)
     families.discard('')
     chromosome_match_indices = defaultdict(list)
     for family in families:
@@ -45,7 +57,7 @@ class RequestHandler:
                 .limit_fields('family')\
                 .verbatim()\
                 .paging(0, 0)
-      result = gene_index.search(query)
+      result = await gene_index.search(query)
       num_genes = result.total
       # get the genes
       query = Query(family)\
@@ -53,10 +65,13 @@ class RequestHandler:
                 .verbatim()\
                 .return_fields('chromosome', 'index')\
                 .paging(0, num_genes)
-      result = gene_index.search(query)
+      result = await gene_index.search(query)
       for d in result.docs:
         chromosome_match_indices[d.chromosome].append(int(d.index))
-    # compute islands and gaps
+    return chromosome_match_indices
+
+  async def _chromosomeGeneIndexesToBlocks(self, chromosome_match_indices, matched, intermediate):
+    # compute blocks from indexes via islands and gaps
     blocks = defaultdict(list)
     for chromosome_name, indices in chromosome_match_indices.items():
       indices.sort()
@@ -78,39 +93,21 @@ class RequestHandler:
       if (matched < 1 and len(block)/len(query_track) >= matched) or \
       (matched >= 1 and len(block) >= matched):
         blocks[chromosome_name].append(block)
+    return blocks
+
+  async def process(self, query_track, matched, intermediate):
+    # connect to the index
+    gene_index = Client('geneIdx', conn=self.redis_connection)
+    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    # search the gene index
+    # TODO: is there a way to query for all genes exactly at once?
+    chromosome_match_indexes = await self._queryToChromosomeGeneMatchIndexes(query_track, gene_index)
+    # compute micro-synteny blocks
+    blocks = await self._chromosomeGeneIndexesToBlocks(chromosome_match_indexes, matched, intermediate)
     # fetch result tracks
-    families = set()
-    tracks = []
-    for chromosome_name, blocks in blocks.items():
-      stripped_chromosome_name = _stripEscapeCharacters(chromosome_name)
-      query = Query(chromosome_name)\
-                .limit_fields('name')\
-                .verbatim()\
-                .return_fields('genus', 'species')
-      result = chromosome_index.search(query)
-      chromosome = result.docs[0]
-      for block in blocks:
-        first = block[0]
-        last = block[-1]
-        num_genes = last-first+1
-        query = Query(chromosome_name)\
-                  .limit_fields('chromosome')\
-                  .verbatim()\
-                  .add_filter(NumericFilter('index', first, last))\
-                  .sort_by('index')\
-                  .return_fields('name', 'family')\
-                  .paging(0, num_genes)
-        result = gene_index.search(query)
-        # format and return
-        track = {
-            'name': stripped_chromosome_name,
-            'genus': chromosome.genus,
-            'species': chromosome.species,
-            'genes': [],
-            'families': [],
-          }
-        for doc in result.docs:
-          track['genes'].append(_stripEscapeCharacters(doc.name))
-          track['families'].append(_stripEscapeCharacters(doc.family))
-        tracks.append(track)
+    block_tracks = await asyncio.gather(*[
+      self._chromosomeBlocksToTracks(chr_name, chr_blocks, chromosome_index)
+      for chr_name, chr_blocks in blocks.items()
+    ])
+    tracks = list(chain(*block_tracks))
     return tracks

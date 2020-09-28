@@ -7,17 +7,17 @@ async def http_post_handler(request):
   # parse the chromosome and parameters from the POST data
   data = await request.json()
   chromosome = data.get('chromosome')
+  target = data.get('target')
   matched = data.get('matched')
   intermediate = data.get('intermediate')
   mask = data.get('mask')
-  targets = data.get('targets')
   handler = request.app['handler']
   try:
-    chromosome, matched, intermediate, mask, targets = \
-      handler.parseArguments(chromosome, matched, intermediate, mask, targets)
+    chromosome, target, matched, intermediate, mask = \
+      handler.parseArguments(chromosome, target, matched, intermediate, mask)
   except:
     return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
-  blocks = await handler.process(chromosome, matched, intermediate, mask, targets)
+  blocks = await handler.process(chromosome, target, matched, intermediate, mask)
   if blocks is None:
     return web.HTTPNotFound(text='Chromosome not found')
   return web.json_response({'blocks': blocks})
@@ -42,4 +42,3 @@ async def run_http_server(host, port, handler):
   await runner.setup()
   site = web.TCPSite(runner, host, port)
   await site.start()
-  # TODO: what about teardown? runner.cleanup()

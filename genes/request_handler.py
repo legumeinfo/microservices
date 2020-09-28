@@ -1,5 +1,6 @@
 # dependencies
-from redisearch import Client
+#from redisearch import Client
+from aioredisearch import Client
 
 
 class RequestHandler:
@@ -7,24 +8,21 @@ class RequestHandler:
   def __init__(self, redis_connection):
     self.redis_connection = redis_connection
 
-  # TODO: use aioredis and call redisearch via .execute to prevent blocking
-  # https://redislabs.com/blog/beyond-the-cache-with-python/
+  def _geneDocToDict(self, gene_doc):
+    return {
+      'name': gene_doc.name,
+      'chromosome': gene_doc.chromosome,
+      'family': gene_doc.family,
+      'fmin': int(gene_doc.fmin),
+      'fmax': int(gene_doc.fmax),
+      'strand': int(gene_doc.strand),
+    }
+
   async def process(self, names):
     # connect to the index
     gene_index = Client('geneIdx', conn=self.redis_connection)
-    # search the gene index
-    # TODO: is there a way to query for all genes exactly at once?
-    genes = []
-    for name in names:
-      doc = gene_index.load_document(f'gene:{name}')
-      if hasattr(doc, 'name'):
-        gene = {
-          'name': name,
-          'chromosome': doc.chromosome,
-          'family': doc.family,
-          'fmin': int(doc.fmin),
-          'fmax': int(doc.fmax),
-          'strand': int(doc.strand),
-        }
-        genes.append(gene)
+    # get the genes from the index
+    gene_ids = map(lambda name: f'gene:{name}', names)
+    docs = await gene_index.get(*gene_ids)
+    genes = list(map(self._geneDocToDict, filter(lambda d: d is not None, docs)))
     return genes

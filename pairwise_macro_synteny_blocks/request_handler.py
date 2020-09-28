@@ -1,8 +1,8 @@
 # Python
 from collections import defaultdict
 from itertools import chain
-# dependencies
-from redisearch import Client
+# module
+from aioredisearch import Client
 
 
 class RequestHandler:
@@ -122,11 +122,7 @@ class RequestHandler:
     r = self._indexBlocksViaIndexPathTraceback(r_path_ends, r_pointers, r_scores, matched)
     return chain(f, r)
 
-  # TODO: use aioredis and call redisearch via .execute to prevent blocking
-  # https://redislabs.com/blog/beyond-the-cache-with-python/
   async def process(self, query_chromosome, target, matched, intermediate, mask):
-
-    start_time  = time.time()
 
     # connect to the indexes
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
@@ -134,19 +130,19 @@ class RequestHandler:
 
     # check if the target chromosome exists
     target_doc_id = f'chromosome:{target}'
-    target_doc = chromosome_index.load_document(target_doc_id)
+    target_doc = await chromosome_index.load_document(target_doc_id)
     # exit if the target chromosome wasn't found
     if not hasattr(target_doc, 'name'):
       return None
 
     # count how many genes are on the target chromosome
-    num_genes = self.redis_connection.llen(f'{target_doc_id}:genes')
+    num_genes = await self.redis_connection.llen(f'{target_doc_id}:genes')
     # exit if there aren't enough genes to construct even a single block
     if num_genes < matched:
       return []
 
     # get the functional annotations of the genes on the target chromosome
-    target_chromosome = self.redis_connection.lrange(f'{target_doc_id}:families', 0, -1)
+    target_chromosome = await self.redis_connection.lrange(f'{target_doc_id}:families', 0, -1)
 
     # compute gene index pairs based on matching annotations
     index_pairs = self._chromosomesToIndexPairs(query_chromosome, target_chromosome, mask)
@@ -161,6 +157,7 @@ class RequestHandler:
 
     # convert the index blocks into output blocks
     blocks = []
+    pipeline = self.redis_connection.pipeline()
     for begin_pair, end_pair in index_blocks:
       # determine the query start/stop indexes and block orientation based on
       # the query index values
@@ -170,26 +167,24 @@ class RequestHandler:
           (end_pair[1], begin_pair[1], '-')
       # get the physical locations of the target start gene
       begin_target_index = begin_pair[0]
-      l = self.redis_connection.llen(f'{target_doc_id}:fmins')
-      start_fmin = self.redis_connection.lindex(f'{target_doc_id}:fmins', begin_target_index)
-      start_fmax = self.redis_connection.lindex(f'{target_doc_id}:fmaxs', begin_target_index)
-      fmin = min(int(start_fmin), int(start_fmax))
+      pipeline.lindex(f'{target_doc_id}:fmins', begin_target_index)
+      pipeline.lindex(f'{target_doc_id}:fmaxs', begin_target_index)
       # get the physical locations of the target end gene
       end_target_index = begin_pair[0]
-      end_fmin = self.redis_connection.lindex(f'{target_doc_id}:fmins', end_target_index)
-      end_fmax = self.redis_connection.lindex(f'{target_doc_id}:fmaxs', end_target_index)
-      fmax = max(int(end_fmin), int(end_fmax))
+      pipeline.lindex(f'{target_doc_id}:fmins', end_target_index)
+      pipeline.lindex(f'{target_doc_id}:fmaxs', end_target_index)
       # make and save the block
       block = {
           'i': query_start_index,
           'j': query_stop_index,
-          'fmin': fmin,
-          'fmax': fmax,
           'orientation': orientation
         }
       blocks.append(block)
-
-    end_time = time.time()
-    print(f'total: {end_time-start_time}')
+    locations = await pipeline.execute()
+    for i, block in enumerate(blocks):
+      n = i*4
+      start_fmin, start_fmax, end_fmin, end_fmax = locations[n:n+4]
+      block['fmin'] = min(int(start_fmin), int(start_fmax))
+      block['fmax'] = max(int(end_fmin), int(end_fmax))
 
     return blocks
