@@ -1,0 +1,174 @@
+version: '2.4'
+
+services:
+  redisearch:
+    image: redislabs/redisearch:1.6.13
+    healthcheck:
+      test: "redis-cli ping"
+    restart: always
+
+  chado_to_redisearch:
+    build: database 
+    depends_on:
+      db:
+        condition: service_healthy
+      redisearch:
+        condition: service_healthy
+    # load redisearch from chado only once
+    restart: on-failure
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      REDIS_HOST: redisearch
+    command:
+      - --no-reload
+
+  chromosome:
+    build: chromosome
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8080:8080"
+      - "9080:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  chromosome_search:
+    build: chromosome_search
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8081:8080"
+      - "9081:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  chromosome_region:
+    build: chromosome_region
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8082:8080"
+      - "9082:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  gene:
+    build: gene
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8083:8080"
+      - "9083:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  gene_search:
+    build: gene_search
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8084:8080"
+      - "9084:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  macro_synteny_blocks:
+    build: macro_synteny_blocks
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8085:8080"
+      - "9085:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  micro_synteny_blocks:
+    build: micro_synteny_blocks
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8086:8080"
+      - "9086:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  pairwise_macro_synteny_blocks:
+    build: pairwise_macro_synteny_blocks
+    depends_on:
+      - chado_to_redisearch
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      REDIS_HOST: redisearch
+      GRPC_HOST: "0.0.0.0"
+    ports:
+      - "8087:8080"
+      - "9087:8081"
+    expose:
+      - "8080"
+      - "8081"
+
+  search:
+    build: search/microservices/search
+    depends_on:
+      - gene_search
+      - chromosome_search
+      - chromosome_region
+    restart: always
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      GRPC_HOST: "0.0.0.0"
+      GENE_SEARCH_ADDR: gene_search:8081
+      CHROMOSOME_SEARCH_ADDR: chromosome_search:8081
+      CHROMOSOME_REGION_ADDR: chromosome_region:8081
+    ports:
+      - "8088:8080"
+      - "9088:8081"
+    expose:
+      - "8080"
+      - "8081"
