@@ -7,28 +7,10 @@ services:
       test: "redis-cli ping"
     restart: always
 
-  chado_to_redisearch:
-    build: database 
-    depends_on:
-      db:
-        condition: service_healthy
-      redisearch:
-        condition: service_healthy
-    # load redisearch from chado only once
-    restart: on-failure
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: db
-      REDIS_HOST: redisearch
-    command:
-      - --no-reload
-
   chromosome:
     build: chromosome
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -44,7 +26,7 @@ services:
   chromosome_search:
     build: chromosome_search
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -60,7 +42,7 @@ services:
   chromosome_region:
     build: chromosome_region
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -76,7 +58,7 @@ services:
   gene:
     build: gene
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -92,7 +74,7 @@ services:
   gene_search:
     build: gene_search
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -108,12 +90,13 @@ services:
   macro_synteny_blocks:
     build: macro_synteny_blocks
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
       GRPC_HOST: "0.0.0.0"
+      PAIRWISE_ADDR: pairwise_macro_synteny_blocks:8081
     ports:
       - "8085:8080"
       - "9085:8081"
@@ -124,7 +107,7 @@ services:
   micro_synteny_blocks:
     build: micro_synteny_blocks
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
@@ -140,7 +123,7 @@ services:
   pairwise_macro_synteny_blocks:
     build: pairwise_macro_synteny_blocks
     depends_on:
-      - chado_to_redisearch
+      - redisearch
     restart: always
     environment:
       HTTP_HOST: "0.0.0.0"
