@@ -1,147 +1,196 @@
 version: '2.4'
 
 services:
+
+  reverse-proxy:
+    image: traefik:v2.3
+    ports:
+      - "80:80"
+      - "8080:8080"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+
   redisearch:
     image: redislabs/redisearch:1.6.13
     healthcheck:
       test: "redis-cli ping"
+    expose:
+      - "6379"
+    volumes:
+      - ${PWD}/database/data/dump.rdb:/data/dump.rdb:rw
 
   chromosome:
     build: chromosome
+    container_name: chromosome
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8080:8080"
-      - "9080:8081"
+      GRPC_PORT: "81"
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chromosome.rule=Host(`chromosome.gcv.localhost`)"
+      - "traefik.http.routers.chromosome.entrypoints=web"
 
   chromosome_search:
     build: chromosome_search
+    container_name: chromosome_search
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8081:8080"
-      - "9081:8081"
+      GRPC_PORT: "81"
+    command:
+      - --no-http
     expose:
-      - "8080"
-      - "8081"
+      - "81"
 
   chromosome_region:
     build: chromosome_region
+    container_name: chromosome_region
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8082:8080"
-      - "9082:8081"
+      GRPC_PORT: "81"
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chromosome_region.rule=Host(`chromosome-region.gcv.localhost`)"
+      - "traefik.http.routers.chromosome_region.entrypoints=web"
 
   genes:
     build: genes
+    container_name: genes
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8083:8080"
-      - "9083:8081"
+      GRPC_PORT: "81"
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.genes.rule=Host(`genes.gcv.localhost`)"
+      - "traefik.http.routers.genes.entrypoints=web"
 
   gene_search:
     build: gene_search
+    container_name: gene_search
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8084:8080"
-      - "9084:8081"
+      GRPC_PORT: "81"
+    command:
+      - --no-http
     expose:
-      - "8080"
-      - "8081"
+      - "81"
 
   macro_synteny_blocks:
     build: macro_synteny_blocks
+    container_name: macro_synteny_blocks
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
+      pairwise_macro_synteny_blocks:
+        condition: service_started
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-      PAIRWISE_ADDR: pairwise_macro_synteny_blocks:8081
-    ports:
-      - "8085:8080"
-      - "9085:8081"
+      GRPC_PORT: "81"
+      PAIRWISE_ADDR: pairwise_macro_synteny_blocks:81
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.macro-synteny-blocks.rule=Host(`macro-synteny-blocks.gcv.localhost`)"
+      - "traefik.http.routers.macro-synteny-blocks.entrypoints=web"
 
-  micro_synteny_blocks:
-    build: micro_synteny_blocks
+  micro_synteny_search:
+    build: micro_synteny_search
+    container_name: micro_synteny_search
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8086:8080"
-      - "9086:8081"
+      GRPC_PORT: "81"
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.micro-synteny-search.rule=Host(`micro-synteny-search.gcv.localhost`)"
+      - "traefik.http.routers.micro-synteny-search.entrypoints=web"
 
   pairwise_macro_synteny_blocks:
     build: pairwise_macro_synteny_blocks
+    container_name: pairwise_macro_synteny_blocks
     depends_on:
-      - redisearch
+      redisearch:
+        condition: service_healthy
     environment:
-      HTTP_HOST: "0.0.0.0"
       REDIS_HOST: redisearch
       GRPC_HOST: "0.0.0.0"
-    ports:
-      - "8087:8080"
-      - "9087:8081"
+      GRPC_PORT: "81"
+    command:
+      - --no-http
     expose:
-      - "8080"
-      - "8081"
+      - "81"
 
   search:
     build: search
+    container_name: search
     depends_on:
-      - gene_search
-      - chromosome_search
-      - chromosome_region
+      gene_search:
+        condition: service_started
+      chromosome_search:
+        condition: service_started
+      chromosome_region:
+        condition: service_started
     environment:
       HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "80"
       GRPC_HOST: "0.0.0.0"
-      GENE_SEARCH_ADDR: gene_search:8081
-      CHROMOSOME_SEARCH_ADDR: chromosome_search:8081
-      CHROMOSOME_REGION_ADDR: chromosome_region:8081
-    ports:
-      - "8088:8080"
-      - "9088:8081"
+      GRPC_PORT: "81"
+      GENE_SEARCH_ADDR: gene_search:81
+      CHROMOSOME_SEARCH_ADDR: chromosome_search:81
+      CHROMOSOME_REGION_ADDR: chromosome_region:81
     expose:
-      - "8080"
-      - "8081"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.search.rule=Host(`search.gcv.localhost`)"
+      - "traefik.http.routers.search.entrypoints=web"

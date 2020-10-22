@@ -24,7 +24,7 @@ async def run_http_server(host, port, handler):
            allow_headers='*',
          )
   })
-  route = app.router.add_post('/genes', http_post_handler)
+  route = app.router.add_post('/', http_post_handler)
   cors.add(route)
   # run the app
   runner = web.AppRunner(app)

@@ -23,7 +23,7 @@ async def run_http_server(host, port, handler):
            allow_headers='*',
          )
   })
-  route = app.router.add_get('/gene-search', http_get_handler)
+  route = app.router.add_get('/', http_get_handler)
   cors.add(route)
   # run the app
   runner = web.AppRunner(app)

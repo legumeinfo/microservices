@@ -61,6 +61,8 @@ def parseArgs():
   parser.add_argument('--rchunksize', action=EnvArg, envvar=rchunksize_envvar, type=int, default=100, help=f'The chunk size to be used for Redis batch processing (can also be specified using the {rchunksize_envvar} environment variable).')
   parser.add_argument('--no-reload', dest='noreload', action='store_true', help='Don\'t load a search index if it already exists.')
   parser.set_defaults(noreload=False)
+  parser.add_argument('--no-save', dest='nosave', action='store_true', help='Don\'t save the Redis database to disk after loading.')
+  parser.set_defaults(nosave=False)
 
   return parser.parse_args()
 
@@ -276,10 +278,13 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     _replacePreviousPrintLine(msg.format('done'))
 
 
-def transferData(postgres_connection, redis_connection, chunk_size, noreload, uniquename):
+def transferData(postgres_connection, redis_connection, chunk_size, noreload, uniquename, nosave):
 
   chromosome_id_name_map = transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, uniquename)
   transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map, uniquename)
+  # manually save the data
+  if not nosave:
+    redis_connection.save()
 
 
 if __name__ == '__main__':
@@ -305,7 +310,7 @@ if __name__ == '__main__':
   _replacePreviousPrintLine(msg.format('done'))
   # transfer the relevant data from Chado to Redis
   try:
-    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload, args.uniquename)
+    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload, args.uniquename, args.nosave)
   except Exception as e:
     print(e)
   # disconnect from the database
