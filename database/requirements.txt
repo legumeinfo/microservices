@@ -1,6 +1,13 @@
+argcomplete==1.12.1
+argh==0.26.2
+biopython==1.78
+gffutils==0.10.1
 hiredis==1.1.0
+numpy==1.19.3
 psycopg2==2.8.5
+pyfaidx==0.5.9.1
 redis==3.5.3
 redisearch==1.0.0
 rmtest==0.7.0
+simplejson==3.17.2
 six==1.15.0
