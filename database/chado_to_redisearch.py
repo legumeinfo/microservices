@@ -63,6 +63,8 @@ def parseArgs():
   parser.set_defaults(noreload=False)
   parser.add_argument('--no-save', dest='nosave', action='store_true', help='Don\'t save the Redis database to disk after loading.')
   parser.set_defaults(nosave=False)
+  parser.add_argument('--extend', dest='extend', action='store_true', help='Extend the existing data in the Redis database rather than replacing.');
+  parser.set_defaults(extend=False)
 
   return parser.parse_args()
 
@@ -89,31 +91,34 @@ def _replacePreviousPrintLine(newline):
   print(newline)
 
 
-def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, uniquename):
+def transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, extend, uniquename):
 
   print('Loading chromosomes...')
   # prepare RediSearch
   indexName = 'chromosomeIdx'
   chromosome_index = redisearch.Client(indexName, conn=redis_connection)
-  # TODO: there should be an extend argparse flag that prevents deletion
   try:
     chromosome_index.info()
     if noreload:  # previous line will error if index doesn't exist
       print(f'\t"{indexName}" already exists in RediSearch')
       return
-    msg = '\tClearing index... {}'
-    print(msg.format(''))
-    chromosome_index.drop_index()
-    _replacePreviousPrintLine(msg.format('done'))
   except Exception as e:
     print(e)
-  fields = [
-      redisearch.TextField('name'),
-      redisearch.NumericField('length'),
-      redisearch.TextField('genus'),
-      redisearch.TextField('species'),
-    ]
-  chromosome_index.create_index(fields)
+  if (extend==False):
+    try:
+      msg = '\tClearing chromosome index... {}'
+      print(msg.format(''))
+      chromosome_index.drop_index()
+      _replacePreviousPrintLine(msg.format('done'))
+      fields = [
+        redisearch.TextField('name'),
+        redisearch.NumericField('length'),
+        redisearch.TextField('genus'),
+        redisearch.TextField('species'),
+      ]
+      chromosome_index.create_index(fields)
+    except Exception as e:
+      exit(e)
   indexer = chromosome_index.batch_indexer(chunk_size=chunk_size)
 
   with postgres_connection.cursor() as c:
@@ -168,25 +173,25 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
     return chromosome_id_name_map
 
 
-def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map, uniquename):
+def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, extend, chromosome_id_name_map, uniquename):
 
   print('Loading genes...')
   # prepare RediSearch
   indexName = 'geneIdx'
   interval_index = redisearch.Client(indexName, conn=redis_connection)
-  # TODO: there should be an extend argparse flag that prevents deletion
   try:
     interval_index.info()
     if noreload:  # previous line will error if index doesn't exist
       print(f'\t"{indexName}" already exists in RediSearch')
       return
+  except Exception as e:
+    print(e)
+  if (extend==False):
     msg = '\tClearing index... {}'
     print(msg.format(''))
     interval_index.drop_index()
     _replacePreviousPrintLine(msg.format('done'))
-  except Exception as e:
-    print(e)
-  fields = [
+    fields = [
       redisearch.TextField('chromosome'),
       redisearch.TextField('name'),
       redisearch.NumericField('fmin'),
@@ -195,7 +200,7 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
       redisearch.NumericField('strand'),
       redisearch.NumericField('index', sortable=True),
     ]
-  interval_index.create_index(fields)
+    interval_index.create_index(fields)
   indexer = interval_index.batch_indexer(chunk_size=chunk_size)
 
   with postgres_connection.cursor() as c:
@@ -278,10 +283,10 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
     _replacePreviousPrintLine(msg.format('done'))
 
 
-def transferData(postgres_connection, redis_connection, chunk_size, noreload, uniquename, nosave):
+def transferData(postgres_connection, redis_connection, chunk_size, noreload, extend, uniquename, nosave):
 
-  chromosome_id_name_map = transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, uniquename)
-  transferGenes(postgres_connection, redis_connection, chunk_size, noreload, chromosome_id_name_map, uniquename)
+  chromosome_id_name_map = transferChromosomes(postgres_connection, redis_connection, chunk_size, noreload, extend, uniquename)
+  transferGenes(postgres_connection, redis_connection, chunk_size, noreload, extend, chromosome_id_name_map, uniquename)
   # manually save the data
   if not nosave:
     redis_connection.save()
@@ -310,7 +315,7 @@ if __name__ == '__main__':
   _replacePreviousPrintLine(msg.format('done'))
   # transfer the relevant data from Chado to Redis
   try:
-    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload, args.uniquename, args.nosave)
+    transferData(postgres_connection, redis_connection, args.rchunksize, args.noreload, args.extend, args.uniquename, args.nosave)
   except Exception as e:
     print(e)
   # disconnect from the database
