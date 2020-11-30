@@ -1,8 +1,11 @@
 # dependencies
+import grpc
 from grpc.experimental import aio
 # module
-import microsyntenysearch_pb2
-import microsyntenysearch_pb2_grpc
+from services import microsyntenysearch_pb2
+from services import microsyntenysearch_pb2_grpc
+from structures import microtrack_pb2
+from structures import track_pb2
 
 
 class MicroSyntenySearch(microsyntenysearch_pb2_grpc.MicroSyntenySearchServicer):
@@ -19,8 +22,18 @@ class MicroSyntenySearch(microsyntenysearch_pb2_grpc.MicroSyntenySearchServicer)
     except:
       # raise a gRPC INVALID ARGUMENT error
       await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or have invalid values')
-    tracks = await self.handler.process(request.query, request.matched, request.intermediate)
-    return microsyntenysearch_pb2.SearchReply(tracks=tracks)
+    tracks = await self.handler.process(query, matched, intermediate)
+    track_messages = list(map(lambda t:
+      microtrack_pb2.MicroTrack(
+        name=t['name'],
+        track=track_pb2.Track(
+          genus=t['genus'],
+          species=t['species'],
+          genes=t['genes'],
+          families=t['families'],
+        )
+      ), tracks))
+    return microsyntenysearch_pb2.MicroSyntenySearchReply(tracks=track_messages)
 
 
 async def run_grpc_server(host, port, handler):

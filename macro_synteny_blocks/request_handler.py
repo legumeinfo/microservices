@@ -14,10 +14,8 @@ class RequestHandler:
     self.pairwise_address = pairwise_address
 
   def parseArguments(self, chromosome, matched, intermediate, mask, targets):
-    if type(chromosome) is not list:
-      raise ValueError('query must be a list')
-    if type(targets) is not list:
-      raise ValueError('targets must be a list')
+    iter(chromosome)  # TypeError if not iterable
+    iter(targets)  # TypeError if not iterable
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
     if matched <= 0 or intermediate <= 0:

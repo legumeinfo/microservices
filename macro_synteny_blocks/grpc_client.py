@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-import pairwisemacrosyntenyblocks_pb2
-import pairwisemacrosyntenyblocks_pb2_grpc
+from services import pairwisemacrosyntenyblocks_pb2
+from services import pairwisemacrosyntenyblocks_pb2_grpc
 
 
 async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, address):
@@ -11,7 +11,14 @@ async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, interme
   await channel.channel_ready()
   stub = pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMacroSyntenyBlocksStub(channel)
   try:
-    result = await stub.Compute(pairwisemacrosyntenyblocks_pb2.ComputeRequest(chromosome=chromosome, target=target, matched=matched, intermediate=intermediate, mask=mask))
+    result = await stub.Compute(
+      pairwisemacrosyntenyblocks_pb2.PairwiseMacroSyntenyBlocksComputeRequest(
+        chromosome=chromosome,
+        target=target,
+        matched=matched,
+        intermediate=intermediate,
+        mask=mask
+      ))
     return result.blocks
   except:
     return None

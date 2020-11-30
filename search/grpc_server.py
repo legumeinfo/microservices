@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-import search_pb2
-import search_pb2_grpc
+from services import search_pb2
+from services import search_pb2_grpc
 
 
 class Search(search_pb2_grpc.SearchServicer):
@@ -12,7 +12,12 @@ class Search(search_pb2_grpc.SearchServicer):
 
   async def Search(self, request, context):
     results = await self.handler.process(request.query)
-    return search_pb2.SearchReply(results=results)
+    reply = search_pb2.SearchReply()
+    if 'genes' in results:
+        reply.genes.extend(results['genes'])
+    if 'regions' in results:
+        reply.regions.extend(results['regions'])
+    return reply
 
 
 async def run_grpc_server(host, port, query_parser):

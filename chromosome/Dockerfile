@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENTRYPOINT ["python3", "microservice.py"]
+ENTRYPOINT ["python3", "-u", "microservice.py"]

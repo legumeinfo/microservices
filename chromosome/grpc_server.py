@@ -2,8 +2,10 @@
 import grpc
 from grpc.experimental import aio
 # module
-import chromosome_pb2
-import chromosome_pb2_grpc
+from services import chromosome_pb2
+from services import chromosome_pb2_grpc
+from structures import track_pb2
+from structures import chromosome_pb2 as chromosome_pb2_struct
 
 
 class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):
@@ -12,11 +14,21 @@ class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):
     self.handler = handler
 
   async def Get(self, request, context):
-    chromosome = await self.handler.process(request.chromosome)
+    chromosome = await self.handler.process(request.name)
     if chromosome is None:
       # raise a gRPC NOT FOUND error
       await context.abort(grpc.StatusCode.NOT_FOUND, 'Chromosome not found')
-    return chromosome_pb2.GetReply(length=chromosome.length, genus=chromosome.genus, species=chromosome.species, genes=chromosome.gnes, families=chromosome.families)
+    return chromosome_pb2.ChromosomeGetReply(
+      chromosome=chromosome_pb2_struct.Chromosome(
+        length=chromosome['length'],
+        track=track_pb2.Track(
+          genus=chromosome['genus'],
+          species=chromosome['species'],
+          genes=chromosome['genes'],
+          families=chromosome['families']
+        )
+      )
+    )
 
 
 async def run_grpc_server(host, port, handler):

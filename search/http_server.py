@@ -8,6 +8,7 @@ async def http_get_handler(request):
   # parse the query from the URL query string parameters
   query = request.rel_url.query.get('q', '')
   results = await handler.process(query)
+  results['regions'] = list(map(lambda r: {'gene': r.gene, 'neighbors': r.neighbors}, results['regions']))
   return web.json_response(results)
 
 

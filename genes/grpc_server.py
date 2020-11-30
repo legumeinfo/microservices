@@ -1,8 +1,9 @@
 # dependencies
 from grpc.experimental import aio
 # module
-import genes_pb2
-import genes_pb2_grpc
+from services import genes_pb2
+from services import genes_pb2_grpc
+from structures import gene_pb2
 
 
 class Genes(genes_pb2_grpc.GenesServicer):
@@ -10,9 +11,18 @@ class Genes(genes_pb2_grpc.GenesServicer):
   def __init__(self, handler):
     self.handler = handler
 
-  async def Search(self, request, context):
-    genes = await self.handler.process(request.genes)
-    return genes_pb2.GetReply(genes=genes)
+  async def Get(self, request, context):
+    genes = await self.handler.process(request.names)
+    gene_messages = list(map(lambda g:
+      gene_pb2.Gene(
+        name=g['name'],
+        fmin=g['fmin'],
+        fmax=g['fmax'],
+        strand=g['strand'],
+        family=g['family'],
+        chromosome=g['chromosome'],
+      ), genes))
+    return genes_pb2.GenesGetReply(genes=gene_messages)
 
 
 async def run_grpc_server(host, port, handler):

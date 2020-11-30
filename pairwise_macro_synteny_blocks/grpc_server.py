@@ -2,8 +2,9 @@
 import grpc
 from grpc.experimental import aio
 # module
-import pairwisemacrosyntenyblocks_pb2
-import pairwisemacrosyntenyblocks_pb2_grpc
+from services import pairwisemacrosyntenyblocks_pb2
+from services import pairwisemacrosyntenyblocks_pb2_grpc
+from structures import block_pb2
 
 
 class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMacroSyntenyBlocksServicer):
@@ -26,7 +27,15 @@ class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMac
     if blocks is None:
       # raise a gRPC NOT FOUND error
       await context.abort(grpc.StatusCode.NOT_FOUND, 'Chromosome not found')
-    return pairwisemacrosyntenyblocks_pb2.ComputeReply(blocks=blocks)
+    block_messages = list(map(lambda b:
+      block_pb2.Block(
+          i=b['i'],
+          j=b['j'],
+          fmin=b['fmin'],
+          fmax=b['fmax'],
+          orientation=b['orientation'],
+      ), blocks))
+    return pairwisemacrosyntenyblocks_pb2.PairwiseMacroSyntenyBlocksComputeReply(blocks=block_messages)
 
 
 async def run_grpc_server(host, port, handler):

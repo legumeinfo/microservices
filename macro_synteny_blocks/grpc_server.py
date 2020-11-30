@@ -1,8 +1,9 @@
 # dependencies
+import grpc
 from grpc.experimental import aio
 # module
-import macrosyntenyblocks_pb2
-import macrosyntenyblocks_pb2_grpc
+from services import macrosyntenyblocks_pb2
+from services import macrosyntenyblocks_pb2_grpc
 
 
 class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer):
@@ -22,7 +23,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
       # raise a gRPC INVALID ARGUMENT error
       await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or given arguments have invalid values')
     blocks = await self.handler.process(chromosome, matched, intermediate, mask, targets)
-    return macrosyntenyblocks_pb2.ComputeReply(blocks=blocks)
+    return macrosyntenyblocks_pb2.MacroSyntenyBlocksComputeReply(blocks=blocks)
 
 
 async def run_grpc_server(host, port, handler):

@@ -20,7 +20,7 @@ class RequestHandler:
     families = await self.redis_connection.lrange(f'chromosome:{name}:families', 0, -1)
     # build the chromosome
     chromosome = {
-        'length': chromosome_doc.length,
+        'length': int(chromosome_doc.length),
         'genus': chromosome_doc.genus,
         'species': chromosome_doc.species,
         'genes': genes,

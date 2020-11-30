@@ -1,4 +1,4 @@
-version: '2.4'
+version: '3.3'
 
 services:
 
@@ -13,10 +13,23 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.grpc.address=:81"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "traefik.enable=true"
+
+  envoy:
+    image: envoyproxy/envoy:v1.14.1
+    volumes:
+      - ${PWD}/envoy/envoy.yaml:/etc/envoy/envoy.yaml
+    environment:
+      loglevel: debug
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.envoy.rule=Host(`localhost`) && PathPrefix(`/gcv/{service:(genes|chromosome|micro-synteny-search|macro-synteny-blocks|chromosome-region|search)}/grpc-web`)"
+      - "traefik.http.services.envoy.loadbalancer.server.port=8080"
+      - "traefik.http.routers.envoy.entrypoints=web"
 
   redisearch:
     image: redislabs/redisearch:1.6.13
@@ -41,9 +54,12 @@ services:
       GRPC_PORT: "81"
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.chromosome.rule=Host(`chromosome.gcv.localhost`)"
+      - "traefik.http.routers.chromosome.rule=Host(`localhost`) && Path(`/gcv/chromosome`)"
+      - "traefik.http.middlewares.chromosome-stripprefix.stripprefix.prefixes=/gcv/chromosome"
+      - "traefik.http.routers.chromosome.middlewares=chromosome-stripprefix@docker"
       - "traefik.http.routers.chromosome.entrypoints=web"
 
   chromosome_search:
@@ -75,10 +91,13 @@ services:
       GRPC_PORT: "81"
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.chromosome_region.rule=Host(`chromosome-region.gcv.localhost`)"
-      - "traefik.http.routers.chromosome_region.entrypoints=web"
+      - "traefik.http.routers.chromosome-region.rule=Host(`localhost`) && Path(`/gcv/chromosome-region`)"
+      - "traefik.http.middlewares.chromosome-region-stripprefix.stripprefix.prefixes=/gcv/chromosome-region"
+      - "traefik.http.routers.chromosome-region.middlewares=chromosome-region-stripprefix@docker"
+      - "traefik.http.routers.chromosome-region.entrypoints=web"
 
   genes:
     build: genes
@@ -94,9 +113,12 @@ services:
       GRPC_PORT: "81"
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.genes.rule=Host(`genes.gcv.localhost`)"
+      - "traefik.http.routers.genes.rule=Host(`localhost`) && Path(`/gcv/genes`)"
+      - "traefik.http.middlewares.genes-stripprefix.stripprefix.prefixes=/gcv/genes"
+      - "traefik.http.routers.genes.middlewares=genes-stripprefix@docker"
       - "traefik.http.routers.genes.entrypoints=web"
 
   gene_search:
@@ -131,9 +153,12 @@ services:
       PAIRWISE_ADDR: pairwise_macro_synteny_blocks:81
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.macro-synteny-blocks.rule=Host(`macro-synteny-blocks.gcv.localhost`)"
+      - "traefik.http.routers.macro-synteny-blocks.rule=Host(`localhost`) && Path(`/gcv/macro-synteny-blocks`)"
+      - "traefik.http.middlewares.macro-synteny-blocks-stripprefix.stripprefix.prefixes=/gcv/macro-synteny-blocks"
+      - "traefik.http.routers.macro-synteny-blocks.middlewares=macro-synteny-blocks-stripprefix@docker"
       - "traefik.http.routers.macro-synteny-blocks.entrypoints=web"
 
   micro_synteny_search:
@@ -150,9 +175,12 @@ services:
       GRPC_PORT: "81"
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.micro-synteny-search.rule=Host(`micro-synteny-search.gcv.localhost`)"
+      - "traefik.http.routers.micro-synteny-search.rule=Host(`localhost`) && Path(`/gcv/micro-synteny-search`)"
+      - "traefik.http.middlewares.micro-synteny-search-stripprefix.stripprefix.prefixes=/gcv/micro-synteny-search"
+      - "traefik.http.routers.micro-synteny-search.middlewares=micro-synteny-search-stripprefix@docker"
       - "traefik.http.routers.micro-synteny-search.entrypoints=web"
 
   pairwise_macro_synteny_blocks:
@@ -190,7 +218,10 @@ services:
       CHROMOSOME_REGION_ADDR: chromosome_region:81
     expose:
       - "80"
+      - "81"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.search.rule=Host(`search.gcv.localhost`)"
+      - "traefik.http.routers.search.rule=Host(`localhost`) && Path(`/gcv/search`)"
+      - "traefik.http.middlewares.search-stripprefix.stripprefix.prefixes=/gcv/search"
+      - "traefik.http.routers.search.middlewares=search-stripprefix@docker"
       - "traefik.http.routers.search.entrypoints=web"

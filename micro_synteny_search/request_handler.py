@@ -14,8 +14,7 @@ class RequestHandler:
     self.redis_connection = redis_connection
 
   def parseArguments(self, query_track, matched, intermediate):
-    if type(query_track) is not list:
-      raise ValueError('query must be a list')
+    iter(query_track)  # TypeError if not iterable
     matched = float(matched)  # ValueError
     intermediate = float(intermediate)  # ValueError
     if matched <= 0 or intermediate <= 0:

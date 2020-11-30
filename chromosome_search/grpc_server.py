@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-import chromosomesearch_pb2
-import chromosomesearch_pb2_grpc
+from services import chromosomesearch_pb2
+from services import chromosomesearch_pb2_grpc
 
 
 class ChromosomeSearch(chromosomesearch_pb2_grpc.ChromosomeSearchServicer):
@@ -12,7 +12,7 @@ class ChromosomeSearch(chromosomesearch_pb2_grpc.ChromosomeSearchServicer):
 
   async def Search(self, request, context):
     chromosomes = await self.handler.process(request.query)
-    return chromosomesearch_pb2.SearchReply(chromosomes=chromosomes)
+    return chromosomesearch_pb2.ChromosomeSearchReply(chromosomes=chromosomes)
 
 
 async def run_grpc_server(host, port, handler):
