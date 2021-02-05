@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x16structures/block.proto\x12\x0egcv.structures\"c\n\x06\x42locks\x12\x12\n\nchromosome\x18\x01 \x01(\t\x12\r\n\x05genus\x18\x02 \x01(\t\x12\x0f\n\x07species\x18\x03 \x01(\t\x12%\n\x06\x62locks\x18\x04 \x03(\x0b\x32\x15.gcv.structures.Block\"N\n\x05\x42lock\x12\t\n\x01i\x18\x01 \x01(\r\x12\t\n\x01j\x18\x02 \x01(\r\x12\x0c\n\x04\x66min\x18\x03 \x01(\r\x12\x0c\n\x04\x66max\x18\x04 \x01(\r\x12\x13\n\x0borientation\x18\x05 \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x16structures/block.proto\x12\x0egcv.structures\"c\n\x06\x42locks\x12\x12\n\nchromosome\x18\x01 \x01(\t\x12\r\n\x05genus\x18\x02 \x01(\t\x12\x0f\n\x07species\x18\x03 \x01(\t\x12%\n\x06\x62locks\x18\x04 \x03(\x0b\x32\x15.gcv.structures.Block\"g\n\x05\x42lock\x12\t\n\x01i\x18\x01 \x01(\r\x12\t\n\x01j\x18\x02 \x01(\r\x12\x0c\n\x04\x66min\x18\x03 \x01(\r\x12\x0c\n\x04\x66max\x18\x04 \x01(\r\x12\x13\n\x0borientation\x18\x05 \x01(\t\x12\x17\n\x0foptionalMetrics\x18\x06 \x03(\x02\x62\x06proto3'
 )
 
 
@@ -121,6 +121,13 @@ _BLOCK = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='optionalMetrics', full_name='gcv.structures.Block.optionalMetrics', index=5,
+      number=6, type=2, cpp_type=6, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -134,7 +141,7 @@ _BLOCK = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=143,
-  serialized_end=221,
+  serialized_end=246,
 )
 
 _BLOCKS.fields_by_name['blocks'].message_type = _BLOCK

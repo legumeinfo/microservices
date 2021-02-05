@@ -10,14 +10,15 @@ async def http_post_handler(request):
   matched = data.get('matched')
   intermediate = data.get('intermediate')
   mask = data.get('mask')
-  targets = data.get('targets')
+  targets = data.get('targets', [])
+  metrics = data.get('optionalMetrics', [])
   handler = request.app['handler']
   try:
-    chromosome, matched, intermediate, mask, targets = \
-      handler.parseArguments(chromosome, matched, intermediate, mask, targets)
+    chromosome, matched, intermediate, mask, targets, metrics = \
+      handler.parseArguments(chromosome, matched, intermediate, mask, targets, metrics)
   except:
     return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
-  blocks = await handler.process(chromosome, matched, intermediate, mask, targets, grpc_decode=True)
+  blocks = await handler.process(chromosome, matched, intermediate, mask, targets, metrics, grpc_decode=True)
   json = web.json_response({'blocks': blocks})
   return json
 

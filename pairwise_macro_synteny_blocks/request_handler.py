@@ -3,6 +3,7 @@ from collections import defaultdict
 from itertools import chain
 # module
 from aioredisearch import Client
+from metrics import METRICS
 
 
 class RequestHandler:
@@ -10,8 +11,9 @@ class RequestHandler:
   def __init__(self, redis_connection):
     self.redis_connection = redis_connection
 
-  def parseArguments(self, chromosome, target, matched, intermediate, mask):
+  def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics):
     iter(chromosome)  # TypeError if not iterable
+    iter(metrics)  # TypeError if not iterable
     if target is None:
       raise ValueError('target is required')
     matched = int(matched)  # ValueError
@@ -24,7 +26,10 @@ class RequestHandler:
         raise ValueError('mask must be positive')
     else:
       mask = float('inf')
-    return chromosome, target, matched, intermediate, mask
+    for metric in metrics:
+      if metric not in METRICS:
+        raise ValueError(f'"{metric}" is not a valid metric')
+    return chromosome, target, matched, intermediate, mask, metrics
 
   # given a query chromosome and a target chromosome as ordered lists of
   # functional annotations, the function computes a gene index pair for each
@@ -55,7 +60,7 @@ class RequestHandler:
       if target_family_counts[f] <= mask and f in query_family_index_map:
         pairs.extend(map(lambda n: (i, n), query_family_index_map[f]))
 
-    return pairs
+    return pairs, masked_families
 
   # given a set of index pair DAG path endpoints, the graph edges (pointers),
   # the path scores from the graph construction recurrence, and the minimum path
@@ -122,7 +127,7 @@ class RequestHandler:
     r = self._indexBlocksViaIndexPathTraceback(r_path_ends, r_pointers, r_scores, matched)
     return chain(f, r)
 
-  async def process(self, query_chromosome, target, matched, intermediate, mask):
+  async def process(self, query_chromosome, target, matched, intermediate, mask, metrics):
 
     # connect to the indexes
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
@@ -145,7 +150,8 @@ class RequestHandler:
     target_chromosome = await self.redis_connection.lrange(f'{target_doc_id}:families', 0, -1)
 
     # compute gene index pairs based on matching annotations
-    index_pairs = self._chromosomesToIndexPairs(query_chromosome, target_chromosome, mask)
+    index_pairs, masked_families = \
+      self._chromosomesToIndexPairs(query_chromosome, target_chromosome, mask)
 
     # exit if there aren't enough pairs to construct even a single block that
     # satisfies the matched requirement
@@ -166,19 +172,29 @@ class RequestHandler:
         if begin_pair[1] < end_pair[1] else \
           (end_pair[1], begin_pair[1], '-')
       # get the physical locations of the target start gene
-      begin_target_index = begin_pair[0]
-      pipeline.lindex(f'{target_doc_id}:fmins', begin_target_index)
-      pipeline.lindex(f'{target_doc_id}:fmaxs', begin_target_index)
+      target_start_index = begin_pair[0]
+      pipeline.lindex(f'{target_doc_id}:fmins', target_start_index)
+      pipeline.lindex(f'{target_doc_id}:fmaxs', target_start_index)
       # get the physical locations of the target end gene
-      end_target_index = begin_pair[0]
-      pipeline.lindex(f'{target_doc_id}:fmins', end_target_index)
-      pipeline.lindex(f'{target_doc_id}:fmaxs', end_target_index)
+      target_stop_index = end_pair[0]
+      pipeline.lindex(f'{target_doc_id}:fmins', target_stop_index)
+      pipeline.lindex(f'{target_doc_id}:fmaxs', target_stop_index)
       # make and save the block
       block = {
           'i': query_start_index,
           'j': query_stop_index,
           'orientation': orientation
         }
+      # compute optional metrics on the block
+      if metrics:
+        block['optionalMetrics'] = []
+        query_families = query_chromosome[query_start_index:query_stop_index+1]
+        target_families = target_chromosome[target_start_index:target_stop_index+1]
+        if orientation == '-':
+          target_families = target_families[::-1]
+        for metric in metrics:
+          value = METRICS[metric](query_families, target_families, masked_families)
+          block['optionalMetrics'].append(value)
       blocks.append(block)
     locations = await pipeline.execute()
     for i, block in enumerate(blocks):

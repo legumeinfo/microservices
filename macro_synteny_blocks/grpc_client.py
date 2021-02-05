@@ -5,7 +5,7 @@ from services import pairwisemacrosyntenyblocks_pb2
 from services import pairwisemacrosyntenyblocks_pb2_grpc
 
 
-async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, address):
+async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, address):
   # fetch channel every time to support dynamic services
   channel = aio.insecure_channel(address)
   await channel.channel_ready()
@@ -17,7 +17,8 @@ async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, interme
         target=target,
         matched=matched,
         intermediate=intermediate,
-        mask=mask
+        mask=mask,
+        optionalMetrics=metrics
       ))
     return result.blocks
   except:

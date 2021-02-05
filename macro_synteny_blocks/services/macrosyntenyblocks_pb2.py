@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n!services/macrosyntenyblocks.proto\x12\x0cgcv.services\x1a\x16structures/block.proto\"\x8a\x01\n MacroSyntenyBlocksComputeRequest\x12\x12\n\nchromosome\x18\x01 \x03(\t\x12\x0f\n\x07matched\x18\x02 \x01(\r\x12\x14\n\x0cintermediate\x18\x03 \x01(\r\x12\x11\n\x04mask\x18\x04 \x01(\rH\x00\x88\x01\x01\x12\x0f\n\x07targets\x18\x05 \x03(\tB\x07\n\x05_mask\"H\n\x1eMacroSyntenyBlocksComputeReply\x12&\n\x06\x62locks\x18\x01 \x03(\x0b\x32\x16.gcv.structures.Blocks2\x7f\n\x12MacroSyntenyBlocks\x12i\n\x07\x43ompute\x12..gcv.services.MacroSyntenyBlocksComputeRequest\x1a,.gcv.services.MacroSyntenyBlocksComputeReply\"\x00\x62\x06proto3'
+  serialized_pb=b'\n!services/macrosyntenyblocks.proto\x12\x0cgcv.services\x1a\x16structures/block.proto\"\xa3\x01\n MacroSyntenyBlocksComputeRequest\x12\x12\n\nchromosome\x18\x01 \x03(\t\x12\x0f\n\x07matched\x18\x02 \x01(\r\x12\x14\n\x0cintermediate\x18\x03 \x01(\r\x12\x11\n\x04mask\x18\x04 \x01(\rH\x00\x88\x01\x01\x12\x0f\n\x07targets\x18\x05 \x03(\t\x12\x17\n\x0foptionalMetrics\x18\x06 \x03(\tB\x07\n\x05_mask\"H\n\x1eMacroSyntenyBlocksComputeReply\x12&\n\x06\x62locks\x18\x01 \x03(\x0b\x32\x16.gcv.structures.Blocks2\x7f\n\x12MacroSyntenyBlocks\x12i\n\x07\x43ompute\x12..gcv.services.MacroSyntenyBlocksComputeRequest\x1a,.gcv.services.MacroSyntenyBlocksComputeReply\"\x00\x62\x06proto3'
   ,
   dependencies=[structures_dot_block__pb2.DESCRIPTOR,])
 
@@ -70,6 +70,13 @@ _MACROSYNTENYBLOCKSCOMPUTEREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='optionalMetrics', full_name='gcv.services.MacroSyntenyBlocksComputeRequest.optionalMetrics', index=5,
+      number=6, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -88,7 +95,7 @@ _MACROSYNTENYBLOCKSCOMPUTEREQUEST = _descriptor.Descriptor(
     fields=[]),
   ],
   serialized_start=76,
-  serialized_end=214,
+  serialized_end=239,
 )
 
 
@@ -119,8 +126,8 @@ _MACROSYNTENYBLOCKSCOMPUTEREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=216,
-  serialized_end=288,
+  serialized_start=241,
+  serialized_end=313,
 )
 
 _MACROSYNTENYBLOCKSCOMPUTEREQUEST.oneofs_by_name['_mask'].fields.append(
@@ -154,8 +161,8 @@ _MACROSYNTENYBLOCKS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=290,
-  serialized_end=417,
+  serialized_start=315,
+  serialized_end=442,
   methods=[
   _descriptor.MethodDescriptor(
     name='Compute',

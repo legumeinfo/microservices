@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n)services/pairwisemacrosyntenyblocks.proto\x12\x0cgcv.services\x1a\x16structures/block.proto\"\x91\x01\n(PairwiseMacroSyntenyBlocksComputeRequest\x12\x12\n\nchromosome\x18\x01 \x03(\t\x12\x0e\n\x06target\x18\x02 \x01(\t\x12\x0f\n\x07matched\x18\x03 \x01(\r\x12\x14\n\x0cintermediate\x18\x04 \x01(\r\x12\x11\n\x04mask\x18\x05 \x01(\rH\x00\x88\x01\x01\x42\x07\n\x05_mask\"O\n&PairwiseMacroSyntenyBlocksComputeReply\x12%\n\x06\x62locks\x18\x01 \x03(\x0b\x32\x15.gcv.structures.Block2\x97\x01\n\x1aPairwiseMacroSyntenyBlocks\x12y\n\x07\x43ompute\x12\x36.gcv.services.PairwiseMacroSyntenyBlocksComputeRequest\x1a\x34.gcv.services.PairwiseMacroSyntenyBlocksComputeReply\"\x00\x62\x06proto3'
+  serialized_pb=b'\n)services/pairwisemacrosyntenyblocks.proto\x12\x0cgcv.services\x1a\x16structures/block.proto\"\xaa\x01\n(PairwiseMacroSyntenyBlocksComputeRequest\x12\x12\n\nchromosome\x18\x01 \x03(\t\x12\x0e\n\x06target\x18\x02 \x01(\t\x12\x0f\n\x07matched\x18\x03 \x01(\r\x12\x14\n\x0cintermediate\x18\x04 \x01(\r\x12\x11\n\x04mask\x18\x05 \x01(\rH\x00\x88\x01\x01\x12\x17\n\x0foptionalMetrics\x18\x06 \x03(\tB\x07\n\x05_mask\"O\n&PairwiseMacroSyntenyBlocksComputeReply\x12%\n\x06\x62locks\x18\x01 \x03(\x0b\x32\x15.gcv.structures.Block2\x97\x01\n\x1aPairwiseMacroSyntenyBlocks\x12y\n\x07\x43ompute\x12\x36.gcv.services.PairwiseMacroSyntenyBlocksComputeRequest\x1a\x34.gcv.services.PairwiseMacroSyntenyBlocksComputeReply\"\x00\x62\x06proto3'
   ,
   dependencies=[structures_dot_block__pb2.DESCRIPTOR,])
 
@@ -70,6 +70,13 @@ _PAIRWISEMACROSYNTENYBLOCKSCOMPUTEREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='optionalMetrics', full_name='gcv.services.PairwiseMacroSyntenyBlocksComputeRequest.optionalMetrics', index=5,
+      number=6, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -88,7 +95,7 @@ _PAIRWISEMACROSYNTENYBLOCKSCOMPUTEREQUEST = _descriptor.Descriptor(
     fields=[]),
   ],
   serialized_start=84,
-  serialized_end=229,
+  serialized_end=254,
 )
 
 
@@ -119,8 +126,8 @@ _PAIRWISEMACROSYNTENYBLOCKSCOMPUTEREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=231,
-  serialized_end=310,
+  serialized_start=256,
+  serialized_end=335,
 )
 
 _PAIRWISEMACROSYNTENYBLOCKSCOMPUTEREQUEST.oneofs_by_name['_mask'].fields.append(
@@ -154,8 +161,8 @@ _PAIRWISEMACROSYNTENYBLOCKS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=313,
-  serialized_end=464,
+  serialized_start=338,
+  serialized_end=489,
   methods=[
   _descriptor.MethodDescriptor(
     name='Compute',
