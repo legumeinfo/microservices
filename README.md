@@ -1,69 +1,45 @@
 # GCV Microservices
 This repository contains a microservices implementation of the
-[Genome Context Viewer](https://github.com/legumeinfo/lis_context_viewer) server.
-Rather than interacting directly with a
-[Chado](http://gmod.org/wiki/Chado_-_Getting_Started) database, scripts are
-provided to load the relevant data from Chado into a Redis database to
-improve performance (see the
-[Wiki](https://github.com/legumeinfo/lis_gcv_microservices/wiki/Redis-Schema)
-for a description of the schema).
+[Genome Context Viewer](https://github.com/legumeinfo/gcv/)
+[services API](https://github.com/legumeinfo/gcv/wiki/Services-API-v2).
 
 
-## Installation
-The server uses [Redis](https://redis.io/) for its database and
-[RabbitMQ](https://www.rabbitmq.com/) for inter-service communication (RPC).
-These will need to be installed and running before proceeding.
+## Setup
+Due to intercommunication between microservices, the need for a proxy server to
+serve gRPC Web requests, and the total number of microservices, we highly
+recommend using the provided Docker Compose files to setup and run the
+microservices.
+See each microservice's directory for instructions on how to setup that
+specific microservice without Docker.
 
-The server is implement in [Python 3](https://www.python.org/).
-As such, the easiest way to install the server is inside of a
-[Python Virtual Environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
+### Docker Compose
+Use the following command to setup and run the microservices locally for
+development
 
-Once Python and Python Virtual Environments are installed, create and activate a
-new Python virtual environment as follows:
+    $ docker-compose up
 
-    $ virtualenv venv
-    $ . ./venv/bin/active
+The services can be brought down locally as follows
 
-Your command line should now look like this:
+    $ docker-compose down
 
-    (venv) $
+Use the following command to setup and run the microservices in production
 
-All the dependencies required to run the server can now be installed in the
-virtual environment as follows:
+    $ docker-compose -f ./docker-compose.prod.yml up
 
-    (venv) $ pip install -r requirements.txt
+The services can be brought down in production with
+
+    $ docker-compose -f ./docker-compose.prod.yml up
+
+Refer to the [Docker Compose documentation](https://docs.docker.com/compose/)
+for further information and how to use Docker Compose.
 
 
 ## Loading Data
-The Redis database can be populated from an existing Chado database.
-To do so, use `chado_to_redis.py`. For example:
-
-    (venv) $ python chado_to_redis.py 
-
-
-## Running the Server(s)
-To run the GCV microservices, first activate the virtual environment and then
-navigate to the `microservices` directory:
-
-    $ . ./venv/bin/activate
-    (venv) $ cd microservices/
-
-From here you can run each of the microservices individually using the `-m`
-switch. For example:
-
-    (venv) microservices/ $ python -m genes_to_tracks.app
-
-You can also run all the microservices as a single monolithic web app as follows:
-
-    (venv) microservices/ $ python -m app
-
-Currently, each microservice as well as the monolith are hard coded to use port
-`1234`.
-Also, the database adapter is hard coded to connect to Redis via the Unix socket
-`/run/redis/redis.sock`.
-These settings will be made configurable in the future.
-
-When you are done using the application, you can exit the Python virtual
-environment by closing your terminal or with the following command:
-
-    (venv) $ deactivate
+The microservices depend on a [Redis](https://redis.io/) database; see the
+[Wiki](https://github.com/legumeinfo/gcv-microservices/wiki/Redis-Schema)
+for a description of the schema.
+Data can be loaded into the Redis database from a
+[Chado](http://gmod.org/wiki/Chado_-_Getting_Started) database (PostgreSQL) or
+from [GFF](https://en.wikipedia.org/wiki/General_feature_format) and
+[FASTA](https://en.wikipedia.org/wiki/FASTA_format) files; see the `database/`
+directory for details.
