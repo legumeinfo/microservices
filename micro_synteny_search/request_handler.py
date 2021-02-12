@@ -69,7 +69,7 @@ class RequestHandler:
         chromosome_match_indices[d.chromosome].append(int(d.index))
     return chromosome_match_indices
 
-  async def _chromosomeGeneIndexesToBlocks(self, chromosome_match_indices, matched, intermediate):
+  async def _chromosomeGeneIndexesToBlocks(self, query_track, chromosome_match_indices, matched, intermediate):
     # compute blocks from indexes via islands and gaps
     blocks = defaultdict(list)
     for chromosome_name, indices in chromosome_match_indices.items():
@@ -102,7 +102,7 @@ class RequestHandler:
     # TODO: is there a way to query for all genes exactly at once?
     chromosome_match_indexes = await self._queryToChromosomeGeneMatchIndexes(query_track, gene_index)
     # compute micro-synteny blocks
-    blocks = await self._chromosomeGeneIndexesToBlocks(chromosome_match_indexes, matched, intermediate)
+    blocks = await self._chromosomeGeneIndexesToBlocks(query_track, chromosome_match_indexes, matched, intermediate)
     # fetch result tracks
     block_tracks = await asyncio.gather(*[
       self._chromosomeBlocksToTracks(chr_name, chr_blocks, chromosome_index)
