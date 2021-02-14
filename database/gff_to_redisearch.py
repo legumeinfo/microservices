@@ -96,7 +96,10 @@ def transferChromosomes(genus, species, gffchr_db, redis_connection, chunk_size,
     try:
       msg = '\tClearing chromosome index... {}'
       print(msg.format(''))
-      chromosome_index.drop_index()
+      try:
+        chromosome_index.drop_index()
+      except:
+        pass
       _replacePreviousPrintLine(msg.format('done'))
       fields = [
         redisearch.TextField('name'),

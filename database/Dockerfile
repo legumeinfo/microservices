@@ -19,4 +19,4 @@ WORKDIR /app
 
 COPY *.py ./
 
-ENTRYPOINT ["python3", "chado_to_redisearch.py"]
+ENV PATH=/app:${PATH}
