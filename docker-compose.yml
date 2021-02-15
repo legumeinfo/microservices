@@ -20,7 +20,7 @@ services:
   envoy:
     image: envoyproxy/envoy:v1.14.1
     volumes:
-      - ${PWD}/envoy/envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
     environment:
       loglevel: debug
     labels:
@@ -36,7 +36,7 @@ services:
     expose:
       - "6379"
     volumes:
-      - ${PWD}/database/data:/data:rw
+      - ./database/data:/data:rw
 
   loader:
     build: database
