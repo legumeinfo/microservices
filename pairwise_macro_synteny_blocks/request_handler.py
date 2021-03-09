@@ -38,9 +38,10 @@ class RequestHandler:
 
     # make a dictionary that maps query chromosome families to gene indices
     query_family_index_map = defaultdict(list)
-    masked_families = set()
+    orphan = ''
+    masked_families = set(orphan)
     for i, f in enumerate(query_chromosome):
-      if f != '':
+      if f != orphan:
         query_family_index_map[f].append(i)
         if len(query_family_index_map[f]) > mask:
           masked_families.add(f)
@@ -187,13 +188,20 @@ class RequestHandler:
         }
       # compute optional metrics on the block
       if metrics:
+        mask_filter = lambda f: f not in masked_families
         block['optionalMetrics'] = []
-        query_families = query_chromosome[query_start_index:query_stop_index+1]
-        target_families = target_chromosome[target_start_index:target_stop_index+1]
+        query_families = list(filter(
+            mask_filter,
+            query_chromosome[query_start_index:query_stop_index+1]
+          ))
+        target_families = list(filter(
+            mask_filter,
+            target_chromosome[target_start_index:target_stop_index+1]
+          ))
         if orientation == '-':
           target_families = target_families[::-1]
         for metric in metrics:
-          value = METRICS[metric](query_families, target_families, masked_families)
+          value = METRICS[metric](query_families, target_families)
           block['optionalMetrics'].append(value)
       blocks.append(block)
     locations = await pipeline.execute()
