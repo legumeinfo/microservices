@@ -11,6 +11,10 @@ class RequestHandler:
   def __init__(self, redis_connection):
     self.redis_connection = redis_connection
 
+  def _parseMetric(self, metric):
+    name, *args = metric.split(':')
+    return name, args
+
   def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics):
     iter(chromosome)  # TypeError if not iterable
     iter(metrics)  # TypeError if not iterable
@@ -27,7 +31,8 @@ class RequestHandler:
     else:
       mask = float('inf')
     for metric in metrics:
-      if metric not in METRICS:
+      name, args = self._parseMetric(metric)
+      if name not in METRICS:
         raise ValueError(f'"{metric}" is not a valid metric')
     return chromosome, target, matched, intermediate, mask, metrics
 
@@ -201,7 +206,8 @@ class RequestHandler:
         if orientation == '-':
           target_families = target_families[::-1]
         for metric in metrics:
-          value = METRICS[metric](query_families, target_families)
+          name, args = self._parseMetric(metric)
+          value = METRICS[name](query_families, target_families, *args)
           block['optionalMetrics'].append(value)
       blocks.append(block)
     locations = await pipeline.execute()
