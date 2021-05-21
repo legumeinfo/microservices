@@ -1,6 +1,6 @@
-hiredis==1.1.0
-psycopg2==2.8.5
+hiredis==2.0.0
+psycopg2==2.8.6
 redis==3.5.3
-redisearch==1.0.0
+redisearch==2.0.0
 rmtest==0.7.0
-six==1.15.0
+six==1.16.0

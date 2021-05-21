@@ -113,7 +113,8 @@ def transferChromosomes(postgres_connection, redis_connection, chunk_size, norel
       redisearch.TextField('genus'),
       redisearch.TextField('species'),
     ]
-  chromosome_index.create_index(fields)
+  definition = redisearch.IndexDefinition(prefix=['chromosome:'])
+  chromosome_index.create_index(fields, definition=definition)
   indexer = chromosome_index.batch_indexer(chunk_size=chunk_size)
 
   with postgres_connection.cursor() as c:
@@ -195,7 +196,8 @@ def transferGenes(postgres_connection, redis_connection, chunk_size, noreload, c
       redisearch.NumericField('strand'),
       redisearch.NumericField('index', sortable=True),
     ]
-  interval_index.create_index(fields)
+  definition = redisearch.IndexDefinition(prefix=['gene:'])
+  interval_index.create_index(fields, definition=definition)
   indexer = interval_index.batch_indexer(chunk_size=chunk_size)
 
   with postgres_connection.cursor() as c:
