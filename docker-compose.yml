@@ -1,5 +1,3 @@
-version: '3.3'
-
 services:
 
   reverse-proxy:
@@ -38,7 +36,19 @@ services:
     expose:
       - "6379"
     volumes:
-      - ./database/data/dump.rdb:/data/dump.rdb:rw
+      - ./database/data:/data:rw
+
+  loader:
+    build: database
+    depends_on:
+      redisearch:
+        condition: service_healthy
+    environment:
+      REDIS_HOST: redisearch
+    profiles: ["loader"]
+    working_dir: /mnt
+    volumes:
+      - ${PWD}:/mnt:ro
 
   chromosome:
     build: chromosome
