@@ -30,7 +30,7 @@ services:
       - "traefik.http.routers.envoy.entrypoints=web"
 
   redisearch:
-    image: redislabs/redisearch:2.0.5
+    image: redislabs/redisearch:2.0.9
     healthcheck:
       test: "redis-cli ping"
     expose:
