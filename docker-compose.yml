@@ -38,18 +38,6 @@ services:
     volumes:
       - ./database/data:/data:rw
 
-  loader:
-    build: database
-    depends_on:
-      redisearch:
-        condition: service_healthy
-    environment:
-      REDIS_HOST: redisearch
-    profiles: ["loader"]
-    working_dir: /mnt
-    volumes:
-      - ${PWD}:/mnt:ro
-
   chromosome:
     build: chromosome
     container_name: chromosome

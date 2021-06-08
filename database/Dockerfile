@@ -18,5 +18,8 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages/ /usr/local/lib/pytho
 WORKDIR /app
 
 COPY *.py ./
+COPY loaders/ ./loaders/
 
 ENV PATH=/app:${PATH}
+
+ENTRYPOINT ["./load_redisearch.py"]

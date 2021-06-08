@@ -79,8 +79,8 @@ def parseArgs():
 
   # create the parser and command subparser
   parser = argparse.ArgumentParser(
-    description=('Loads data from a Chado (PostreSQL) database into a '
-                 'RediSearch index for use by the GCV search microservices.'),
+    description=('Loads data from a Chado (PostreSQL) database or GFF files '
+                'into a RediSearch index for use by GCV microservices.'
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   subparsers = \
     parser.add_subparsers(title='commands', dest='command', required=True)
