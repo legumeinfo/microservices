@@ -80,7 +80,7 @@ def parseArgs():
   # create the parser and command subparser
   parser = argparse.ArgumentParser(
     description=('Loads data from a Chado (PostreSQL) database or GFF files '
-                'into a RediSearch index for use by GCV microservices.'
+                'into a RediSearch index for use by GCV microservices.'),
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   subparsers = \
     parser.add_subparsers(title='commands', dest='command', required=True)
@@ -126,10 +126,10 @@ def parseArgs():
     default=6379,
     help=(f'The Redis port (can also be specified using the {rport_envvar} '
           'environment variable).'))
-  rchunksize_envvar = 'REDIS_CHUNK_SIZE'
+  rchunksize_envvar = 'CHUNK_SIZE'
   parser.add_argument(
-    '--redis-chunksize',
-    dest='redis_chunksize',
+    '--chunk-size',
+    dest='chunk_size',
     action=EnvAction,
     envvar=rchunksize_envvar,
     type=int,
@@ -138,10 +138,10 @@ def parseArgs():
           f'specified using the {rchunksize_envvar} environment variable).'))
   parser.add_argument(
     '--no-save',
-    dest='nosave',
+    dest='no_save',
     action='store_true',
     help='Don\'t save the Redis database to disk after loading.')
-  parser.set_defaults(nosave=False)
+  parser.set_defaults(no_save=False)
   load_types = {
       'new': 'Will only load indexes if they have to be created first.',
       'reload': 'Will remove existing indexes before loading data.',

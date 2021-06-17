@@ -2,10 +2,10 @@ import redis
 import redisearch
 
 
-class RediSearchIndexExistsError(Exception):
+class RediSearchExistsError(Exception):
   '''
-  The exception to raise when a RediSearch index already existing is
-  incompatible with the specified load type.
+  The exception to raise when Redis already containing data related to the
+  loader is incompatible with the specified load type.
   '''
   pass
 
@@ -20,7 +20,7 @@ class RediSearchLoader(object):
 
   def __init__(self, **kwargs):
     self.load_type = kwargs.get('load_type')
-    self.no_save = kwagrsd.get('no_save')
+    self.no_save = kwargs.get('no_save')
     # connect to Redis
     self.redis_connection = \
       self.__connectToRedis(
@@ -72,13 +72,13 @@ class RediSearchLoader(object):
       redis.Redis: A connection to a Redis database.
     '''
 
-    pool = redis.ConnectionPool(host, port, db, password)
+    pool = redis.ConnectionPool(host=host, port=port, db=db, password=password)
     connection = redis.Redis(connection_pool=pool)
     # ping to force connection, preventing errors downstream
     connection.ping()
     return connection
 
-  def __makeOrGetIndex(name, fields, definition, chunk_size):
+  def __makeOrGetIndex(self, name, fields, definition, chunk_size):
     '''
     Creates a RediSearch index, if necessary, and returns a batch indexer for
     bulk loading data into it.
@@ -103,20 +103,44 @@ class RediSearchLoader(object):
       if self.load_type == 'new':
         message = (f'Index "{name}" already exists but load type '
                   f'"{self.load_type}" does not support preexisting indexes.')
-        raise RediSearchIndexExistsError(message)
+        raise RediSearchExistsError(message)
     except redis.RedisError:
       exists = False
     # clear the index if necessary
-    if exists and self.load_type == 'reload':
+    if exists:
+      if self.load_type == 'reload':
+        print(f'\tDropping index "{name}"')
         index.drop_index()
         exists = False
+      if self.load_type == 'append':
+        print(f'\tData will be appended to index "{name}"')
     # create the index if necessary
     if not exists:
+      print(f'\tCreating index "{name}"')
       index.create_index(fields, definition=definition)
     # create a batch indexer for the index
-    indexer = chromosome_index.batch_indexer(chunk_size=chunk_size)
+    indexer = index.batch_indexer(chunk_size=chunk_size)
 
     return indexer
+
+  def __checkChromosomeKeys(self):
+    keys = self.redis_connection.keys('chromosome:*')
+    if keys:
+      print(f'\tKeys that match "chromosome:*" already exists')
+      if self.load_type == 'new':
+        message = (f'Chromosome keys already exists but load type '
+                  f'"{self.load_type}" does not support preexisting keys.')
+        raise RediSearchExistsError(message)
+      if self.load_type == 'reload':
+        print(f'\tDropping keys that match "chromosome:*"')
+        # NOTE: we create a pipeline and iterate instead of expanding keys into
+        # a single delete call in case there's A LOT of keys to avoid overflow
+        pipeline = self.redis_connection.pipeline()
+        for key in keys:
+          pipeline.delete(key)
+        pipeline.execute()
+      elif self.load_type == 'append':
+        print(f'\tNew "chromosome:*" keys will be appended')
 
   def __setupIndexes(self, chunk_size):
     '''
@@ -147,6 +171,8 @@ class RediSearchLoader(object):
         chromosome_definition,
         chunk_size,
       )
+    # check if any non-RediSearch chromosome keys exist, and drop if necessary
+    self.__checkChromosomeKeys()
 
     # create the gene index
     gene_name = 'geneIdx'
@@ -236,12 +262,8 @@ class RediSearchLoader(object):
     # save the gene attributes as ordered lists in Redis for indexed retrieval
     # and slicing
     pipeline = self.redis_connection.pipeline()
-    pipeline.delete(f'chromosome:{chromosome}:genes')
     pipeline.rpush(f'chromosome:{chromosome}:genes', *map(lambda g: g['name'], genes))
-    pipeline.delete(f'chromosome:{chromosome}:families')
     pipeline.rpush(f'chromosome:{chromosome}:families', *map(lambda g: g['family'], genes))
-    pipeline.delete(f'chromosome:{chromosome}:fmins')
     pipeline.rpush(f'chromosome:{chromosome}:fmins', *map(lambda g: g['fmin'], genes))
-    pipeline.delete(f'chromosome:{chromosome}:fmaxs')
     pipeline.rpush(f'chromosome:{chromosome}:fmaxs', *map(lambda g: g['fmax'], genes))
     pipeline.execute()

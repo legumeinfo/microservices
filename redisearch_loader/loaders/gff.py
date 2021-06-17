@@ -23,7 +23,12 @@ def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
 
   # create chromosome SQLLite database from chromosomal GFF file
   gffchr_db = \
-    gffutils.create_db(chromosome_gff, ':memory:', force=True, keep_order=True)
+    gffutils.create_db(
+      str(chromosome_gff),
+      ':memory:',
+      force=True,
+      keep_order=True,
+    )
 
   # index the chromosomes
   chromosome_names = set()
@@ -52,19 +57,18 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
 
   # create gene SQLLite database from gene GFF file
   gffgene_db = \
-    gffutils.create_db(args.gffgene, ':memory:', force=True, keep_order=True)
+    gffutils.create_db(str(gene_gff), ':memory:', force=True, keep_order=True)
 
   # index the genes by going through the GFA file line by line
   chromosome_genes = defaultdict(list)
   with gfa.open('r') as tsv:
     for line in csv.reader(tsv, delimiter="\t"):
-      if line[0] == 'ScoreMeaning': # metadata
-        continue
-      if line[0].startswith('#'): # comment
+      # skip comment and metadata lines
+      if line[0].startswith('#') or line[0] == 'ScoreMeaning':
         continue
       gene_id = line[0]
       genefamily_id = line[1]
-      if gene_id in gffgene_db:
+      try:
         gffgene = gffgene_db[gene_id]
         chr_name = gffgene.seqid
         if chr_name in chromosome_names:
@@ -81,6 +85,12 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
             'family': genefamily_id,
           }
           chromosome_genes[chr_name].append(gene)
+      except gffutils.FeatureNotFoundError:
+        # NOTE: gffutils.FeatureDB doesn't have an __in__ operator so it falls
+        # back to __getitem__, which always raises this error if the item
+        # doesn't exist in the DB. That's why we're trying to get the gene in a
+        # try/catch instead of checking of it's in the DB before getting it...
+        pass
 
   # index the genes
   for chr_name, genes in chromosome_genes.items():

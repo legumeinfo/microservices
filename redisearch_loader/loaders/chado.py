@@ -1,14 +1,13 @@
 import psycopg2
+from collections import defaultdict
 
 
-def makePostgresConnectionString(self, database, user, password, host, port):
+def makePostgresConnectionString(database, user, password, host, port):
   '''
   Creates a connection string that can be used by psycopg2 to connect to a
   PostgreSQL database.
 
   Parameters:
-    self (Environment): The instance of the Environment class this method is
-      being called on.
     database (str): The name of the database to connect to.
     user (str): The name of the user to connect as.
     password (str, optional): The password of the user.
@@ -201,7 +200,7 @@ uniquename):
     # load genes
     transferGenes(
       postgres_connection,
-      redis_connection,
+      redisearch_loader,
       chromosome_id_name_map,
       uniquename
     )
