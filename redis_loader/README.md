@@ -31,8 +31,8 @@ And the Chaddo (PostgreSQL) database credentials can be provided via the `POSTGR
 
 The loading script can be run as follows
 
-    (venv) $ ./load_redisearch.py
+    (venv) $ ./load_redis.py
 
 For more information about the script and additional commands and arguments, run
 
-    (venv) $ ./load_redisearch.py --help
+    (venv) $ ./load_redis.py --help

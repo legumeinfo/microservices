@@ -22,4 +22,4 @@ COPY loaders/ ./loaders/
 
 ENV PATH=/app:${PATH}
 
-ENTRYPOINT ["./load_redisearch.py"]
+ENTRYPOINT ["./load_redis.py"]
