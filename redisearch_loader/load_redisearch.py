@@ -275,7 +275,7 @@ def parseArgs():
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
     help=('The GFF file containing gene records (can also be specified using '
          f'the {gffgene_envvar} environment variable).'))
-  gffchr_envvar = 'CHR_GFF_FILE'
+  gffchr_envvar = 'CHROMOSOME_GFF_FILE'
   gff_parser.add_argument(
     '--chromosome-gff',
     dest='chromosome_gff',

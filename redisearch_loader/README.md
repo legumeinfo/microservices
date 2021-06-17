@@ -1,11 +1,9 @@
-# Genome Context Viewer search database
+# Genome Context Viewer Redis loader
 
-The microservices that support the fuzzy search functionality of the GCV client are built on a [Redis](https://redis.io/) database equipped with the [RediSearch](https://oss.redislabs.com/redisearch/) module.
-This directory contains scripts for loading data from a PostgreSQL database configured with the [Chado](http://gmod.org/wiki/Chado_-_Getting_Started) schema into RediSearch indexes.
+The microservices that support the GCV client are built on a [Redis](https://redis.io/) database equipped with the [RediSearch](https://oss.redislabs.com/redisearch/) module.
+This directory contains scripts for loading data into Redis from GFF files or a PostgreSQL database configured with the [Chado](http://gmod.org/wiki/Chado_-_Getting_Started) schema.
 
 ## Setup
-
-We assume you have already setup Chado and populated it with your data.
 
 RediSearch is a module for Redis.
 It can be [installed locally or run via Docker](https://oss.redislabs.com/redisearch/Quick_Start/).
@@ -25,14 +23,16 @@ All the script's dependencies are listed in the `requirements.txt` file, which c
 
 ## Running
 
-The script loads data from a PostgreSQL database into a Redis database.
-The credentials for these databases can be set via command line flags or via environment variables.
-The PostgreSQL database credentials can be provided via the `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT` environment variables, and the Redis database credentials can be provided via the `REDIS_DB`, `REDIS_PASSWORD`, `REDIS_HOST`, and `REDIS_PORT` environment variables.
+The script loads data into Redis from GFF files or a Chado (PostgreSQL) database.
+The credentials for Redis and the different data sources can be set via command line flags or via environment variables.
+The Redis credentials can be provided via the `REDIS_DB`, `REDIS_PASSWORD`, `REDIS_HOST`, and `REDIS_PORT` environment variables.
+The GFF credits can be provided via the `GENUS`, `SPECIES`, `STRAIN`, `GENE_GFF_FILE`, `CHROMOSOME_GFF_FILE`, and `GFA_FILE` environment variables.
+And the Chaddo (PostgreSQL) database credentials can be provided via the `POSTGRES_DATABASE`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT` environment variables.
 
-Run the loading script as follows
+The loading script can be run as follows
 
-    (venv) $ ./chado_to_redis.py
+    (venv) $ ./load_redisearch.py
 
-For more information about the script, run
+For more information about the script and additional commands and arguments, run
 
-    (venv) $ ./chado_to_redis.py --help
+    (venv) $ ./load_redisearch.py --help
