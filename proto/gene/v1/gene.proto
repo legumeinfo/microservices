@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv;
+package gcv.gene.v1;
 
 
 message Gene {

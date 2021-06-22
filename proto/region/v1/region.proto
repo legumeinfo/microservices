@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv.structures;
+package gcv.region.v1;
 
 
 message Region {
