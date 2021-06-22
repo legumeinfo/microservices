@@ -20,11 +20,16 @@ Similarly, as long as the major version of the chromosome service is 1, the pack
 
     prackage gcv.chromosome_service.v1
 
-The microservices themselves should not symlink or directly include `.proto` files from this directory or from other microservices.
+The microservices themselves should not symlink, copy, or directly include `.proto` files from this directory or from other microservices.
 Instead, the `git read-tree` command should be used to create versioned copies of the `.proto` files a microservice depends on in its `proto/` directory.
 For example, major version 1 of the macro-synteny blocks service depends on major version 1 of the pairwise macro-synteny blocks service and major versino 1 the blocks data type.
 `git read-tree` can be used to copy these specific versions into the macro-synteny blocks service's `proto/` directory as follows
 
+  git read-tree --prefix=macro_synteny_blocks/proto/pairwisemacrosynteny_service -u pairwise_macro_synteny_blocks@v1:pairwise_macro_synteny_blocks/proto/pairwisemacrosyntenyblocks_service
   git read-tree --prefix=macro_synteny_blocks/proto/blocks -u proto/blocks@v1:proto/blocks 
 
-should import each `.proto` file in a consistent, version aware way that I haven't settled on yet...
+Notice that this preserves the previously described subpaths of each `.proto` file.
+This is intentional to preserve version differentiation across languages and so dependencies are correct when compiling with `protoc`.
+
+This technique ensures that a microservice is built against the specific versions of the `.proto` files it depends on.
+It also allows old versions of `.proto` files to be removed from the repository but still remain available as dependency targets.

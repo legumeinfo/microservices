@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package gcv.region.v1;
+
+
+message Region {
+  string gene = 1;
+  uint32 neighbors = 2;
+}
