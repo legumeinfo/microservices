@@ -1,5 +1,7 @@
-import psycopg2
+# Python
 from collections import defaultdict
+# dependencies
+import psycopg2
 
 
 def makePostgresConnectionString(database, user, password, host, port):

@@ -1,13 +1,21 @@
-FROM python:3.8-alpine3.12 AS builder
+FROM python:3.9-alpine AS builder
 
 RUN apk add --no-cache \
   gcc \
   musl-dev \
   postgresql-dev
 
-COPY requirements.txt .
+WORKDIR /app
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY INSTALL ./
+COPY LICENSE ./
+COPY MANIFEST.in ./
+COPY README.rst ./
+COPY setup.cfg ./
+COPY setup.py ./
+COPY redis_loader/ ./redis_loader/
+
+RUN pip3 install --no-cache-dir .
 
 FROM python:3.8-alpine3.12
 
@@ -17,9 +25,4 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages/ /usr/local/lib/pytho
 
 WORKDIR /app
 
-COPY *.py ./
-COPY loaders/ ./loaders/
-
-ENV PATH=/app:${PATH}
-
-ENTRYPOINT ["./load_redis.py"]
+ENTRYPOINT ["python", "-m", "redis_loader"]

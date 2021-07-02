@@ -6,7 +6,8 @@ import os
 import pathlib
 from collections import defaultdict
 # module
-from loaders import RediSearchLoader, loadFromChado, loadFromGFF
+import redis_loader
+from redis_loader.loaders import RediSearchLoader, loadFromChado, loadFromGFF
 
 
 def chado(redisearch_loader, args):
@@ -79,9 +80,15 @@ def parseArgs():
 
   # create the parser and command subparser
   parser = argparse.ArgumentParser(
+    prog=redis_loader.__name__,
     description=('Loads data from a Chado (PostreSQL) database or GFF files '
                 'into a RediSearch index for use by GCV microservices.'),
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument(
+    '--version',
+    action='version',
+    version=f'%(prog)s {redis_loader.__version__}',
+  )
   subparsers = \
     parser.add_subparsers(title='commands', dest='command', required=True)
 
@@ -300,7 +307,7 @@ def parseArgs():
   return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
 
   # parse command-line arguments
   args = parseArgs()
@@ -317,3 +324,7 @@ if __name__ == '__main__':
     }
   with RediSearchLoader(**kwargs) as loader:
     args.command(loader, args)
+
+
+if __name__ == '__main__':
+  main()
