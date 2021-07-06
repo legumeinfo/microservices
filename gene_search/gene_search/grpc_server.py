@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from services import genesearch_pb2
-from services import genesearch_pb2_grpc
+from gene_search.services import genesearch_pb2
+from gene_search.services import genesearch_pb2_grpc
 
 
 class GeneSearch(genesearch_pb2_grpc.GeneSearchServicer):

@@ -1,7 +1,7 @@
 # dependencies
 from redisearch import Query
 # module
-from aioredisearch import Client
+from gene_search.aioredisearch import Client
 
 
 class RequestHandler:
