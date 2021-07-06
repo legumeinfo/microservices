@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from services import chromosomeregion_pb2 as services_dot_chromosomeregion__pb2
+from search.services import search_pb2 as services_dot_search__pb2
 
 
-class ChromosomeRegionStub(object):
+class SearchStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -14,42 +14,42 @@ class ChromosomeRegionStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Get = channel.unary_unary(
-                '/gcv.services.ChromosomeRegion/Get',
-                request_serializer=services_dot_chromosomeregion__pb2.ChromosomeRegionGetRequest.SerializeToString,
-                response_deserializer=services_dot_chromosomeregion__pb2.ChromosomeRegionGetReply.FromString,
+        self.Search = channel.unary_unary(
+                '/gcv.services.Search/Search',
+                request_serializer=services_dot_search__pb2.SearchRequest.SerializeToString,
+                response_deserializer=services_dot_search__pb2.SearchReply.FromString,
                 )
 
 
-class ChromosomeRegionServicer(object):
+class SearchServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Get(self, request, context):
+    def Search(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_ChromosomeRegionServicer_to_server(servicer, server):
+def add_SearchServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Get': grpc.unary_unary_rpc_method_handler(
-                    servicer.Get,
-                    request_deserializer=services_dot_chromosomeregion__pb2.ChromosomeRegionGetRequest.FromString,
-                    response_serializer=services_dot_chromosomeregion__pb2.ChromosomeRegionGetReply.SerializeToString,
+            'Search': grpc.unary_unary_rpc_method_handler(
+                    servicer.Search,
+                    request_deserializer=services_dot_search__pb2.SearchRequest.FromString,
+                    response_serializer=services_dot_search__pb2.SearchReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'gcv.services.ChromosomeRegion', rpc_method_handlers)
+            'gcv.services.Search', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class ChromosomeRegion(object):
+class Search(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Get(request,
+    def Search(request,
             target,
             options=(),
             channel_credentials=None,
@@ -59,8 +59,8 @@ class ChromosomeRegion(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/gcv.services.ChromosomeRegion/Get',
-            services_dot_chromosomeregion__pb2.ChromosomeRegionGetRequest.SerializeToString,
-            services_dot_chromosomeregion__pb2.ChromosomeRegionGetReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/gcv.services.Search/Search',
+            services_dot_search__pb2.SearchRequest.SerializeToString,
+            services_dot_search__pb2.SearchReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

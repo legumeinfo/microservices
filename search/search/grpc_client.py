@@ -1,12 +1,12 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from services import genesearch_pb2
-from services import genesearch_pb2_grpc
-from services import chromosomesearch_pb2
-from services import chromosomesearch_pb2_grpc
-from services import chromosomeregion_pb2
-from services import chromosomeregion_pb2_grpc
+from search.services import genesearch_pb2
+from search.services import genesearch_pb2_grpc
+from search.services import chromosomesearch_pb2
+from search.services import chromosomesearch_pb2_grpc
+from search.services import chromosomeregion_pb2
+from search.services import chromosomeregion_pb2_grpc
 
 
 async def gene_search(query, address):

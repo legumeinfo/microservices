@@ -6,10 +6,11 @@ import asyncio
 import os
 import uvloop
 # module
-from grpc_server import run_grpc_server
-from http_server import run_http_server
-from query_parser import makeQueryParser
-from request_handler import RequestHandler
+import search
+from search.grpc_server import run_grpc_server
+from search.http_server import run_http_server
+from search.query_parser import makeQueryParser
+from search.request_handler import RequestHandler
 
 
 # a class that loads argument values from command line variables, resulting in a
@@ -31,8 +32,14 @@ def parseArgs():
 
   # create the parser
   parser = argparse.ArgumentParser(
+    prog=search.__name__,
     description='A microservice for resolving GCV search queries.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument(
+    '--version',
+    action='version',
+    version=f'%(prog)s {search.__version__}',
+  )
 
   # Async HTTP args
   parser.add_argument('--no-http', dest='nohttp', action='store_true', help='Don\'t run the HTTP server.')
@@ -64,16 +71,36 @@ def parseArgs():
   return parser.parse_args()
 
 
-if __name__ == '__main__':
+async def main_coroutine(args):
+  query_parser = makeQueryParser(args.chars)
+  handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
+  tasks = []
+  if not args.nohttp:
+    http_coro = run_http_server(args.hhost, args.hport, handler)
+    http_task = asyncio.create_task(http_coro)
+    tasks.append(http_task)
+  if not args.nogrpc:
+    grpc_coro = run_grpc_server(args.ghost, args.gport, handler)
+    grpc_task = asyncio.create_task(grpc_coro)
+    tasks.append(grpc_task)
+  await asyncio.gather(*tasks)
+
+
+def main():
+
+  # parse the command line arguments / environment variables
   args = parseArgs()
   if args.nohttp and args.nogrpc:
     exit('--no-http and --no-grpc can\'t both be given')
-  query_parser = makeQueryParser(args.chars)
-  handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
+
+  # initialize asyncio
   uvloop.install()
   loop = asyncio.get_event_loop()
-  if not args.nohttp:
-    loop.create_task(run_http_server(args.hhost, args.hport, handler))
-  if not args.nogrpc:
-    loop.create_task(run_grpc_server(args.ghost, args.gport, handler))
+
+  # run the program
+  loop.create_task(main_coroutine(args))
   loop.run_forever()
+
+
+if __name__ == '__main__':
+  main()
