@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from services import pairwisemacrosyntenyblocks_pb2 as services_dot_pairwisemacrosyntenyblocks__pb2
+from macro_synteny_blocks.services import pairwisemacrosyntenyblocks_pb2 as services_dot_pairwisemacrosyntenyblocks__pb2
 
 
 class PairwiseMacroSyntenyBlocksStub(object):

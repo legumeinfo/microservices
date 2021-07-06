@@ -3,8 +3,8 @@ import asyncio
 # dependencies
 from redisearch import Query
 # module
-from aioredisearch import Client
-from grpc_client import computePairwiseMacroSyntenyBlocks
+from macro_synteny_blocks.aioredisearch import Client
+from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks
 
 
 class RequestHandler:
