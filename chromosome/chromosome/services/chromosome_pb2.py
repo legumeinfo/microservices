@@ -11,7 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from structures import chromosome_pb2 as structures_dot_chromosome__pb2
+from chromosome.structures import chromosome_pb2 as structures_dot_chromosome__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(

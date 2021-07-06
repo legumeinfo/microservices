@@ -2,10 +2,11 @@
 import grpc
 from grpc.experimental import aio
 # module
-from services import chromosome_pb2
-from services import chromosome_pb2_grpc
-from structures import track_pb2
-from structures import chromosome_pb2 as chromosome_pb2_struct
+import chromosome
+from chromosome.services import chromosome_pb2
+from chromosome.services import chromosome_pb2_grpc
+from chromosome.structures import track_pb2
+from chromosome.structures import chromosome_pb2 as chromosome_pb2_struct
 
 
 class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):

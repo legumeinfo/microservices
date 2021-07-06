@@ -1,5 +1,5 @@
 # module
-from aioredisearch import Client
+from chromosome.aioredisearch import Client
 
 
 class RequestHandler:
