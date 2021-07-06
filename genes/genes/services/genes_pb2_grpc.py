@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from services import genes_pb2 as services_dot_genes__pb2
+from genes.services import genes_pb2 as services_dot_genes__pb2
 
 
 class GenesStub(object):

@@ -1,6 +1,6 @@
 # dependencies
 #from redisearch import Client
-from aioredisearch import Client
+from genes.aioredisearch import Client
 
 
 class RequestHandler:

@@ -1,0 +1,8 @@
+def int_or_str(value):
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+__version__ = '1.0.0alpha'
+VERSION = tuple(map(int_or_str, __version__.split('.')))

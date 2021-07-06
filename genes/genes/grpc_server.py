@@ -1,9 +1,9 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from services import genes_pb2
-from services import genes_pb2_grpc
-from structures import gene_pb2
+from genes.services import genes_pb2
+from genes.services import genes_pb2_grpc
+from genes.structures import gene_pb2
 
 
 class Genes(genes_pb2_grpc.GenesServicer):
