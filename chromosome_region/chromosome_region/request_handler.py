@@ -2,7 +2,7 @@
 import asyncio
 import bisect
 # module
-from aioredisearch import Client
+from chromosome_region.aioredisearch import Client
 
 
 class RequestHandler:

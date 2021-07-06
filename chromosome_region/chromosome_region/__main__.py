@@ -6,10 +6,11 @@ import asyncio
 import os
 import uvloop
 # module
-from database import connectToRedis
-from grpc_server import run_grpc_server
-from http_server import run_http_server
-from request_handler import RequestHandler
+import chromosome_region
+from chromosome_region.database import connectToRedis
+from chromosome_region.grpc_server import run_grpc_server
+from chromosome_region.http_server import run_http_server
+from chromosome_region.request_handler import RequestHandler
 
 
 # a class that loads argument values from command line variables, resulting in a
@@ -31,8 +32,14 @@ def parseArgs():
 
   # create the parser
   parser = argparse.ArgumentParser(
+    prog=chromosome_region.__name__,
     description='A microservice for retrieving a region from a given chromosome.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument(
+    '--version',
+    action='version',
+    version=f'%(prog)s {chromosome_region.__version__}',
+  )
 
   # Async HTTP args
   parser.add_argument('--no-http', dest='nohttp', action='store_true', help='Don\'t run the HTTP server.')
@@ -64,7 +71,7 @@ def parseArgs():
 
 
 # the main coroutine that starts the various program tasks
-async def main(args):
+async def main_coroutine(args):
   redis_connection = await connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
   handler = RequestHandler(redis_connection)
   tasks = []
@@ -77,14 +84,21 @@ async def main(args):
   await asyncio.gather(*tasks)
 
 
-if __name__ == '__main__':
+def main():
+
   # parse the command line arguments / environment variables
   args = parseArgs()
   if args.nohttp and args.nogrpc:
     exit('--no-http and --no-grpc can\'t both be given')
+
   # initialize asyncio
   uvloop.install()
   loop = asyncio.get_event_loop()
+
   # run the program
-  loop.create_task(main(args))
+  loop.create_task(main_coroutine(args))
   loop.run_forever()
+
+
+if __name__ == '__main__':
+  main()

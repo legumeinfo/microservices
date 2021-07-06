@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from services import chromosomeregion_pb2 as services_dot_chromosomeregion__pb2
+from chromosome_region.services import chromosomeregion_pb2 as services_dot_chromosomeregion__pb2
 
 
 class ChromosomeRegionStub(object):

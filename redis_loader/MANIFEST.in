@@ -1,4 +1,4 @@
 include INSTALL
 include LICENSE
 include MANIFEST.in
-include *.rst
+include *.md
