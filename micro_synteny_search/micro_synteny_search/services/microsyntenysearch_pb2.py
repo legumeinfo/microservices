@@ -11,7 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from structures import microtrack_pb2 as structures_dot_microtrack__pb2
+from micro_synteny_search.structures import microtrack_pb2 as structures_dot_microtrack__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(

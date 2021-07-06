@@ -5,7 +5,7 @@ from itertools import chain
 # dependencies
 from redisearch import NumericFilter, Query
 # module
-from aioredisearch import Client
+from micro_synteny_search.aioredisearch import Client
 
 
 class RequestHandler:

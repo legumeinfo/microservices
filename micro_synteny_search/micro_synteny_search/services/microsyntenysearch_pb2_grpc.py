@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from services import microsyntenysearch_pb2 as services_dot_microsyntenysearch__pb2
+from micro_synteny_search.services import microsyntenysearch_pb2 as services_dot_microsyntenysearch__pb2
 
 
 class MicroSyntenySearchStub(object):

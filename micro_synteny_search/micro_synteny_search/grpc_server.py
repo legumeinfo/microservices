@@ -2,10 +2,10 @@
 import grpc
 from grpc.experimental import aio
 # module
-from services import microsyntenysearch_pb2
-from services import microsyntenysearch_pb2_grpc
-from structures import microtrack_pb2
-from structures import track_pb2
+from micro_synteny_search.services import microsyntenysearch_pb2
+from micro_synteny_search.services import microsyntenysearch_pb2_grpc
+from micro_synteny_search.structures import microtrack_pb2
+from micro_synteny_search.structures import track_pb2
 
 
 class MicroSyntenySearch(microsyntenysearch_pb2_grpc.MicroSyntenySearchServicer):
