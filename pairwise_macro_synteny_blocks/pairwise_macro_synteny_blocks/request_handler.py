@@ -2,8 +2,8 @@
 from collections import defaultdict
 from itertools import chain
 # module
-from aioredisearch import Client
-from metrics import METRICS
+from pairwise_macro_synteny_blocks.aioredisearch import Client
+from pairwise_macro_synteny_blocks.metrics import METRICS
 
 
 class RequestHandler:
