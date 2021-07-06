@@ -10,7 +10,7 @@ WORKDIR /app
 COPY INSTALL ./
 COPY LICENSE ./
 COPY MANIFEST.in ./
-COPY README.rst ./
+COPY README.md ./
 COPY setup.cfg ./
 COPY setup.py ./
 COPY redis_loader/ ./redis_loader/
