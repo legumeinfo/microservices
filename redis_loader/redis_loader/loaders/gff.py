@@ -32,7 +32,7 @@ def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
 
   # index the chromosomes
   chromosome_names = set()
-  for chr in gffchr_db.features_of_type('chromosome', order_by='attributes'):
+  for chr in gffchr_db.features_of_type(('chromosome','supercontig'), order_by='attributes'):
     name = chr.seqid
     length = chr.end
     chromosome_names.add(name)
@@ -59,17 +59,10 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
   gffgene_db = \
     gffutils.create_db(str(gene_gff), ':memory:', force=True, keep_order=True)
 
-  # index the genes by going through the GFA file line by line
+  # index all the genes in the db
+  gene_lookup = dict()
   chromosome_genes = defaultdict(list)
-  with gfa.open('r') as tsv:
-    for line in csv.reader(tsv, delimiter="\t"):
-      # skip comment and metadata lines
-      if line[0].startswith('#') or line[0] == 'ScoreMeaning':
-        continue
-      gene_id = line[0]
-      genefamily_id = line[1]
-      try:
-        gffgene = gffgene_db[gene_id]
+  for gffgene in gffgene_db.features_of_type('gene', order_by='attributes'):
         chr_name = gffgene.seqid
         if chr_name in chromosome_names:
           strand = 0
@@ -82,15 +75,20 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
             'fmin': gffgene.start,
             'fmax': gffgene.end,
             'strand': strand,
-            'family': genefamily_id,
+            'family': '',
           }
+          gene_lookup[gffgene.id] = gene
           chromosome_genes[chr_name].append(gene)
-      except gffutils.FeatureNotFoundError:
-        # NOTE: gffutils.FeatureDB doesn't have an __in__ operator so it falls
-        # back to __getitem__, which always raises this error if the item
-        # doesn't exist in the DB. That's why we're trying to get the gene in a
-        # try/catch instead of checking of it's in the DB before getting it...
-        pass
+  # deal with family assignments (for non-orphans) from GFA
+  with gfa.open('r') as tsv:
+    for line in csv.reader(tsv, delimiter="\t"):
+      # skip comment and metadata lines
+      if line[0].startswith('#') or line[0] == 'ScoreMeaning':
+        continue
+      gene_id = line[0]
+      gene = gene_lookup[gene_id]
+      genefamily_id = line[1]
+      gene['family'] = genefamily_id
 
   # index the genes
   for chr_name, genes in chromosome_genes.items():
