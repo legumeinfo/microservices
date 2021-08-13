@@ -25,4 +25,4 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages/ /usr/local/lib/pytho
 
 WORKDIR /app
 
-ENTRYPOINT ["python", "-m", "redis_loader"]
+ENTRYPOINT ["python", "-u", "-m", "redis_loader"]

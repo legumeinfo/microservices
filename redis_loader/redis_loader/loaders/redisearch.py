@@ -72,8 +72,7 @@ class RediSearchLoader(object):
       redis.Redis: A connection to a Redis database.
     '''
 
-    pool = redis.ConnectionPool(host=host, port=port, db=db, password=password)
-    connection = redis.Redis(connection_pool=pool)
+    connection = redis.Redis(host=host, port=port, db=db, password=password)
     # ping to force connection, preventing errors downstream
     connection.ping()
     return connection

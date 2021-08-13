@@ -17,7 +17,8 @@ async def gene_search(query, address):
   try:
     results = await stub.Search(genesearch_pb2.GeneSearchRequest(query=query))
     return results.genes
-  except:
+  except Exception as e:
+    print(e)
     return []
 
 
@@ -29,7 +30,8 @@ async def chromosome_search(query, address):
   try:
     results = await stub.Search(chromosomesearch_pb2.ChromosomeSearchRequest(query=query))
     return results.chromosomes
-  except:
+  except Exception as e:
+    print(e)
     return []
 
 
@@ -41,5 +43,6 @@ async def chromosome_region(chromosome, start, stop, address):
   try:
     response = await stub.Get(chromosomeregion_pb2.ChromosomeRegionGetRequest(chromosome=chromosome, start=start, stop=stop))
     return [response.region]
-  except:
+  except Exception as e:
+    print(e)
     return []

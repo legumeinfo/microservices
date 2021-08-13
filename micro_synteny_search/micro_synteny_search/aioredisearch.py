@@ -33,7 +33,7 @@ class Client(redisearch.Client):
   # unlike RediSearch get, this implementation returns a Document instance for
   # each id that exists in the database and None for those that don't
   async def get(self, *ids):
-    flat_fields = await self.redis.execute('FT.MGET', self.index_name, *ids)
+    flat_fields = await self.redis.execute_command('FT.MGET', self.index_name, *ids)
     docs = []
     for id, id_flat_fields in zip(ids, flat_fields):
       if id_flat_fields is None:
@@ -50,7 +50,7 @@ class Client(redisearch.Client):
   async def search(self, query):
     args, query = self._mk_query_args(query)
     st = time.time()
-    res = await self.redis.execute(self.SEARCH_CMD, *args)
+    res = await self.redis.execute_command(self.SEARCH_CMD, *args)
     return redisearch.Result(res,
                   not query._no_content,
                   duration=(time.time() - st) * 1000.0,

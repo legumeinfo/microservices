@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir .
 
 COPY . .
 
-ENTRYPOINT ["python3", "-m", "macro_synteny_blocks"]
+ENTRYPOINT ["python3", "-u", "-m", "macro_synteny_blocks"]

@@ -21,5 +21,6 @@ async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, interme
         optionalMetrics=metrics
       ))
     return result.blocks
-  except:
+  except Exception as e:
+    print(e)
     return None

@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir .
 
 COPY . .
 
-ENTRYPOINT ["python3", "-m", "genes"]
+ENTRYPOINT ["python3", "-u", "-m", "genes"]

@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir .
 
 COPY . .
 
-ENTRYPOINT ["python3", "-m", "micro_synteny_search"]
+ENTRYPOINT ["python3", "-u", "-m", "micro_synteny_search"]

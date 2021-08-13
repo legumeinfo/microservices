@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir .
 
 COPY . .
 
-ENTRYPOINT ["python3", "-m", "chromosome_region"]
+ENTRYPOINT ["python3", "-u", "-m", "chromosome_region"]
