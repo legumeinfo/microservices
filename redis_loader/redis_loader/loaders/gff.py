@@ -114,7 +114,7 @@ gene_gff, gfa):
 
   # HACK the species to contain the strain name if given
   if strain is not None:
-    species += strain
+    species += ':' + strain
   chromosome_names = \
     transferChromosomes(redisearch_loader, genus, species, chromosome_gff)
   transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names)
