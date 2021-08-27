@@ -40,7 +40,6 @@ services:
 
   chromosome:
     build: chromosome
-    container_name: chromosome
     depends_on:
       redisearch:
         condition: service_healthy
@@ -62,7 +61,6 @@ services:
 
   chromosome_search:
     build: chromosome_search
-    container_name: chromosome_search
     depends_on:
       redisearch:
         condition: service_healthy
@@ -77,7 +75,6 @@ services:
 
   chromosome_region:
     build: chromosome_region
-    container_name: chromosome_region
     depends_on:
       redisearch:
         condition: service_healthy
@@ -99,7 +96,6 @@ services:
 
   genes:
     build: genes
-    container_name: genes
     depends_on:
       redisearch:
         condition: service_healthy
@@ -121,7 +117,6 @@ services:
 
   gene_search:
     build: gene_search
-    container_name: gene_search
     depends_on:
       redisearch:
         condition: service_healthy
@@ -136,7 +131,6 @@ services:
 
   macro_synteny_blocks:
     build: macro_synteny_blocks
-    container_name: macro_synteny_blocks
     depends_on:
       redisearch:
         condition: service_healthy
@@ -161,7 +155,6 @@ services:
 
   micro_synteny_search:
     build: micro_synteny_search
-    container_name: micro_synteny_search
     depends_on:
       redisearch:
         condition: service_healthy
@@ -183,7 +176,6 @@ services:
 
   pairwise_macro_synteny_blocks:
     build: pairwise_macro_synteny_blocks
-    container_name: pairwise_macro_synteny_blocks
     depends_on:
       redisearch:
         condition: service_healthy
@@ -198,7 +190,6 @@ services:
 
   search:
     build: search
-    container_name: search
     depends_on:
       gene_search:
         condition: service_started
