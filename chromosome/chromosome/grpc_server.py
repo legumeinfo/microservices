@@ -3,10 +3,9 @@ import grpc
 from grpc.experimental import aio
 # module
 import chromosome
-from chromosome.services import chromosome_pb2
-from chromosome.services import chromosome_pb2_grpc
-from chromosome.structures import track_pb2
-from chromosome.structures import chromosome_pb2 as chromosome_pb2_struct
+from chromosome.proto.chromosome_service.v1 import chromosome_pb2
+from chromosome.proto.chromosome_service.v1 import chromosome_pb2_grpc
+from chromosome.proto.track.v1 import track_pb2
 
 
 class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):
@@ -20,7 +19,7 @@ class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):
       # raise a gRPC NOT FOUND error
       await context.abort(grpc.StatusCode.NOT_FOUND, 'Chromosome not found')
     return chromosome_pb2.ChromosomeGetReply(
-      chromosome=chromosome_pb2_struct.Chromosome(
+      chromosome=track_pb2.Chromosome(
         length=chromosome['length'],
         track=track_pb2.Track(
           genus=chromosome['genus'],

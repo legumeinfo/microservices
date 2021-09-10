@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/chromosome.proto";
+import "track/v1/track.proto";
 
 package gcv.services;
 
@@ -16,5 +16,5 @@ message ChromosomeGetRequest {
 
 
 message ChromosomeGetReply {
-  gcv.structures.Chromosome chromosome = 1;
+  gcv.track.v1.Chromosome chromosome = 1;
 }
