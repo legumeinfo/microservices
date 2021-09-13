@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/region.proto";
+import "region/v1/region.proto";
 
 package gcv.services;
 
@@ -17,5 +17,5 @@ message ChromosomeRegionGetRequest {
 }
 
 message ChromosomeRegionGetReply {
-  gcv.structures.Region region = 1;
+  gcv.region.v1.Region region = 1;
 }

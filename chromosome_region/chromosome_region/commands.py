@@ -16,7 +16,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''Provides distutils command classes for the chromosome Python setup process.'''
+'''Provides distutils command classes for the chromosome_region Python setup process.'''
 
 
 import os
@@ -42,5 +42,5 @@ class BuildProtos(setuptools.Command):
     # there).
     from grpc_tools import command
     proto_dir = \
-      os.path.join(self.distribution.package_dir[''], 'chromosome/proto')
+      os.path.join(self.distribution.package_dir[''], 'chromosome_region/proto')
     command.build_package_protos(proto_dir)

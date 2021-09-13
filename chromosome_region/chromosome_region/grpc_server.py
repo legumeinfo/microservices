@@ -2,9 +2,9 @@
 import grpc
 from grpc.experimental import aio
 # module
-from chromosome_region.services import chromosomeregion_pb2
-from chromosome_region.services import chromosomeregion_pb2_grpc
-from chromosome_region.structures import region_pb2
+from chromosome_region.proto.chromosomeregion_service.v1 import chromosomeregion_pb2
+from chromosome_region.proto.chromosomeregion_service.v1 import chromosomeregion_pb2_grpc
+from chromosome_region.proto.region.v1 import region_pb2
 
 
 class ChromosomeRegion(chromosomeregion_pb2_grpc.ChromosomeRegionServicer):
