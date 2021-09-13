@@ -2,9 +2,9 @@
 import grpc
 from grpc.experimental import aio
 # module
-from pairwise_macro_synteny_blocks.services import pairwisemacrosyntenyblocks_pb2
-from pairwise_macro_synteny_blocks.services import pairwisemacrosyntenyblocks_pb2_grpc
-from pairwise_macro_synteny_blocks.structures import block_pb2
+from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
+from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+from pairwise_macro_synteny_blocks.proto.block.v1 import block_pb2
 
 
 class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMacroSyntenyBlocksServicer):
