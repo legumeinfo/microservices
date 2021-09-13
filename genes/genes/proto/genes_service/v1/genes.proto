@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/gene.proto";
+import "gene/v1/gene.proto";
 
 package gcv.services;
 
@@ -16,5 +16,5 @@ message GenesGetRequest {
 
 
 message GenesGetReply {
-  repeated gcv.structures.Gene genes = 1;
+  repeated gcv.gene.v1.Gene genes = 1;
 }
