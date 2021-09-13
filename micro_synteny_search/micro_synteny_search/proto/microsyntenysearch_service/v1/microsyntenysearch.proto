@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/microtrack.proto";
+import "track/v1/track.proto";
 
 package gcv.services;
 
@@ -18,5 +18,5 @@ message MicroSyntenySearchRequest {
 
 
 message MicroSyntenySearchReply {
-  repeated gcv.structures.MicroTrack tracks = 1;
+  repeated gcv.track.v1.MicroTrack tracks = 1;
 }
