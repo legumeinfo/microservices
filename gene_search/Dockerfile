@@ -12,6 +12,6 @@ COPY gene_search/ ./gene_search/
 
 RUN pip install --no-cache-dir .
 
-COPY . .
+WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "gene_search"]

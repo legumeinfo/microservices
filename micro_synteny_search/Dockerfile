@@ -12,6 +12,6 @@ COPY micro_synteny_search/ ./micro_synteny_search/
 
 RUN pip install --no-cache-dir .
 
-COPY . .
+WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "micro_synteny_search"]

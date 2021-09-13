@@ -12,6 +12,6 @@ COPY pairwise_macro_synteny_blocks/ ./pairwise_macro_synteny_blocks/
 
 RUN pip install --no-cache-dir .
 
-COPY . .
+WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "pairwise_macro_synteny_blocks"]

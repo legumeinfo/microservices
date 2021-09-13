@@ -28,24 +28,20 @@ build_proto_command = 'build_proto'
 
 try:
   # these imports will fail unless in the build environment
-  from distutils.command.build import build
+  from setuptools.command.build_py import build_py
   from chromosome import commands
 
-  class Build(build):
-    '''Custom build command.'''
+  class BuildPy(build_py):
+    '''Custom build_py command class.'''
 
-    def has_protos(self):
-      # TODO: update to actually check proto files exist
-      return True
-
-    # prepend build_proto because it generates .py files that build_py will
-    # install
-    sub_commands =  [(build_proto_command, has_protos)] + build.sub_commands
+    def run(self):
+      self.run_command(build_proto_command)
+      build_py.run(self)
 
   SETUP_REQUIRES = ('grpcio-tools>=1.39,<2',)
   COMMAND_CLASS = {
     build_proto_command: commands.BuildProtos,
-    'build': Build
+    'build_py': BuildPy
   }
 except ImportError:
   SETUP_REQUIRES = ()

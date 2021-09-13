@@ -12,6 +12,6 @@ COPY macro_synteny_blocks/ ./macro_synteny_blocks/
 
 RUN pip install --no-cache-dir .
 
-COPY . .
+WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "macro_synteny_blocks"]

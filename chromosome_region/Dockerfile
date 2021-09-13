@@ -12,6 +12,6 @@ COPY chromosome_region/ ./chromosome_region/
 
 RUN pip install --no-cache-dir .
 
-COPY . .
+WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "chromosome_region"]
