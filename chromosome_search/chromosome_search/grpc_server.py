@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from chromosome_search.services import chromosomesearch_pb2
-from chromosome_search.services import chromosomesearch_pb2_grpc
+from chromosome_search.proto.chromosomesearch_service.v1 import chromosomesearch_pb2
+from chromosome_search.proto.chromosomesearch_service.v1 import chromosomesearch_pb2_grpc
 
 
 class ChromosomeSearch(chromosomesearch_pb2_grpc.ChromosomeSearchServicer):
