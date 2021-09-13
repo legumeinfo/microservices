@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from macro_synteny_blocks.services import pairwisemacrosyntenyblocks_pb2
-from macro_synteny_blocks.services import pairwisemacrosyntenyblocks_pb2_grpc
+from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
+from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
 
 
 async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, address):

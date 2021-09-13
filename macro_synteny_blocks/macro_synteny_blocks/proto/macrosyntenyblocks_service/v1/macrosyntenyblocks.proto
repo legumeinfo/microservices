@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/block.proto";
+import "block/v1/block.proto";
 
 package gcv.services;
 
@@ -21,5 +21,5 @@ message MacroSyntenyBlocksComputeRequest {
 
 
 message MacroSyntenyBlocksComputeReply {
-  repeated gcv.structures.Blocks blocks = 1;
+  repeated gcv.block.v1.Blocks blocks = 1;
 }

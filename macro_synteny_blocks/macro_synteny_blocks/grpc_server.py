@@ -2,8 +2,8 @@
 import grpc
 from grpc.experimental import aio
 # module
-from macro_synteny_blocks.services import macrosyntenyblocks_pb2
-from macro_synteny_blocks.services import macrosyntenyblocks_pb2_grpc
+from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2
+from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2_grpc
 
 
 class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer):
