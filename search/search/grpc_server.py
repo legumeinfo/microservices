@@ -1,8 +1,8 @@
 # dependencies
 from grpc.experimental import aio
 # module
-from search.services import search_pb2
-from search.services import search_pb2_grpc
+from search.proto.search_service.v1 import search_pb2
+from search.proto.search_service.v1 import search_pb2_grpc
 
 
 class Search(search_pb2_grpc.SearchServicer):

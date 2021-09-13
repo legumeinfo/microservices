@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "structures/region.proto";
+import "region/v1/region.proto";
 
 package gcv.services;
 
@@ -17,5 +17,5 @@ message SearchRequest {
 
 message SearchReply {
   repeated string genes = 1;
-  repeated gcv.structures.Region regions = 2;
+  repeated gcv.region.v1.Region regions = 2;
 }
