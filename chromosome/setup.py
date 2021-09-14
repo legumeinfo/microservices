@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+# Python
 import setuptools
+from setuptools.command.build_py import build_py
+# package
+from chromosome import commands
 
 
 PACKAGE_DIRECTORIES = {
@@ -7,47 +11,25 @@ PACKAGE_DIRECTORIES = {
 }
 
 
-class NoOpCommand(setuptools.Command):
-  '''No operation command.'''
-
-  description = ''
-  user_options = []
-
-  def initialize_options(self):
-      pass
-
-  def finalize_options(self):
-      pass
-
-  def run(self):
-      pass
+COMMAND_CLASS = {}
 
 
 build_proto_command = 'build_proto'
 
 
-try:
-  # these imports will fail unless in the build environment
-  from setuptools.command.build_py import build_py
-  from chromosome import commands
+class BuildPy(build_py):
+  '''Custom build_py command class.'''
 
-  class BuildPy(build_py):
-    '''Custom build_py command class.'''
+  def run(self):
+    build_py.run(self)
+    self.run_command(build_proto_command)
 
-    def run(self):
-      self.run_command(build_proto_command)
-      build_py.run(self)
 
-  SETUP_REQUIRES = ('grpcio-tools>=1.39,<2',)
-  COMMAND_CLASS = {
-    build_proto_command: commands.BuildProtos,
-    'build_py': BuildPy
-  }
-except ImportError:
-  SETUP_REQUIRES = ()
-  COMMAND_CLASS = {
-    build_proto_command: NoOpCommand,
-  }
+SETUP_REQUIRES = ('grpcio-tools>=1.39,<2',)
+COMMAND_CLASS = {
+  build_proto_command: commands.BuildProtos,
+  'build_py': BuildPy
+}
 
 
 setuptools.setup(
