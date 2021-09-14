@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv.services;
+package legumeinfo.microservices.chromosomesearch_service.v1;
 
 
 service ChromosomeSearch {

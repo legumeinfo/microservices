@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "gene/v1/gene.proto";
 
-package gcv.services;
+package legumeinfo.microservices.genes_service.v1;
 
 
 service Genes {
@@ -16,5 +16,5 @@ message GenesGetRequest {
 
 
 message GenesGetReply {
-  repeated gcv.gene.v1.Gene genes = 1;
+  repeated legumeinfo.microservices.gene.v1.Gene genes = 1;
 }

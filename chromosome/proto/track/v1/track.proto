@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv.track.v1;
+package legumeinfo.microservices.track.v1;
 
 
 message Track {

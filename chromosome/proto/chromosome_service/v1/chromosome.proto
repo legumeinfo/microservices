@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "track/v1/track.proto";
 
-package gcv.services;
+package legumeinfo.microservices.chromosome_service.v1;
 
 
 service Chromosome {
@@ -16,5 +16,5 @@ message ChromosomeGetRequest {
 
 
 message ChromosomeGetReply {
-  gcv.track.v1.Chromosome chromosome = 1;
+  legumeinfo.microservices.track.v1.Chromosome chromosome = 1;
 }

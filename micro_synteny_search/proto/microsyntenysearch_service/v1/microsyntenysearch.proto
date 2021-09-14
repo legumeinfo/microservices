@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "track/v1/track.proto";
 
-package gcv.services;
+package legumeinfo.microservices.microsyntenysearch_service.v1;
 
 
 service MicroSyntenySearch {
@@ -18,5 +18,5 @@ message MicroSyntenySearchRequest {
 
 
 message MicroSyntenySearchReply {
-  repeated gcv.track.v1.MicroTrack tracks = 1;
+  repeated legumeinfo.microservices.track.v1.MicroTrack tracks = 1;
 }

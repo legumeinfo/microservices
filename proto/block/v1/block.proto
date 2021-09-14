@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv.block.v1;
+package legumeinfo.microservices.block.v1;
 
 
 message Blocks {

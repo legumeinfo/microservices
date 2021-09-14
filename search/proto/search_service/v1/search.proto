@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "region/v1/region.proto";
 
-package gcv.services;
+package legumeinfo.microservices.search_service.v1;
 
 
 service Search {
@@ -17,5 +17,5 @@ message SearchRequest {
 
 message SearchReply {
   repeated string genes = 1;
-  repeated gcv.region.v1.Region regions = 2;
+  repeated legumeinfo.microservices.region.v1.Region regions = 2;
 }

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gcv.region.v1;
+package legumeinfo.microservices.region.v1;
 
 
 message Region {

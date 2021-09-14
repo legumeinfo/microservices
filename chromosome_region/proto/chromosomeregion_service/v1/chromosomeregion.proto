@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "region/v1/region.proto";
 
-package gcv.services;
+package legumeinfo.microservices.chromosomeregion_service.v1;
 
 
 service ChromosomeRegion {
@@ -17,5 +17,5 @@ message ChromosomeRegionGetRequest {
 }
 
 message ChromosomeRegionGetReply {
-  gcv.region.v1.Region region = 1;
+  legumeinfo.microservices.region.v1.Region region = 1;
 }
