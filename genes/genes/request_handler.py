@@ -12,7 +12,7 @@ class RequestHandler:
     return {
       'name': gene_doc.name,
       'chromosome': gene_doc.chromosome,
-      'family': gene_doc.family,
+      'family': gene_doc.family or '',
       'fmin': int(gene_doc.fmin),
       'fmax': int(gene_doc.fmax),
       'strand': int(gene_doc.strand),
