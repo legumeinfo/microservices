@@ -1,6 +1,6 @@
-# Genome Context Viewer Redis loader
+# Redis Loader
 
-The microservices that support the GCV client are built on a [Redis](https://redis.io/) database equipped with the [RediSearch](https://oss.redislabs.com/redisearch/) module.
+Various microservices are built on a [Redis](https://redis.io/) database equipped with the [RediSearch](https://oss.redislabs.com/redisearch/) module.
 This directory contains a program for loading data into Redis from GFF files or a PostgreSQL database configured with the [Chado](http://gmod.org/wiki/Chado_-_Getting_Started) schema.
 
 ## Setup

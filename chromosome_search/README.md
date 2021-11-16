@@ -1,4 +1,4 @@
-# Genome Context Viewer chromosome search microservice
+# Chromosome Search Microservice
 
 This directory contains the chromosome search microservice.
 This microservice takes a query and returns chromosome names that are similar to the given query.

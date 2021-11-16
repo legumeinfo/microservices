@@ -1,45 +1,19 @@
-# GCV Microservices
-This repository contains a microservices implementation of the
-[Genome Context Viewer](https://github.com/legumeinfo/gcv/)
-[services API](https://github.com/legumeinfo/gcv/wiki/Services-API-v2).
+# Legumeinfo Microservices
+This repository contains microservices developed and maintained by the Legume Information System to support the [Legumeinfo website](https://legumeinfo.org/) as well as the various apps developed and maintained by the group.
+Each subdirectory contains a different microservice, with the exception of the `proto/` directory, which contains [Protocol Buffers](https://developers.google.com/protocol-buffers) that define common data types used by one or more of the microservices.
+See the `proto/` directory for more information about using these Protocol Buffers.
 
+## Usage
+Each microservice is distributed as a Docker image via the GitHub container registry.
+Unless you are a developer, we recommend using these prebuilt images rather trying to compile and run microservices yourself.
+Additionally, if you are using microservices that depend on other microservices, we especially recommend using a tool for deploying multi-container applications, such as [Docker Compose](https://docs.docker.com/compose/) or [Kubernetes](https://kubernetes.io/).
 
-## Setup
-Due to intercommunication between microservices, the need for a proxy server to
-serve gRPC Web requests, and the total number of microservices, we highly
-recommend using the provided Docker Compose files to setup and run the
-microservices.
-See each microservice's directory for instructions on how to setup that
-specific microservice without Docker.
+Some containers support [gRPC](https://grpc.io/).
+If you wish to communicate with these containers from a Web client using gRPC Web, then you must use a proxy that supports gRPC Web request, such as [Envoy Proxy](https://www.envoyproxy.io/).
 
-### Docker Compose
-Use the following command to setup and run the microservices locally for
-development
+**See the [Genome Context Viewer repository](https://github.com/legumeinfo/gcv/tree/main/microservices) for an example of deploying Legumeinfo microservices using Docker Compose, Envoy Proxy, and Traefik.**
+The example configures microservices to communicate and supports gRPC Web requests.
 
-    $ docker-compose up
-
-The services can be brought down locally as follows
-
-    $ docker-compose down
-
-Use the following command to setup and run the microservices in production
-
-    $ docker-compose -f ./docker-compose.prod.yml up
-
-The services can be brought down in production with
-
-    $ docker-compose -f ./docker-compose.prod.yml up
-
-Refer to the [Docker Compose documentation](https://docs.docker.com/compose/)
-for further information and how to use Docker Compose.
-
-
-## Loading Data
-The microservices depend on a [Redis](https://redis.io/) database; see the
-[Wiki](https://github.com/legumeinfo/gcv-microservices/wiki/Redis-Schema)
-for a description of the schema.
-Data can be loaded into the Redis database from a
-[Chado](http://gmod.org/wiki/Chado_-_Getting_Started) database (PostgreSQL) or
-from [GFF](https://en.wikipedia.org/wiki/General_feature_format) and
-[FASTA](https://en.wikipedia.org/wiki/FASTA_format) files; see the `database/`
-directory for details.
+## Development
+See the directories of microservices you wish to compile manually for instructions on doing so.
+Generally, we recommend still using a solution like Docker Compose to orchestrate container building and cross-talk, even during development.

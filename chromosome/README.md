@@ -1,4 +1,4 @@
-# Genome Context Viewer chromosome microservice
+# Chromosome Microservice
 
 This directory contains the chromosome microservice.
 This microservice takes a chromosome name and returns the chromosome object that corresponds to the name.

@@ -1,4 +1,4 @@
-# Genome Context Viewer chromosome region microservice
+# Chromosome Region Microservice
 
 This directory contains the chromosome region microservice.
 This microservice takes a chromosome name and a region and returns the name of the gene at the center of the region and the number of genes that flank it.

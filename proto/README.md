@@ -1,3 +1,5 @@
+# Protocol Buffers
+
 This directory contains `.proto` files ([Protocol Buffers](https://developers.google.com/protocol-buffers)) that define structured data types that may be used by the microservices in this repository and the clients that interact with them.
 Each `.proto` file is individually versioned (i.e. MAJOR.MINOR.PATCH) to allow microservices to use old and new versions of various data types simultaneously.
 As such, each `.proto` file should be self contained and not import types from other `.proto` files, meaning related types should be contained within a single `.proto` file.

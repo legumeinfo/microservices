@@ -1,4 +1,4 @@
-# Genome Context Viewer macro-synteny blocks microservice
+# Macro-Synteny Blocks Microservice
 
 This directory contains the macro-synteny blocks microservice.
 This microservice takes a chromosome as an ordered list of functional annotations and returns a set of synteny blocks computed on-demand from chromosome in the database.

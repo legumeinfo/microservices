@@ -1,4 +1,4 @@
-# Genome Context Viewer genes microservice
+# Genes Microservice
 
 This directory contains the genes microservice.
 This microservice takes a list of gene names and returns the gene objects corresponding to the names.

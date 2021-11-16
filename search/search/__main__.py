@@ -33,7 +33,7 @@ def parseArgs():
   # create the parser
   parser = argparse.ArgumentParser(
     prog=search.__name__,
-    description='A microservice for resolving GCV search queries.',
+    description='A microservice for resolving search queries.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument(
     '--version',

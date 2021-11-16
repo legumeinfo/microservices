@@ -1,4 +1,4 @@
-# Genome Context Viewer micro-synteny search microservice
+# Micro-Synteny Search Microservice
 
 This directory contains the micro-synteny search microservice.
 This microservice takes a track as an ordered list of functional annotations and returns tracks that have similar annotation content.

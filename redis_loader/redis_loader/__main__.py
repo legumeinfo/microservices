@@ -82,7 +82,7 @@ def parseArgs():
   parser = argparse.ArgumentParser(
     prog=redis_loader.__name__,
     description=('Loads data from a Chado (PostreSQL) database or GFF files '
-                'into a RediSearch index for use by GCV microservices.'),
+                'into a RediSearch index for use by microservices.'),
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument(
     '--version',

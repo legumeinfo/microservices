@@ -1,4 +1,4 @@
-# Genome Context Viewer pairwise macro-synteny blocks microservice
+# Pairwise Macro-Synteny Blocks Microservice
 
 This directory contains the pairwise macro-synteny blocks microservice.
 This microservice takes a chromosome as an ordered list of functional annotations and the identifier of a chromosome in the database and returns a set of synteny blocks computed on-demand between the given chromosome and the chromosome in the database.

@@ -1,4 +1,4 @@
-# Genome Context Viewer gene search microservice
+# Gene Search Microservice
 
 This directory contains the gene search microservice.
 This microservice takes a query and returns gene names that are similar to the given query.
