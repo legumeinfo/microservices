@@ -3,13 +3,23 @@ name: Build container image on microservice release
 on:
   push:
     tags:
-      - '**'
+      - 'chromosome@v[0-9]+.[0-9]+.[0-9]+'
+      - 'chromosome_region@v[0-9]+.[0-9]+.[0-9]+'
+      - 'chromosome_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'gene_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'genes@v[0-9]+.[0-9]+.[0-9]+'
+      - 'macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
+      - 'micro_synteny_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'pairwise_macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
+      - 'redis_loader@v[0-9]+.[0-9]+.[0-9]+'
+      - 'search@v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io
 
 jobs:
   build-and-push-image:
+    name: 'Microservice Docker image build and push'
     runs-on: ubuntu-20.04
 
     steps:
@@ -33,7 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/microservice-${{ env.MICROSERVICE }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/microservices-${{ env.MICROSERVICE }}
           tags: |
             type=match,pattern=[^@]+@v(\d+),group=1
             type=match,pattern=[^@]+@v(\d+\.\d+),group=1
