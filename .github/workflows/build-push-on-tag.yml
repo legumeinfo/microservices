@@ -1,0 +1,58 @@
+name: Build container image on microservice release
+
+on:
+  push:
+    tags:
+      - 'chromosome@v[0-9]+.[0-9]+.[0-9]+'
+      - 'chromosome_region@v[0-9]+.[0-9]+.[0-9]+'
+      - 'chromosome_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'gene_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'genes@v[0-9]+.[0-9]+.[0-9]+'
+      - 'macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
+      - 'micro_synteny_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'pairwise_macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
+      - 'redis_loader@v[0-9]+.[0-9]+.[0-9]+'
+      - 'search@v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push-image:
+    name: 'Microservice Docker image build and push'
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse tag & set IMAGE_NAME and TAG environment variables
+        run: |
+          MICROSERVICE=${GITHUB_REF##*/}
+          MICROSERVICE=${MICROSERVICE%@*}
+          echo "MICROSERVICE=${MICROSERVICE}" >> $GITHUB_ENV
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/microservices-${{ env.MICROSERVICE }}
+          tags: |
+            type=match,pattern=[^@]+@v(\d+),group=1
+            type=match,pattern=[^@]+@v(\d+\.\d+),group=1
+            type=match,pattern=[^@]+@v(.*),group=1
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./${{ env.MICROSERVICE }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
