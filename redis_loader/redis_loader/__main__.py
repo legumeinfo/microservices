@@ -3,7 +3,6 @@
 # Python
 import argparse
 import os
-import pathlib
 from collections import defaultdict
 # module
 import redis_loader
@@ -278,7 +277,6 @@ def parseArgs():
     required=True,
     action=EnvAction,
     envvar=gffgene_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
     help=('The GFF file containing gene records (can also be specified using '
          f'the {gffgene_envvar} environment variable).'))
@@ -289,7 +287,6 @@ def parseArgs():
     required=True,
     action=EnvAction,
     envvar=gffchr_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
     help=('The GFF file containing chromosome/supercontig records (can also be '
          f'specified using the {gffchr_envvar} environment variable).'))
@@ -299,7 +296,6 @@ def parseArgs():
     required=True,
     action=EnvAction,
     envvar=gfa_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
     help=('The GFA file containing gene-gene family associations (can also be '
          f'specified using the {gfa_envvar} environment variable).'))
