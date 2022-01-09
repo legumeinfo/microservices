@@ -278,7 +278,7 @@ def parseArgs():
     action=EnvAction,
     envvar=gffgene_envvar,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFF file containing gene records (can also be specified using '
+    help=('The GFF(.gz) file containing gene records (can also be specified using '
          f'the {gffgene_envvar} environment variable).'))
   gffchr_envvar = 'CHROMOSOME_GFF_FILE'
   gff_parser.add_argument(
@@ -288,7 +288,7 @@ def parseArgs():
     action=EnvAction,
     envvar=gffchr_envvar,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFF file containing chromosome/supercontig records (can also be '
+    help=('The GFF(.gz) file containing chromosome/supercontig records (can also be '
          f'specified using the {gffchr_envvar} environment variable).'))
   gfa_envvar = 'GFA_FILE'
   gff_parser.add_argument(
@@ -297,7 +297,7 @@ def parseArgs():
     action=EnvAction,
     envvar=gfa_envvar,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFA file containing gene-gene family associations (can also be '
+    help=('The GFA(.gz) file containing gene-gene family associations (can also be '
          f'specified using the {gfa_envvar} environment variable).'))
 
   return parser.parse_args()
