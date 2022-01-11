@@ -83,7 +83,8 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
           gene_lookup[gffgene.id] = gene
           chromosome_genes[chr_name].append(gene)
   # deal with family assignments (for non-orphans) from GFA
-  with (open(gfa, 'rb') if urlparse(gfa).scheme == '' else urlopen(gfa)) as fileobj:
+  with (open(gfa, 'rb') if urlparse(gfa).scheme == ''
+                        else urlopen(gfa)) as fileobj:
     tsv = gzip.GzipFile(fileobj=fileobj) if gfa.endswith("gz") else fileobj
     for line in csv.reader(codecs.iterdecode(tsv, 'utf-8'), delimiter="\t"):
       # skip comment and metadata lines
