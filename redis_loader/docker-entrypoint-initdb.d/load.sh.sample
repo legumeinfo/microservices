@@ -5,7 +5,7 @@ set -o errexit -o pipefail
 wget -O - https://data.legumeinfo.org/Medicago/truncatula/genomes/R108_HM340.gnm1.XT6J/medtr.R108_HM340.gnm1.XT6J.genome_main.fna.gz.fai |
   awk ' BEGIN { FS=OFS="\t"; print "##gff-version 3" }
         { 
-            print $1, ".", $1 ~ /scaffold/ ? "supercontig" : "chromosome", 
+            print $1, ".", $1 ~ /\.scf/ ? "supercontig" : "chromosome", 
                    1, $2, ".", ".", ".", "ID=" $1 ";" "Name=" $1 
         }' | 
     python -u -m redis_loader --load-type append gff \
