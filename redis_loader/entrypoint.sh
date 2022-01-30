@@ -18,4 +18,7 @@ then
   cd -
 fi
 
-[ $# -gt 0 ] && python -u -m redis_loader "$@"
+if [ $# -gt 0 ] 
+then
+  python -u -m redis_loader "$@"
+fi
