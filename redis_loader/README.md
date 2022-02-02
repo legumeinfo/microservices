@@ -29,7 +29,7 @@ The script loads data into Redis from GFF files or a Chado (PostgreSQL) database
 The credentials for Redis and the different data sources can be set via command line flags or via environment variables.
 The Redis credentials can be provided via the `REDIS_DB`, `REDIS_PASSWORD`, `REDIS_HOST`, and `REDIS_PORT` environment variables.
 The GFF credits can be provided via the `GENUS`, `SPECIES`, `STRAIN`, `GENE_GFF_FILE`, `CHROMOSOME_GFF_FILE`, and `GFA_FILE` environment variables.
-And the Chaddo (PostgreSQL) database credentials can be provided via the `POSTGRES_DATABASE`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT` environment variables.
+And the Chado (PostgreSQL) database credentials can be provided via the `POSTGRES_DATABASE`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT` environment variables.
 
 The loading script can be run as follows
 
@@ -42,3 +42,7 @@ For more information about the script and additional commands and arguments, run
 If the program was built as a docker container, it can be run as follows
 
     $ docker run redis_loader
+
+Any `*.sh` scripts in the container /docker-entrypoint-initdb.d directory will be processed if the `REDIS_DB` (default 0) at `REDIS_HOST` (default 'localhost') on port `REDIS_PORT` (default 6379) is empty:
+
+    $ docker run -e REDIS_HOST=my-redis-db-host -v $PWD/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d redis_loader
