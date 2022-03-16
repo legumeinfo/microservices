@@ -80,10 +80,15 @@ class RequestHandler:
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
     # get all chromosome names if no targets are specified
     targets = await self._getTargets(targets, chromosome_index)
-    # compute blocks for each chromosome
+    # get the number of genes on each target chromosome
+    pipeline = self.redis_connection.pipeline()
+    for name in targets:
+      pipeline.llen(f'chromosome:{name}:genes')
+    target_gene_counts = await pipeline.execute()
+    # compute blocks for each chromosome that is large enough
     target_blocks = await asyncio.gather(*[
         self._computePairwiseBlocks(chromosome, name, matched, intermediate, mask, metrics, chromosome_index, grpc_decode)
-        for name in targets
+        for i, name in enumerate(targets) if target_gene_counts[i] >= matched
       ])
     # remove the targets that didn't return any blocks
     filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
