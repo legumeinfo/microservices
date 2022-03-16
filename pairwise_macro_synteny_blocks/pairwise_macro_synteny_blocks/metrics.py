@@ -1,8 +1,10 @@
 from array import array
 from itertools import chain
+from collections import Counter
 
 
-def jaccard(a, b, n=1, reversals=False):
+def jaccard(a, b, n=1, reversals=False, multiset=False):
+
   # parse args that may have come from string
   if isinstance(n, str):
     n = int(n)
@@ -31,12 +33,25 @@ def jaccard(a, b, n=1, reversals=False):
 
   # convert n-gram lists to id sets
   def gramID(g): return ids[g]
-  sa = set(map(gramID, na))
-  sb = set(map(gramID, nb))
+  aIDs, bIDs = map(gramID, na), map(gramID, nb)
 
-  # compute the metric
-  return 1-len(sa & sb)/len(sa | sb)
+# generate a count map for each list
+  def multiSet(l):
+    if not multiset:
+      return Counter({e:1 for e in l})
+    return Counter(l)
+  sa, sb = multiSet(aIDs), multiSet(bIDs)
 
+  # compute the Jaccard index
+  intersection = sa & sb
+  union = sa | sb
+  numerator = sum(intersection.values())
+  denominator = sum(union.values())
+  if denominator == 0:
+    denominator = 1
+
+  # return the distance
+  return 1-numerator/denominator
 
 def levenshtein(a, b):
 
