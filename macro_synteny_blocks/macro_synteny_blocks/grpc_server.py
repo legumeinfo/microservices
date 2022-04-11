@@ -18,12 +18,13 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
     mask = request.mask
     targets = request.targets
     metrics = request.optionalMetrics
+    min_chromosome_genes = request.optionalChromosomeGenes
     try:
-      self.handler.parseArguments(chromosome, matched, intermediate, mask, targets, metrics)
+      self.handler.parseArguments(chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes)
     except:
       # raise a gRPC INVALID ARGUMENT error
       await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or given arguments have invalid values')
-    blocks = await self.handler.process(chromosome, matched, intermediate, mask, targets, metrics)
+    blocks = await self.handler.process(chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes)
     return macrosyntenyblocks_pb2.MacroSyntenyBlocksComputeReply(blocks=blocks)
 
 

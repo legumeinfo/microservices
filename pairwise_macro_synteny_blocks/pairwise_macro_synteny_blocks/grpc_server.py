@@ -19,12 +19,13 @@ class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMac
     intermediate = request.intermediate
     mask = request.mask
     metrics = request.optionalMetrics
+    min_chromosome_genes = request.optionalChromosomeGenes
     try:
-      self.handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics)
+      self.handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes)
     except:
       # raise a gRPC INVALID ARGUMENT error
       await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or given arguments have invalid values')
-    blocks = await self.handler.process(chromosome, target, matched, intermediate, mask, metrics)
+    blocks = await self.handler.process(chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes)
     if blocks is None:
       # raise a gRPC NOT FOUND error
       await context.abort(grpc.StatusCode.NOT_FOUND, 'Chromosome not found')

@@ -5,7 +5,7 @@ from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pai
 from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
 
 
-async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, address):
+async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, address):
   # fetch channel every time to support dynamic services
   channel = aio.insecure_channel(address)
   await channel.channel_ready()
@@ -18,7 +18,8 @@ async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, interme
         matched=matched,
         intermediate=intermediate,
         mask=mask,
-        optionalMetrics=metrics
+        optionalMetrics=metrics,
+        optionalChromosomeGenes=min_chromosome_genes
       ))
     return result.blocks
   except Exception as e:
