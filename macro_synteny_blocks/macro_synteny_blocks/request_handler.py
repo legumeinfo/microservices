@@ -13,22 +13,23 @@ class RequestHandler:
     self.redis_connection = redis_connection
     self.pairwise_address = pairwise_address
 
-  def parseArguments(self, chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes):
+  def parseArguments(self, chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromosome_length):
     iter(chromosome)  # TypeError if not iterable
     iter(targets)  # TypeError if not iterable
     iter(metrics)  # TypeError if not iterable
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
     min_chromosome_genes = int(min_chromosome_genes) #ValueError
-    if matched <= 0 or intermediate <= 0 or min_chromosome_genes <= 0:
-      raise ValueError('matched, intermediate, min_chromosome_genes,must be positive')
+    min_chromosome_length = int(min_chromosome_length) #ValueError
+    if matched <= 0 or intermediate <= 0 or min_chromosome_genes <= 0 or min_chromosome_length <= 0:
+      raise ValueError('matched, intermediate, min_chromosome_genes, min_chromosome_length must be positive')
     if mask is not None:
       mask = int(mask)
       if mask <= 0:
         raise ValueError('mask must be positive')
     else:
       mask = float('inf')
-    return chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes
+    return chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromosome_length
 
   def _grpcBlockToDictBlock(self, grpc_block):
     dict_block = {
@@ -42,7 +43,7 @@ class RequestHandler:
       dict_block['optionalMetrics'] = list(grpc_block.optionalMetrics)
     return dict_block
 
-  async def _getTargets(self, targets, min_chromosome_genes, chromosome_index):
+  async def _getTargets(self, targets, min_chromosome_genes, min_chromosome_length, chromosome_index):
     if targets:
       return targets
     # count how many chromosomes there are

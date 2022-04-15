@@ -18,6 +18,7 @@ message PairwiseMacroSyntenyBlocksComputeRequest {
   optional uint32 mask = 5;
   repeated string optionalMetrics = 6;
   optional uint32 optionalChromosomeGenes = 7;
+  optional uint32 optionalChromosomeLength = 8;
 }
 
 
