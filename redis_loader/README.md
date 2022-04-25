@@ -6,7 +6,7 @@ This directory contains a program for loading data into Redis from GFF files or 
 ## Setup
 
 redis_loader requires running a Redis server with the RediSearch module loaded.
-See [RediSearch's quickstart](https://oss.redislabs.com/redisearch/Quick_Start/) for installation instructions.
+See [RediSearch's quickstart](https://oss.redislabs.com/redisearch/Quick_Start/) for installation instructions. By default, Redis is configured to automatically backup to disk whenever the database changes. However, this may cause issues if you're repeatedly running redis_loader (e.g. running in a bash script to bulk load several GFF files). To avoid any such problems, we recommend running Redis with the ` --save ""` flag, which disables its automatic background saving (see the [Redis config documentation](https://redis.io/docs/manual/config/) for other methods of changing this setting). Changes to the database can still be saved to disk by explicitly calling the Redis [SAVE command](https://redis.io/commands/save/), which redis_loader does by default (disable this behavior with the `--no-save` flag). **Using these flags is how to effectively implement transactional loading, i.e. if a load fails the changes will not be written to disk, though the database in memory will need to be reloaded to purge the partial changes.**
 
 redis_loader is currently not available via pip so it must be built locally.
 We recommend installing redis_loader in a [Python Virtual Environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) to avoid conflicts with other package managers and Python projects.
