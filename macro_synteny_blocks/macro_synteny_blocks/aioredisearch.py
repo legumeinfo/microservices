@@ -1,6 +1,7 @@
 # Python
 import time
 # dependencies
+import aioredis
 import redisearch
 import six
 
@@ -47,12 +48,21 @@ class Client(redisearch.Client):
         docs.append(doc)
     return docs
 
-  async def search(self, query):
-    args, query = self._mk_query_args(query)
-    st = time.time()
-    res = await self.redis.execute_command(self.SEARCH_CMD, *args)
+  def search_result(self, query, res, st=time.time()):
     return redisearch.Result(res,
                   not query._no_content,
                   duration=(time.time() - st) * 1000.0,
                   has_payload=query._with_payloads,
                   with_scores=query._with_scores)
+
+  # unlike RediSearch search, this implementation returns the unparsed result if
+  # the Redis client is a pipeline, i.e. the result will be the pipeline itself.
+  # After the pipeline executes, the individual results can be converted to
+  # Results via the search_result method
+  async def search(self, query):
+    args, query = self._mk_query_args(query)
+    st = time.time()
+    res = await self.redis.execute_command(self.SEARCH_CMD, *args)
+    if isinstance(self.redis, aioredis.client.Pipeline):
+      return res
+    return self.search_result(query, res, st)

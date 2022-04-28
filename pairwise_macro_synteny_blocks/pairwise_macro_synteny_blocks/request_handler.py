@@ -152,7 +152,7 @@ class RequestHandler:
     num_genes = await self.redis_connection.llen(f'{target_doc_id}:genes')
     
     # exit if there are less genes than the min_chromosome_genes optional metric
-    if num_genes < min_chromosome_genes
+    if num_genes < min_chromosome_genes:
       return []
 
     # exit if there aren't enough genes to construct even a single block

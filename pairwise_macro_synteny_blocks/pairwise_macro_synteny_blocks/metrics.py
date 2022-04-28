@@ -36,10 +36,10 @@ def jaccard(a, b, n=1, reversals=False, multiset=False):
   aIDs, bIDs = map(gramID, na), map(gramID, nb)
 
   # generate a count map for each list
-  def multiSet(1):
+  def multiSet(l):
     if not multiset:
-      return Counter({e:1 for e in 1})
-    return Counter(1)
+      return Counter({e:1 for e in l})
+    return Counter(l)
   sa, sb = multiSet(aIDs), multiSet(bIDs)
 
   # compute the Jaccard index
@@ -52,7 +52,8 @@ def jaccard(a, b, n=1, reversals=False, multiset=False):
 
   # return the distance
   return 1-numerator/denominator
-  
+
+
 def levenshtein(a, b):
 
   if a == b: return 0
