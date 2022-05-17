@@ -14,21 +14,23 @@ class RequestHandler:
     self.redis_connection = redis_connection
     self.pairwise_address = pairwise_address
 
-  def parseArguments(self, chromosome, matched, intermediate, mask, targets, metrics):
+  def parseArguments(self, chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromosome_length):
     iter(chromosome)  # TypeError if not iterable
     iter(targets)  # TypeError if not iterable
     iter(metrics)  # TypeError if not iterable
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
-    if matched <= 0 or intermediate <= 0:
-      raise ValueError('matched and intermediate must be positive')
+    min_chromosome_genes = int(min_chromosome_genes) #ValueError
+    min_chromosome_length = int(min_chromosome_length) #ValueError
+    if matched <= 0 or intermediate <= 0 or min_chromosome_genes <= 0 or min_chromosome_length <= 0:
+      raise ValueError('matched, intermediate, min_chromosome_genes, min_chromosome_length must be positive')
     if mask is not None:
       mask = int(mask)
       if mask <= 0:
         raise ValueError('mask must be positive')
     else:
       mask = float('inf')
-    return chromosome, matched, intermediate, mask, targets, metrics
+    return chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromosome_length
 
   def _grpcBlockToDictBlock(self, grpc_block):
     dict_block = {
@@ -41,6 +43,7 @@ class RequestHandler:
     if grpc_block.optionalMetrics:
       dict_block['optionalMetrics'] = list(grpc_block.optionalMetrics)
     return dict_block
+
 
   async def _getTargets(self, targets, chromosome, matched, intermediate):
 
@@ -129,9 +132,9 @@ class RequestHandler:
     return filtered_targets
 
 
-  async def _computePairwiseBlocks(self, chromosome, target, matched, intermediate, mask, metrics, chromosome_index, grpc_decode):
+  async def _computePairwiseBlocks(self, chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, chromosome_index, grpc_decode):
     # compute the blocks for the target chromosome
-    blocks = await computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, self.pairwise_address)
+    blocks = await computePairwiseMacroSyntenyBlocks(chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, self.pairwise_address)
     if not blocks:  # true for None or []
       return None
     # fetch the chromosome object
@@ -148,7 +151,7 @@ class RequestHandler:
       blocks_object['blocks'] = blocks
     return blocks_object
 
-  async def process(self, chromosome, matched, intermediate, mask, targets, metrics, grpc_decode=False):
+  async def process(self, chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, grpc_decode=False):
     # connect to the index
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
     # get all chromosome names if no targets are specified

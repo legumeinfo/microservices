@@ -31,11 +31,11 @@ def jaccard(a, b, n=1, reversals=False, multiset=False):
         ids[g] = i
         i += 1
 
-  # convert n-gram lists to id sets
+  # convert n-gram lists to id iterators
   def gramID(g): return ids[g]
   aIDs, bIDs = map(gramID, na), map(gramID, nb)
 
-# generate a count map for each list
+  # generate a count map for each list
   def multiSet(l):
     if not multiset:
       return Counter({e:1 for e in l})
@@ -52,6 +52,7 @@ def jaccard(a, b, n=1, reversals=False, multiset=False):
 
   # return the distance
   return 1-numerator/denominator
+
 
 def levenshtein(a, b):
 
