@@ -12,13 +12,15 @@ async def http_post_handler(request):
   mask = data.get('mask')
   targets = data.get('targets', [])
   metrics = data.get('optionalMetrics', [])
+  min_chromosome_genes = data.get('min_chromosome_genes', matched)
+  min_chromosome_length = data.get('min_chromosome_length', matched)
   handler = request.app['handler']
   try:
-    chromosome, matched, intermediate, mask, targets, metrics = \
-      handler.parseArguments(chromosome, matched, intermediate, mask, targets, metrics)
+    chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromosome_length = \
+      handler.parseArguments(chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromsome_length)
   except:
     return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
-  blocks = await handler.process(chromosome, matched, intermediate, mask, targets, metrics, grpc_decode=True)
+  blocks = await handler.process(chromosome, matched, intermediate, mask, targets, metrics, min_chromosome_genes, min_chromsome_length, grpc_decode=True)
   json = web.json_response({'blocks': blocks})
   return json
 

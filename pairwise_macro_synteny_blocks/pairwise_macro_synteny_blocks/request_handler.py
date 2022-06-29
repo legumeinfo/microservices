@@ -15,13 +15,15 @@ class RequestHandler:
     name, *args = metric.split(':')
     return name, args
 
-  def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics):
+  def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, min_chromosome_length):
     iter(chromosome)  # TypeError if not iterable
     iter(metrics)  # TypeError if not iterable
     if target is None:
       raise ValueError('target is required')
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
+    min_chromosome_genes = int(min_chromosome_genes) #ValueError
+    min_chromosome_length = int(min_chromosome_length) #ValueError
     if matched <= 0 or intermediate <= 0:
       raise ValueError('matched and intermediate must be positive')
     if mask is not None:
@@ -34,7 +36,7 @@ class RequestHandler:
       name, args = self._parseMetric(metric)
       if name not in METRICS:
         raise ValueError(f'"{metric}" is not a valid metric')
-    return chromosome, target, matched, intermediate, mask, metrics
+    return chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, min_chromosome_length
 
   # given a query chromosome and a target chromosome as ordered lists of
   # functional annotations, the function computes a gene index pair for each
@@ -133,7 +135,7 @@ class RequestHandler:
     r = self._indexBlocksViaIndexPathTraceback(r_path_ends, r_pointers, r_scores, matched)
     return chain(f, r)
 
-  async def process(self, query_chromosome, target, matched, intermediate, mask, metrics):
+  async def process(self, query_chromosome, target, matched, intermediate, mask, metrics, min_chromosome_genes, min_chromosome_length):
 
     # connect to the indexes
     chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
@@ -148,8 +150,13 @@ class RequestHandler:
 
     # count how many genes are on the target chromosome
     num_genes = await self.redis_connection.llen(f'{target_doc_id}:genes')
+
     # exit if there aren't enough genes to construct even a single block
     if num_genes < matched:
+      return []
+
+    # exit if there are less genes than the min_chromosome_genes optional metric
+    if num_genes < min_chromosome_genes:
       return []
 
     # get the functional annotations of the genes on the target chromosome
