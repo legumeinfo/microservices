@@ -6,14 +6,16 @@ from aiohttp import web
 async def http_post_handler(request):
   # parse the chromosome and parameters from the POST data
   data = await request.json()
+  # required parameters
   chromosome = data.get('chromosome')
   target = data.get('target')
   matched = data.get('matched')
   intermediate = data.get('intermediate')
-  mask = data.get('mask')
-  metrics = data.get('optionalMetrics')
-  chromosome_genes = data.get('chromosomeGenes'. matched)
-  chromosome_length = data.get('chromosomeLength', 1)
+  # optional parameters
+  mask = data.get('mask', None)
+  metrics = data.get('optionalMetrics', None)
+  chromosome_genes = data.get('chromosomeGenes', None)
+  chromosome_length = data.get('chromosomeLength', None)
   handler = request.app['handler']
   try:
     chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length = \

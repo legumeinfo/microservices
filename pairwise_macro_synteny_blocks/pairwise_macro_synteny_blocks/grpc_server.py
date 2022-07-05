@@ -13,16 +13,19 @@ class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMac
     self.handler = handler
 
   async def Compute(self, request, context):
+    # required parameters
     chromosome = request.chromosome
     target = request.target
     matched = request.matched
     intermediate = request.intermediate
-    mask = request.mask
-    metrics = request.optionalMetrics
-    chromosome_genes = request.chromosomeGenes
-    chromosome_length = request.chromosomeLength
+    # optional parameters
+    mask = request.mask or None
+    metrics = request.optionalMetrics or None
+    chromosome_genes = request.chromosomeGenes or None
+    chromosome_length = request.chromosomeLength or None
     try:
-      self.handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length)
+      chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length = \
+        self.handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length)
     except:
       # raise a gRPC INVALID ARGUMENT error
       await context.abort(grpc.StatusCode.INVALID_ARGUMENT, 'Required arguments are missing or given arguments have invalid values')

@@ -17,21 +17,29 @@ class RequestHandler:
 
   def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length):
     iter(chromosome)  # TypeError if not iterable
-    iter(metrics)  # TypeError if not iterable
     if target is None:
       raise ValueError('target is required')
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
-    chromosome_genes = int(chromosome_genes) #ValueError
-    chromosome_length = int(chromosome_length) #ValueError
-    if matched <= 0 or intermediate <= 0:
-      raise ValueError('matched and intermediate must be positive')
+    if chromosome_genes is None:
+      chromosome_genes = matched
+    else:
+      chromosome_genes = int(chromosome_genes)  # ValueError
+    if chromosome_length is None:
+      chromosome_length = 1
+    else:
+      chromosome_length = int(chromosome_length)  # ValueError
+    if matched <= 0 or intermediate <= 0 or chromosome_genes <= 0 or chromosome_length <= 0:
+      raise ValueError('matched, intermediate, chromosome genes, and chromosome length must be positive')
     if mask is not None:
       mask = int(mask)
       if mask <= 0:
         raise ValueError('mask must be positive')
     else:
       mask = float('inf')
+    if metrics is None:
+      metrics = []
+    iter(metrics)  # TypeError if not iterable
     for metric in metrics:
       name, args = self._parseMetric(metric)
       if name not in METRICS:
