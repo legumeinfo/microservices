@@ -2,9 +2,9 @@
 import asyncio
 from collections import defaultdict
 # dependencies
-from redisearch import Query
+from redis.commands.search.query import Query
 # module
-from macro_synteny_blocks.aioredisearch import Client
+from macro_synteny_blocks.aioredisearch import CustomAsyncSearch
 from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks
 
 
@@ -56,7 +56,7 @@ class RequestHandler:
 
     # use a pipeline to reduce the number of calls to database
     pipeline = self.redis_connection.pipeline()
-    gene_index = Client('geneIdx', conn=pipeline)
+    gene_index = CustomAsyncSearch(pipeline, index_name='geneIdx')
 
     # get genes for each family and bin them by chromosome
     families = set(chromosome)
@@ -160,7 +160,7 @@ class RequestHandler:
 
   async def process(self, chromosome, matched, intermediate, mask, targets, metrics, chromosome_genes, chromosome_length, grpc_decode=False):
     # connect to the index
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    chromosome_index = CustomAsyncSearch(self.redis_connection, index_name='chromosomeIdx')
     # get all chromosome names if no targets are specified
     filtered_targets = await self._getTargets(targets, chromosome, matched, intermediate)
     # compute blocks for each chromosome that is large enough
