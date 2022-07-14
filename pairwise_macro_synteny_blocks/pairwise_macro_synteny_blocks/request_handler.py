@@ -1,8 +1,9 @@
 # Python
 from collections import defaultdict
 from itertools import chain
+# dependencies
+from redis.commands.search import AsyncSearch
 # module
-from pairwise_macro_synteny_blocks.aioredisearch import Client
 from pairwise_macro_synteny_blocks.metrics import METRICS
 
 
@@ -146,8 +147,7 @@ class RequestHandler:
   async def process(self, query_chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length):
 
     # connect to the indexes
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
-    gene_index = Client('geneIdx', conn=self.redis_connection)
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
 
     # check if the target chromosome exists
     target_doc_id = f'chromosome:{target}'
