@@ -1,4 +1,4 @@
-# module
+# dependencies
 from redis.commands.search import AsyncSearch
 
 

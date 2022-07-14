@@ -3,9 +3,8 @@ import asyncio
 from collections import defaultdict
 from itertools import chain
 # dependencies
-from redisearch import NumericFilter, Query
-# module
-from micro_synteny_search.aioredisearch import Client
+from redis.commands.search.query import Query
+from redis.commands.search import AsyncSearch
 
 
 class RequestHandler:
@@ -96,8 +95,8 @@ class RequestHandler:
 
   async def process(self, query_track, matched, intermediate):
     # connect to the index
-    gene_index = Client('geneIdx', conn=self.redis_connection)
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    gene_index = AsyncSearch(self.redis_connection, index_name='geneIdx')
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
     # search the gene index
     # TODO: is there a way to query for all genes exactly at once?
     chromosome_match_indexes = await self._queryToChromosomeGeneMatchIndexes(query_track, gene_index)
