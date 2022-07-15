@@ -91,9 +91,10 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
       if line[0].startswith('#') or line[0] == 'ScoreMeaning':
         continue
       gene_id = line[0]
-      gene = gene_lookup[gene_id]
-      genefamily_id = line[1]
-      gene['family'] = genefamily_id
+      if gene_id in gene_lookup:
+        gene = gene_lookup[gene_id]
+        genefamily_id = line[1]
+        gene['family'] = genefamily_id
 
   # index the genes
   for chr_name, genes in chromosome_genes.items():

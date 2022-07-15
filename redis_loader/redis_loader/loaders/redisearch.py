@@ -1,5 +1,8 @@
+# dependencies
 import redis
-import redisearch
+from redis.commands.search import Search
+from redis.commands.search.field import NumericField, TextField
+from redis.commands.search.indexDefinition import IndexDefinition
 
 
 class RediSearchExistsError(Exception):
@@ -84,16 +87,16 @@ class RediSearchLoader(object):
   
     Parameters:
       name (str): The name of the RediSearch index to be loaded.
-      fields (list[redisearch.Field]): The fields the index should contain.
-      definition (redisearch.IndexDefinition): A definition of the index.
+      fields (list[redis.commands.search.field.Field]): The fields the index should contain.
+      definition (redis.commands.search.indexDefinition.IndexDefinition): A definition of the index.
       chunk_size (int): The chunk size to be used for Redis batch processing.
   
     Returns:
-      redisearch.Client.BatchIndexer: A batch processor for the index.
+      redis.commands.search.Search.BatchIndexer: A batch processor for the index.
     '''
 
-    # create a Client for the index that may or may not exist
-    index = redisearch.Client(name, conn=self.redis_connection)
+    # create a Search for the index that may or may not exist
+    index = Search(self.redis_connection, index_name=name)
     # determine if the index exists
     exists = True
     try:
@@ -109,7 +112,7 @@ class RediSearchLoader(object):
     if exists:
       if self.load_type == 'reload':
         print(f'\tDropping index "{name}"')
-        index.drop_index()
+        index.dropindex(delete_documents=True)
         exists = False
       if self.load_type == 'append':
         print(f'\tData will be appended to index "{name}"')
@@ -149,20 +152,20 @@ class RediSearchLoader(object):
       chunk_size (int): The chunk size to be used for Redis batch processing.
   
     Returns:
-      redisearch.Client.BatchIndexer: A batch processor for the chromosome
+      redis.commands.search.Search.BatchIndexer: A batch processor for the chromosome
         index.
-      redisearch.Client.BatchIndexer: A batch processor for the gene index.
+      redis.commands.search.Search.BatchIndexer: A batch processor for the gene index.
     '''
 
     # create the chromosome index
     chromosome_name = 'chromosomeIdx'
     chromosome_fields = [
-        redisearch.TextField('name'),
-        redisearch.NumericField('length'),
-        redisearch.TextField('genus'),
-        redisearch.TextField('species'),
+        TextField('name'),
+        NumericField('length'),
+        TextField('genus'),
+        TextField('species'),
       ]
-    chromosome_definition = redisearch.IndexDefinition(prefix=['chromosome:'])
+    chromosome_definition = IndexDefinition(prefix=['chromosome:'])
     chromosome_indexer = \
       self.__makeOrGetIndex(
         chromosome_name,
@@ -176,15 +179,15 @@ class RediSearchLoader(object):
     # create the gene index
     gene_name = 'geneIdx'
     gene_fields = [
-      redisearch.TextField('chromosome'),
-      redisearch.TextField('name'),
-      redisearch.NumericField('fmin'),
-      redisearch.NumericField('fmax'),
-      redisearch.TextField('family'),
-      redisearch.NumericField('strand'),
-      redisearch.NumericField('index', sortable=True),
+      TextField('chromosome'),
+      TextField('name'),
+      NumericField('fmin'),
+      NumericField('fmax'),
+      TextField('family'),
+      NumericField('strand'),
+      NumericField('index', sortable=True),
     ]
-    gene_definition = redisearch.IndexDefinition(prefix=['gene:'])
+    gene_definition = IndexDefinition(prefix=['gene:'])
     gene_indexer = \
       self.__makeOrGetIndex(gene_name, gene_fields, gene_definition, chunk_size)
 
