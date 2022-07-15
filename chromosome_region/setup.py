@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # Python
 import setuptools
 from setuptools.command.build_py import build_py
@@ -9,9 +10,6 @@ from chromosome_region import commands
 PACKAGE_DIRECTORIES = {
   '': '.',
 }
-
-
-COMMAND_CLASS = {}
 
 
 build_proto_command = 'build_proto'
@@ -25,7 +23,7 @@ class BuildPy(build_py):
     self.run_command(build_proto_command)
 
 
-SETUP_REQUIRES = ('grpcio-tools>=1.39,<2',)
+SETUP_REQUIRES = ('grpcio-tools',)
 COMMAND_CLASS = {
   build_proto_command: commands.BuildProtos,
   'build_py': BuildPy
