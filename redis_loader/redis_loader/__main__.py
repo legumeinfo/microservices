@@ -86,7 +86,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {redis_loader.__version__}',
+    version=f'%(prog)s {redis_loader.__version__} schema {redis_loader.__schema_version__}',
   )
   subparsers = \
     parser.add_subparsers(title='commands', dest='command', required=True)
