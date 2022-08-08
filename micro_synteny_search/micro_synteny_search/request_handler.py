@@ -51,16 +51,13 @@ class RequestHandler:
     chromosome_match_indices = defaultdict(list)
     for family in families:
       # count how many genes are in the family
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query_string = '@family:{' + family + '}'
+      query = Query(query_string)\
                 .paging(0, 0)
       result = await gene_index.search(query)
       num_genes = result.total
       # get the genes
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query = Query(query_string)\
                 .return_fields('chromosome', 'index')\
                 .paging(0, num_genes)
       result = await gene_index.search(query)

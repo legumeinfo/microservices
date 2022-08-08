@@ -67,13 +67,10 @@ class RequestHandler:
     query_strings = []
     count_queries = []
     for family in families:
-      query_string = f'(@family:{family})'
+      query_string = '(@family:{' + family + '})'
       # limit the genes to the target chromosomes
       if targets:
-        query_string += \
-          '(' + \
-          ' | '.join(map(lambda name: f'@chromosome:{name}', targets)) + \
-          ')'
+        query_string += '(@chromosome:{' + '|'.join(targets) + '})'
       query_strings.append(query_string)
       # count how many genes are in the family
       query = Query(query_string)\
