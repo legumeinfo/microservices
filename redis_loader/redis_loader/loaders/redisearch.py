@@ -1,7 +1,7 @@
 # dependencies
 import redis
 from redis.commands.search import Search
-from redis.commands.search.field import NumericField, TextField
+from redis.commands.search.field import NumericField, TagField, TextField
 from redis.commands.search.indexDefinition import IndexDefinition
 # module
 import redis_loader
@@ -52,7 +52,7 @@ class RediSearchLoader(object):
     # check that the existing database schema is compatible
     if self.load_type == 'append':
       schema_version = self.getExistingSchemaVersion()
-      if schema_version != redis_loader.__schema_version__:
+      if schema_version is not None and schema_version != redis_loader.__schema_version__:
         message = ('An existing GCV database was found with schema version '
                    f'{schema_version} but this loader only supports version '
                    f'{redis_loader.__schema_version__} of the schema.')
@@ -194,10 +194,10 @@ class RediSearchLoader(object):
 
     # create the chromosome index
     chromosome_fields = [
-        TextField('name'),
+        TextField('name'),  # TextField to support fuzzy search, use document ID for recovering specific chromosomes
         NumericField('length'),
-        TextField('genus'),
-        TextField('species'),
+        TagField('genus'),  # TagField since this is a foreign key, i.e. we only match exactly
+        TagField('species'),  # TagField since this is a foreign key, i.e. we only match exactly
       ]
     chromosome_definition = IndexDefinition(prefix=['chromosome:'])
     chromosome_indexer = \
@@ -212,11 +212,11 @@ class RediSearchLoader(object):
 
     # create the gene index
     gene_fields = [
-      TextField('chromosome'),
-      TextField('name'),
+      TagField('chromosome'),  # TagField since this is a foreign key, i.e. we only match exactly
+      TextField('name'),  # TextField to support fuzzy search, use document ID for recovering specific genes
       NumericField('fmin'),
       NumericField('fmax'),
-      TextField('family'),
+      TagField('family'),  # TagField since this is a foreign key, i.e. we only match exactly
       NumericField('strand'),
       NumericField('index', sortable=True),
     ]
