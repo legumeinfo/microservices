@@ -39,7 +39,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {micro_synteny_search.__version__}',
+    version=f'%(prog)s {micro_synteny_search.__version__} schema {micro_synteny_search.__schema_version__}',
   )
 
   # Async HTTP args
