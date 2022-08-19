@@ -38,7 +38,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {chromosome_search.__version__}',
+    version=f'%(prog)s {chromosome_search.__version__} schema {chromosome_search.__schema_version__}',
   )
 
   # Async HTTP args
