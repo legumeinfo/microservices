@@ -39,7 +39,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {gene_search.__version__}',
+    version=f'%(prog)s {gene_search.__version__} schema {gene_search.__schema_version__}',
   )
 
   # Async HTTP args
