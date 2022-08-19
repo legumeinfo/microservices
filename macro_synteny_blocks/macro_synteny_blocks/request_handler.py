@@ -10,9 +10,10 @@ from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks
 
 class RequestHandler:
 
-  def __init__(self, redis_connection, pairwise_address):
+  def __init__(self, redis_connection, pairwise_address, breakpoint_characters=',.<>{}[]"\':;!@#$%^&*()-+=~'):
     self.redis_connection = redis_connection
     self.pairwise_address = pairwise_address
+    self.breakpoint_characters = set(breakpoint_characters)
 
   def parseArguments(self, chromosome, matched, intermediate, mask, targets, metrics, chromosome_genes, chromosome_length):
     iter(chromosome)  # TypeError if not iterable
@@ -39,6 +40,14 @@ class RequestHandler:
       if mask <= 0:
         raise ValueError('mask must be positive')
     return chromosome, matched, intermediate, mask, targets, metrics, chromosome_genes, chromosome_length
+
+  def _cleanTag(self, tag):
+    cleaned_tag = ''
+    for c in tag:
+      if c in self.breakpoint_characters:
+        cleaned_tag += '\\'
+      cleaned_tag += c
+    return cleaned_tag
 
   def _grpcBlockToDictBlock(self, grpc_block):
     dict_block = {
@@ -67,13 +76,12 @@ class RequestHandler:
     query_strings = []
     count_queries = []
     for family in families:
-      query_string = f'(@family:{family})'
+      cleaned_family = self._cleanTag(family)
+      query_string = '(@family:{' + cleaned_family + '})'
       # limit the genes to the target chromosomes
       if targets:
-        query_string += \
-          '(' + \
-          ' | '.join(map(lambda name: f'@chromosome:{name}', targets)) + \
-          ')'
+        cleaned_targets = map(self._cleanTag, targets)
+        query_string += '(@chromosome:{' + '|'.join(cleaned_targets) + '})'
       query_strings.append(query_string)
       # count how many genes are in the family
       query = Query(query_string)\

@@ -39,7 +39,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {pairwise_macro_synteny_blocks.__version__}',
+    version=f'%(prog)s {pairwise_macro_synteny_blocks.__version__} schema {pairwise_macro_synteny_blocks.__schema_version__}',
   )
 
   # Async HTTP args

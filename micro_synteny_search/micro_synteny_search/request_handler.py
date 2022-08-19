@@ -9,8 +9,9 @@ from redis.commands.search import AsyncSearch
 
 class RequestHandler:
 
-  def __init__(self, redis_connection):
+  def __init__(self, redis_connection, breakpoint_characters=',.<>{}[]"\':;!@#$%^&*()-+=~'):
     self.redis_connection = redis_connection
+    self.breakpoint_characters = set(breakpoint_characters)
 
   def parseArguments(self, query_track, matched, intermediate):
     iter(query_track)  # TypeError if not iterable
@@ -50,17 +51,19 @@ class RequestHandler:
     families.discard('')
     chromosome_match_indices = defaultdict(list)
     for family in families:
+      cleaned_family = ''
+      for c in family:
+        if c in self.breakpoint_characters:
+          cleaned_family += '\\'
+        cleaned_family += c
       # count how many genes are in the family
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query_string = '@family:{' + cleaned_family + '}'
+      query = Query(query_string)\
                 .paging(0, 0)
       result = await gene_index.search(query)
       num_genes = result.total
       # get the genes
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query = Query(query_string)\
                 .return_fields('chromosome', 'index')\
                 .paging(0, num_genes)
       result = await gene_index.search(query)
