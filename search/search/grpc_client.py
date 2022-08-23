@@ -1,3 +1,5 @@
+# Python
+import logging
 # dependencies
 from grpc.experimental import aio
 # module
@@ -18,7 +20,7 @@ async def gene_search(query, address):
     results = await stub.Search(genesearch_pb2.GeneSearchRequest(query=query))
     return results.genes
   except Exception as e:
-    print(e)
+    logging.error(e)
     return []
 
 
@@ -31,7 +33,7 @@ async def chromosome_search(query, address):
     results = await stub.Search(chromosomesearch_pb2.ChromosomeSearchRequest(query=query))
     return results.chromosomes
   except Exception as e:
-    print(e)
+    logging.error(e)
     return []
 
 
@@ -44,5 +46,5 @@ async def chromosome_region(chromosome, start, stop, address):
     response = await stub.Get(chromosomeregion_pb2.ChromosomeRegionGetRequest(chromosome=chromosome, start=start, stop=stop))
     return [response.region]
   except Exception as e:
-    print(e)
+    logging.error(e)
     return []
