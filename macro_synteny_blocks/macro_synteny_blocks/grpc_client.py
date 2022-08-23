@@ -1,3 +1,5 @@
+# Python
+import logging
 # dependencies
 from grpc.experimental import aio
 # module
@@ -24,5 +26,5 @@ async def computePairwiseMacroSyntenyBlocks(chromosome, target, matched, interme
       ))
     return result.blocks
   except Exception as e:
-    print(e)
+    logging.error(e)
     return None
