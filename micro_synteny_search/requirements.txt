@@ -18,11 +18,11 @@ async-timeout==4.0.2
     #   redis
 attrs==22.1.0
     # via aiohttp
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via aiohttp
 deprecated==1.2.13
     # via redis
-frozenlist==1.3.0
+frozenlist==1.3.1
     # via
     #   aiohttp
     #   aiosignal
@@ -52,7 +52,7 @@ uvloop==0.16.0
     # via micro-synteny-search (setup.py)
 wrapt==1.14.1
     # via deprecated
-yarl==1.7.2
+yarl==1.8.1
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
