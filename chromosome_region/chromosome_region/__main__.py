@@ -92,8 +92,8 @@ def main():
     exit('--no-http and --no-grpc can\'t both be given')
 
   # initialize asyncio
-  uvloop.install()
-  loop = asyncio.get_event_loop()
+  loop = uvloop.new_event_loop()
+  asyncio.set_event_loop(loop)
 
   # run the program
   loop.create_task(main_coroutine(args))
