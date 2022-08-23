@@ -3,6 +3,7 @@
 # Python
 import argparse
 import asyncio
+import logging
 import os
 import uvloop
 # module
@@ -11,6 +12,15 @@ from genes.database import connectToRedis
 from genes.grpc_server import run_grpc_server
 from genes.http_server import run_http_server
 from genes.request_handler import RequestHandler
+
+
+LOG_LEVELS = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'ERROR': logging.ERROR,
+    'CRITICAL': logging.CRITICAL,
+  }
 
 
 # a class that loads argument values from command line variables, resulting in a
@@ -41,6 +51,29 @@ def parseArgs():
     action='version',
     version=f'%(prog)s {genes.__version__} schema {genes.__schema_version__}',
   )
+
+  # logging args
+  loglevel_envvar = 'LOG_LEVEL'
+  parser.add_argument(
+    '--log-level',
+    dest='log_level',
+    action=EnvArg,
+    envvar=loglevel_envvar,
+    type=str,
+    choices=list(LOG_LEVELS.keys()),
+    default='WARNING',
+    help=('What level of events should be logged (can also be specified using '
+          f'the {loglevel_envvar} environment variable).'))
+  logfile_envvar = 'LOG_FILE'
+  parser.add_argument(
+    '--log-file',
+    dest='log_file',
+    action=EnvArg,
+    default=argparse.SUPPRESS,  # removes "(default: None)" from help text
+    envvar=logfile_envvar,
+    type=str,
+    help=('The file events should be logged in (can also be specified using '
+          f'the {logfile_envvar} environment variable).'))
 
   # Async HTTP args
   parser.add_argument('--no-http', dest='nohttp', action='store_true', help='Don\'t run the HTTP server.')
@@ -91,6 +124,14 @@ def main():
   args = parseArgs()
   if args.nohttp and args.nogrpc:
     exit('--no-http and --no-grpc can\'t both be given')
+
+  # setup logging
+  log_config = {
+      'level': LOG_LEVELS[args.log_level],
+    }
+  if 'log_file' in args:
+    log_config['filename'] = args.log_file
+  logging.basicConfig(**log_config)
 
   # initialize asyncio
   loop = uvloop.new_event_loop()
