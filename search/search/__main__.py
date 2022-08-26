@@ -5,6 +5,8 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
+# dependencies
 import uvloop
 # module
 import search
@@ -104,19 +106,26 @@ def parseArgs():
   return parser.parse_args()
 
 
-async def main_coroutine(args):
-  query_parser = makeQueryParser(args.chars)
-  handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
-  tasks = []
-  if not args.nohttp:
-    http_coro = run_http_server(args.hhost, args.hport, handler)
-    http_task = asyncio.create_task(http_coro)
-    tasks.append(http_task)
-  if not args.nogrpc:
-    grpc_coro = run_grpc_server(args.ghost, args.gport, handler)
-    grpc_task = asyncio.create_task(grpc_coro)
-    tasks.append(grpc_task)
-  await asyncio.gather(*tasks)
+# graceful shutdown
+async def shutdown(loop, signal=None):
+  # report what signal (if any) initiated the shutdown
+  if signal:
+    logging.info(f'Received exit signal {signal.name}')
+  # cancel all running tasks (they know how to cleanup themselves)
+  logging.info('Cancelling outstanding tasks')
+  tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+  [task.cancel() for task in tasks]
+  await asyncio.gather(*tasks, return_exceptions=True)
+  # stop the asyncio loop
+  loop.stop()
+
+
+# the asyncio exception handler that will initiate a shutdown
+def handleException(loop, context):
+  msg = context.get('exception', context['message'])
+  logging.critical(f'Caught exception: {msg}')
+  logging.info('Shutting down')
+  asyncio.create_task(shutdown(loop))
 
 
 def main():
@@ -128,6 +137,8 @@ def main():
 
   # setup logging
   log_config = {
+      'format': '%(asctime)s,%(msecs)d %(levelname)s: %(message)s',
+      'datefmt': '%H:%M:%S',
       'level': LOG_LEVELS[args.log_level],
     }
   if 'log_file' in args:
@@ -138,9 +149,36 @@ def main():
   loop = uvloop.new_event_loop()
   asyncio.set_event_loop(loop)
 
+  # setup asyncio exception handling
+  signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+  for s in signals:
+    loop.add_signal_handler(
+      s, lambda s=s: loop.create_task(shutdown(loop, signal=s))
+    )
+  loop.set_exception_handler(handleException)
+
   # run the program
-  loop.create_task(main_coroutine(args))
-  loop.run_forever()
+  try:
+    # create the query parser
+    query_parser = makeQueryParser(args.chars)
+    # create the request handler
+    handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
+    # start the HTTP server
+    if not args.nohttp:
+      loop.create_task(run_http_server(args.hhost, args.hport, handler))
+    # start the gRPC server
+    if not args.nogrpc:
+      loop.create_task(run_grpc_server(args.ghost, args.gport, handler))
+    # run the main loop
+    loop.run_forever()
+  # catch exceptions not handled by asyncio
+  except Exception as e:
+    context = {'exception': e, 'message': str(e)}
+    loop.call_exception_handler(context)
+  # finalize the shutdown
+  finally:
+    loop.close()
+    logging.info('Successfully shutdown.')
 
 
 if __name__ == '__main__':
