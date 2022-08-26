@@ -12,13 +12,36 @@ class ChromosomeRegion(chromosomeregion_pb2_grpc.ChromosomeRegionServicer):
   def __init__(self, handler):
     self.handler = handler
 
-  async def Get(self, request, context):
+  # create a context done callback that raises the given exception
+  def _exceptionCallbackFactory(self, exception):
+    def exceptionCallback(call):
+      raise exception
+    return exceptionCallback
+
+  # the method that actually handles requests
+  async def _get(self, request, context):
     region = await self.handler.process(request.chromosome, request.start, request.stop)
     if region is None:
       # raise a gRPC NOT FOUND error
       await context.abort(grpc.StatusCode.NOT_FOUND, 'Region not found')
     region_message = region_pb2.Region(gene=region['gene'], neighbors=region['neighbors'])
     return chromosomeregion_pb2.ChromosomeRegionGetReply(region=region_message)
+
+  # implements the service's API
+  async def Get(self, request, context):
+    # subvert the gRPC exception handler via a try/except block
+    try:
+      return await self._get(request, context)
+    # let errors we raised go by
+    except aio.AbortError as e:
+      raise e
+    # raise an internal error to prevent non-gRPC info from being sent to users
+    except Exception as e:
+      # raise the exception after aborting so it gets logged
+      # NOTE: gRPC docs says abort should raise an error but it doesn't...
+      context.add_done_callback(self._exceptionCallbackFactory(e))
+      # return a gRPC INTERNAL error
+      await context.abort(grpc.StatusCode.INTERNAL, 'Internal server error')
 
 
 async def run_grpc_server(host, port, handler):
@@ -28,3 +51,4 @@ async def run_grpc_server(host, port, handler):
   chromosomeregion_pb2_grpc.add_ChromosomeRegionServicer_to_server(servicer, server)
   await server.start()
   await server.wait_for_termination()
+  # TODO: what about teardown? server.stop(None)
