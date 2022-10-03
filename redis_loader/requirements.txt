@@ -12,7 +12,7 @@ async-timeout==4.0.2
     # via redis
 deprecated==1.2.13
     # via redis
-gffutils==0.11.0
+gffutils==0.11.1
     # via redis-loader (setup.py)
 packaging==21.3
     # via redis
