@@ -2,9 +2,16 @@
 import grpc
 from grpc.experimental import aio
 # module
-from genes.proto.genes_service.v1 import genes_pb2
-from genes.proto.genes_service.v1 import genes_pb2_grpc
-from genes.proto.gene.v1 import gene_pb2
+#from genes.proto.genes_service.v1 import genes_pb2
+#from genes.proto.genes_service.v1 import genes_pb2_grpc
+#from genes.proto.gene.v1 import gene_pb2
+# NOTE: the following imports are a temporary workaround for a known protobuf
+# bug; the commented imports above should be used when the bug is fixed:
+# https://github.com/protocolbuffers/protobuf/issues/10075
+from genes import proto
+from genes_service.v1 import genes_pb2
+from genes_service.v1 import genes_pb2_grpc
+from gene.v1 import gene_pb2
 
 
 class Genes(genes_pb2_grpc.GenesServicer):
