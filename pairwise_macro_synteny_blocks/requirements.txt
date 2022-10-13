@@ -32,7 +32,7 @@ grpcio==1.47.0
     #   pairwise-macro-synteny-blocks (setup.py)
 grpcio-tools==1.47.0
     # via pairwise-macro-synteny-blocks (setup.py)
-idna==3.3
+idna==3.4
     # via yarl
 multidict==6.0.2
     # via
