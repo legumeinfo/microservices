@@ -48,7 +48,7 @@ redis==4.3.4
     # via chromosome-search (setup.py)
 six==1.16.0
     # via grpcio
-uvloop==0.16.0
+uvloop==0.17.0
     # via chromosome-search (setup.py)
 wrapt==1.14.1
     # via deprecated
