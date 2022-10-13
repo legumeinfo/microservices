@@ -2,8 +2,14 @@
 import grpc
 from grpc.experimental import aio
 # module
-from gene_search.proto.genesearch_service.v1 import genesearch_pb2
-from gene_search.proto.genesearch_service.v1 import genesearch_pb2_grpc
+#from gene_search.proto.genesearch_service.v1 import genesearch_pb2
+#from gene_search.proto.genesearch_service.v1 import genesearch_pb2_grpc
+# NOTE: the following imports are a temporary workaround for a known protobuf
+# bug; the commented imports above should be used when the bug is fixed:
+# https://github.com/protocolbuffers/protobuf/issues/10075
+from gene_search import proto
+from genesearch_service.v1 import genesearch_pb2
+from genesearch_service.v1 import genesearch_pb2_grpc
 
 
 class GeneSearch(genesearch_pb2_grpc.GeneSearchServicer):
