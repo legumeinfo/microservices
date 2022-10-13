@@ -2,9 +2,16 @@
 import grpc
 from grpc.experimental import aio
 # module
-from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
-from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
-from pairwise_macro_synteny_blocks.proto.block.v1 import block_pb2
+#from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
+#from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+#from pairwise_macro_synteny_blocks.proto.block.v1 import block_pb2
+# NOTE: the following imports are a temporary workaround for a known protobuf
+# bug; the commented imports above should be used when the bug is fixed:
+# https://github.com/protocolbuffers/protobuf/issues/10075
+from pairwise_macro_synteny_blocks import proto
+from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
+from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+from block.v1 import block_pb2
 
 
 class PairwiseMacroSyntenyBlocks(pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMacroSyntenyBlocksServicer):
