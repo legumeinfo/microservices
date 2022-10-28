@@ -26,7 +26,7 @@ FROM python:3.11.0-alpine3.15
 
 RUN apk add --no-cache libpq
 
-COPY --from=builder /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
 COPY ./docker-entrypoint-initdb.d/ /docker-entrypoint-initdb.d/
 COPY ./entrypoint.sh /entrypoint.sh
 
