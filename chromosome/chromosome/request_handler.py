@@ -1,5 +1,5 @@
-# module
-from chromosome.aioredisearch import Client
+# dependencies
+from redis.commands.search import AsyncSearch
 
 
 class RequestHandler:
@@ -9,7 +9,7 @@ class RequestHandler:
 
   async def process(self, name):
     # connect to the index
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
     # get the chromosome
     chromosome_doc = await chromosome_index.load_document(f'chromosome:{name}')
     if not hasattr(chromosome_doc, 'name'):

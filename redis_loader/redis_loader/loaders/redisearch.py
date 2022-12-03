@@ -1,5 +1,25 @@
+# dependencies
 import redis
-import redisearch
+from redis.commands.search import Search
+from redis.commands.search.field import NumericField, TagField, TextField
+from redis.commands.search.indexDefinition import IndexDefinition
+# module
+import redis_loader
+
+
+VERSION_KEY = 'GCV_SCHEMA_VERSION'
+COMPATIBLE_KEY = 'GCV_COMPATIBLE_SCHEMA_VERSIONS'
+
+GENE_INDEX_NAME = 'geneIdx'
+CHROMOSOME_INDEX_NAME = 'chromosomeIdx'
+
+
+class SchemaVersionError(Exception):
+  '''
+  The exception to raise when a GCV database already exists but its schema
+  version isn't supported by the loader.
+  '''
+  pass
 
 
 class RediSearchExistsError(Exception):
@@ -29,9 +49,18 @@ class RediSearchLoader(object):
         kwargs.get('db'),
         kwargs.get('password'),
       )
+    # check that the existing database schema is compatible
+    if self.load_type == 'append':
+      schema_version = self.getExistingSchemaVersion()
+      if schema_version is not None and schema_version != redis_loader.__schema_version__:
+        message = ('An existing GCV database was found with schema version '
+                   f'{schema_version} but this loader only supports version '
+                   f'{redis_loader.__schema_version__} of the schema.')
+        raise SchemaVersionError(message)
     # setup RediSearch
     self.chromosome_indexer, self.gene_indexer = \
       self.__setupIndexes(kwargs.get('chunk_size'))
+
 
   def __enter__(self):
     '''
@@ -72,9 +101,18 @@ class RediSearchLoader(object):
       redis.Redis: A connection to a Redis database.
     '''
 
-    connection = redis.Redis(host=host, port=port, db=db, password=password)
+    # instantiate a connection instance
+    connection = \
+      redis.Redis(
+        host=host,
+        port=port,
+        db=db,
+        password=password,
+        decode_responses=True,
+      )
     # ping to force connection, preventing errors downstream
     connection.ping()
+
     return connection
 
   def __makeOrGetIndex(self, name, fields, definition, chunk_size):
@@ -84,16 +122,16 @@ class RediSearchLoader(object):
   
     Parameters:
       name (str): The name of the RediSearch index to be loaded.
-      fields (list[redisearch.Field]): The fields the index should contain.
-      definition (redisearch.IndexDefinition): A definition of the index.
+      fields (list[redis.commands.search.field.Field]): The fields the index should contain.
+      definition (redis.commands.search.indexDefinition.IndexDefinition): A definition of the index.
       chunk_size (int): The chunk size to be used for Redis batch processing.
   
     Returns:
-      redisearch.Client.BatchIndexer: A batch processor for the index.
+      redis.commands.search.Search.BatchIndexer: A batch processor for the index.
     '''
 
-    # create a Client for the index that may or may not exist
-    index = redisearch.Client(name, conn=self.redis_connection)
+    # create a Search for the index that may or may not exist
+    index = Search(self.redis_connection, index_name=name)
     # determine if the index exists
     exists = True
     try:
@@ -109,7 +147,7 @@ class RediSearchLoader(object):
     if exists:
       if self.load_type == 'reload':
         print(f'\tDropping index "{name}"')
-        index.drop_index()
+        index.dropindex(delete_documents=True)
         exists = False
       if self.load_type == 'append':
         print(f'\tData will be appended to index "{name}"')
@@ -149,23 +187,22 @@ class RediSearchLoader(object):
       chunk_size (int): The chunk size to be used for Redis batch processing.
   
     Returns:
-      redisearch.Client.BatchIndexer: A batch processor for the chromosome
+      redis.commands.search.Search.BatchIndexer: A batch processor for the chromosome
         index.
-      redisearch.Client.BatchIndexer: A batch processor for the gene index.
+      redis.commands.search.Search.BatchIndexer: A batch processor for the gene index.
     '''
 
     # create the chromosome index
-    chromosome_name = 'chromosomeIdx'
     chromosome_fields = [
-        redisearch.TextField('name'),
-        redisearch.NumericField('length'),
-        redisearch.TextField('genus'),
-        redisearch.TextField('species'),
+        TextField('name'),  # TextField to support fuzzy search, use document ID for recovering specific chromosomes
+        NumericField('length'),
+        TagField('genus'),  # TagField since this is a foreign key, i.e. we only match exactly
+        TagField('species'),  # TagField since this is a foreign key, i.e. we only match exactly
       ]
-    chromosome_definition = redisearch.IndexDefinition(prefix=['chromosome:'])
+    chromosome_definition = IndexDefinition(prefix=['chromosome:'])
     chromosome_indexer = \
       self.__makeOrGetIndex(
-        chromosome_name,
+        CHROMOSOME_INDEX_NAME,
         chromosome_fields,
         chromosome_definition,
         chunk_size,
@@ -174,19 +211,28 @@ class RediSearchLoader(object):
     self.__checkChromosomeKeys()
 
     # create the gene index
-    gene_name = 'geneIdx'
     gene_fields = [
-      redisearch.TextField('chromosome'),
-      redisearch.TextField('name'),
-      redisearch.NumericField('fmin'),
-      redisearch.NumericField('fmax'),
-      redisearch.TextField('family'),
-      redisearch.NumericField('strand'),
-      redisearch.NumericField('index', sortable=True),
+      TagField('chromosome'),  # TagField since this is a foreign key, i.e. we only match exactly
+      TextField('name'),  # TextField to support fuzzy search, use document ID for recovering specific genes
+      NumericField('fmin'),
+      NumericField('fmax'),
+      TagField('family'),  # TagField since this is a foreign key, i.e. we only match exactly
+      NumericField('strand'),
+      NumericField('index', sortable=True),
     ]
-    gene_definition = redisearch.IndexDefinition(prefix=['gene:'])
+    gene_definition = IndexDefinition(prefix=['gene:'])
     gene_indexer = \
-      self.__makeOrGetIndex(gene_name, gene_fields, gene_definition, chunk_size)
+      self.__makeOrGetIndex(
+        GENE_INDEX_NAME,
+        gene_fields,
+        gene_definition,
+        chunk_size,
+      )
+
+    # set the schema version and compatible versions
+    self.redis_connection.set(VERSION_KEY, redis_loader.__schema_version__)
+    self.redis_connection.delete(COMPATIBLE_KEY)
+    self.redis_connection.sadd(COMPATIBLE_KEY, *redis_loader.__compatible_schema_versions__)
 
     return chromosome_indexer, gene_indexer
 
@@ -266,3 +312,22 @@ class RediSearchLoader(object):
     pipeline.rpush(f'chromosome:{chromosome}:fmins', *map(lambda g: g['fmin'], genes))
     pipeline.rpush(f'chromosome:{chromosome}:fmaxs', *map(lambda g: g['fmax'], genes))
     pipeline.execute()
+
+  def getExistingSchemaVersion(self):
+    default_version = '1.0.0'
+    # get the existing schema version
+    existing_version = self.redis_connection.get(VERSION_KEY)
+    # no version found
+    if existing_version is None:
+      # check if a v1.0.0 GCV database already exists
+      gene_index = Search(self.redis_connection, index_name=GENE_INDEX_NAME)
+      chromosome_index = Search(self.redis_connection, index_name=CHROMOSOME_INDEX_NAME)
+      try:
+        gene_index.info()  # will throw an error if index doesn't exist
+        chromosome_index.info()  # ditto
+        print(('found existing GCV database without schema version; '
+               f'assuming version {default_version}'))
+        existing_version = default_version
+      except redis.RedisError:
+        pass
+    return existing_version

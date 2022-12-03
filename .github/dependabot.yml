@@ -1,0 +1,102 @@
+version: 2
+updates:
+
+  # chromosome service
+  - package-ecosystem: 'pip'
+    directory: '/chromosome'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/chromosome'
+    schedule:
+      interval: 'daily'
+
+  # chromosome region service
+  - package-ecosystem: 'pip'
+    directory: '/chromosome_region'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/chromosome_region'
+    schedule:
+      interval: 'daily'
+
+  # chromosome search service
+  - package-ecosystem: 'pip'
+    directory: '/chromosome_search'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/chromosome_search'
+    schedule:
+      interval: 'daily'
+
+  # genes service
+  - package-ecosystem: 'pip'
+    directory: '/genes'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/genes'
+    schedule:
+      interval: 'daily'
+
+  # gene search service
+  - package-ecosystem: 'pip'
+    directory: '/gene_search'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/gene_search'
+    schedule:
+      interval: 'daily'
+
+  # macro-synteny blocks service
+  - package-ecosystem: 'pip'
+    directory: '/macro_synteny_blocks'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/macro_synteny_blocks'
+    schedule:
+      interval: 'daily'
+
+  # micro-synteny search service
+  - package-ecosystem: 'pip'
+    directory: '/micro_synteny_search'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/micro_synteny_search'
+    schedule:
+      interval: 'daily'
+
+  # pairwise macro-synteny bearch service
+  - package-ecosystem: 'pip'
+    directory: '/pairwise_macro_synteny_blocks'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/pairwise_macro_synteny_blocks'
+    schedule:
+      interval: 'daily'
+
+  # redis loader
+  - package-ecosystem: 'pip'
+    directory: '/redis_loader'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/redis_loader'
+    schedule:
+      interval: 'daily'
+
+  # search service
+  - package-ecosystem: 'pip'
+    directory: '/search'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/search'
+    schedule:
+      interval: 'daily'

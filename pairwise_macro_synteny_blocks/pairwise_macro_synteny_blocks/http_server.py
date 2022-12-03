@@ -6,19 +6,23 @@ from aiohttp import web
 async def http_post_handler(request):
   # parse the chromosome and parameters from the POST data
   data = await request.json()
+  # required parameters
   chromosome = data.get('chromosome')
   target = data.get('target')
   matched = data.get('matched')
   intermediate = data.get('intermediate')
-  mask = data.get('mask')
-  metrics = data.get('optionalMetrics')
+  # optional parameters
+  mask = data.get('mask', None)
+  metrics = data.get('optionalMetrics', None)
+  chromosome_genes = data.get('chromosomeGenes', None)
+  chromosome_length = data.get('chromosomeLength', None)
   handler = request.app['handler']
   try:
-    chromosome, target, matched, intermediate, mask, metrics = \
-      handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics)
+    chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length = \
+      handler.parseArguments(chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length)
   except:
     return web.HTTPBadRequest(text='Required arguments are missing or have invalid values')
-  blocks = await handler.process(chromosome, target, matched, intermediate, mask, metrics)
+  blocks = await handler.process(chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length)
   if blocks is None:
     return web.HTTPNotFound(text='Chromosome not found')
   return web.json_response({'blocks': blocks})

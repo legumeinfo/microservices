@@ -11,7 +11,7 @@ Additionally, if you are using microservices that depend on other microservices,
 Some containers support [gRPC](https://grpc.io/).
 If you wish to communicate with these containers from a Web client using gRPC Web, then you must use a proxy that supports gRPC Web request, such as [Envoy Proxy](https://www.envoyproxy.io/).
 
-**See the [Genome Context Viewer repository](https://github.com/legumeinfo/gcv/tree/main/microservices) for an example of deploying Legumeinfo microservices using Docker Compose, Envoy Proxy, and Traefik.**
+**See the [Genome Context Viewer Docker Compose repository](https://github.com/legumeinfo/gcv-docker-compose) for an example of deploying Legumeinfo microservices using Docker Compose, Envoy Proxy, and Traefik.**
 The example configures microservices to communicate and supports gRPC Web requests.
 
 ## Development

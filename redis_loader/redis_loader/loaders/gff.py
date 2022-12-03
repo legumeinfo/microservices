@@ -1,8 +1,11 @@
 # Python
+import codecs
 import csv
 from collections import defaultdict
 # dependencies
 import gffutils
+import gzip
+from urllib.request import urlopen, urlparse
 
 
 def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
@@ -14,7 +17,7 @@ def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
       RediSearch.
     genus (str): The genus of the chromosomes being loaded.
     species (str): The species of the chromosomes being loaded.
-    chromosome_gff (pathlib.Path): The path to the GFF to load chromosomes from.
+    chromosome_gff (str): The local path or URL to the GFF to load chromosomes from.
 
   Returns:
     set[str]: A set containing the names of all the chromosomes that were
@@ -24,7 +27,7 @@ def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
   # create chromosome SQLLite database from chromosomal GFF file
   gffchr_db = \
     gffutils.create_db(
-      str(chromosome_gff),
+      chromosome_gff,
       ':memory:',
       force=True,
       keep_order=True,
@@ -48,8 +51,8 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
   Parameters:
     redisearch_loader (RediSearchLoader): The loader to use to load data into
       RediSearch.
-    gene_gff (pathlib.Path): The path to the GFF to load genes from.
-    gfa (pathlib.Path): The path to a GFA file containing gene family
+    gene_gff (str): The local path or URL to the GFF to load genes from.
+    gfa (str): The local path or URL to a GFA file containing gene family
       associations for the genes being loaded.
     chromosome_names (set[str]): A containing the names of all the chromosomes
       that have been loaded.
@@ -57,7 +60,7 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
 
   # create gene SQLLite database from gene GFF file
   gffgene_db = \
-    gffutils.create_db(str(gene_gff), ':memory:', force=True, keep_order=True)
+    gffutils.create_db(gene_gff, ':memory:', force=True, keep_order=True)
 
   # index all the genes in the db
   gene_lookup = dict()
@@ -80,15 +83,18 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
           gene_lookup[gffgene.id] = gene
           chromosome_genes[chr_name].append(gene)
   # deal with family assignments (for non-orphans) from GFA
-  with gfa.open('r') as tsv:
-    for line in csv.reader(tsv, delimiter="\t"):
+  with (open(gfa, 'rb') if urlparse(gfa).scheme == ''
+                        else urlopen(gfa)) as fileobj:
+    tsv = gzip.GzipFile(fileobj=fileobj) if gfa.endswith("gz") else fileobj
+    for line in csv.reader(codecs.iterdecode(tsv, 'utf-8'), delimiter="\t"):
       # skip comment and metadata lines
       if line[0].startswith('#') or line[0] == 'ScoreMeaning':
         continue
       gene_id = line[0]
-      gene = gene_lookup[gene_id]
-      genefamily_id = line[1]
-      gene['family'] = genefamily_id
+      if gene_id in gene_lookup:
+        gene = gene_lookup[gene_id]
+        genefamily_id = line[1]
+        gene['family'] = genefamily_id
 
   # index the genes
   for chr_name, genes in chromosome_genes.items():

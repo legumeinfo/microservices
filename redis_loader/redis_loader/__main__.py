@@ -3,7 +3,6 @@
 # Python
 import argparse
 import os
-import pathlib
 from collections import defaultdict
 # module
 import redis_loader
@@ -88,7 +87,7 @@ def parseArgs():
   parser.add_argument(
     '--version',
     action='version',
-    version=f'%(prog)s {redis_loader.__version__}',
+    version=f'%(prog)s {redis_loader.__version__} schema {redis_loader.__schema_version__}',
   )
   subparsers = \
     parser.add_subparsers(title='commands', dest='command', required=True)
@@ -305,10 +304,9 @@ def parseArgs():
     required=True,
     action=EnvAction,
     envvar=gffgene_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFF file containing gene records (can also be specified using '
-         f'the {gffgene_envvar} environment variable).'))
+    help=('The GFF(.gz) file containing gene records (can also be specified '
+         f'using the {gffgene_envvar} environment variable).'))
   gffchr_envvar = 'CHROMOSOME_GFF_FILE'
   gff_parser.add_argument(
     '--chromosome-gff',
@@ -316,20 +314,18 @@ def parseArgs():
     required=True,
     action=EnvAction,
     envvar=gffchr_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFF file containing chromosome/supercontig records (can also be '
-         f'specified using the {gffchr_envvar} environment variable).'))
+    help=('The GFF(.gz) file containing chromosome/supercontig records (can '
+        f'also be specified using the {gffchr_envvar} environment variable).'))
   gfa_envvar = 'GFA_FILE'
   gff_parser.add_argument(
     '--gfa',
     required=True,
     action=EnvAction,
     envvar=gfa_envvar,
-    type=pathlib.Path,
     default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-    help=('The GFA file containing gene-gene family associations (can also be '
-         f'specified using the {gfa_envvar} environment variable).'))
+    help=('The GFA(.gz) file containing gene-gene family associations (can '
+         f'also be specified using the {gfa_envvar} environment variable).'))
 
   return parser.parse_args()
 

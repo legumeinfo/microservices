@@ -1,8 +1,8 @@
 # Python
 import asyncio
 import bisect
-# module
-from chromosome_region.aioredisearch import Client
+# dependencies
+from redis.commands.search import AsyncSearch
 
 
 class RequestHandler:
@@ -16,7 +16,7 @@ class RequestHandler:
 
   async def process(self, chromosome, start, stop):
     # connect to the index
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
     # get the chromosome
     chromosome_doc_id = f'chromosome:{chromosome}'
     chromosome_doc = await chromosome_index.load_document(chromosome_doc_id)

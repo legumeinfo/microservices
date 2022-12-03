@@ -1,8 +1,9 @@
 # Python
 from collections import defaultdict
 from itertools import chain
+# dependencies
+from redis.commands.search import AsyncSearch
 # module
-from pairwise_macro_synteny_blocks.aioredisearch import Client
 from pairwise_macro_synteny_blocks.metrics import METRICS
 
 
@@ -15,26 +16,36 @@ class RequestHandler:
     name, *args = metric.split(':')
     return name, args
 
-  def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics):
+  def parseArguments(self, chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length):
     iter(chromosome)  # TypeError if not iterable
-    iter(metrics)  # TypeError if not iterable
     if target is None:
       raise ValueError('target is required')
     matched = int(matched)  # ValueError
     intermediate = int(intermediate)  # ValueError
-    if matched <= 0 or intermediate <= 0:
-      raise ValueError('matched and intermediate must be positive')
+    if chromosome_genes is None:
+      chromosome_genes = matched
+    else:
+      chromosome_genes = int(chromosome_genes)  # ValueError
+    if chromosome_length is None:
+      chromosome_length = 1
+    else:
+      chromosome_length = int(chromosome_length)  # ValueError
+    if matched <= 0 or intermediate <= 0 or chromosome_genes <= 0 or chromosome_length <= 0:
+      raise ValueError('matched, intermediate, chromosome genes, and chromosome length must be positive')
     if mask is not None:
       mask = int(mask)
       if mask <= 0:
         raise ValueError('mask must be positive')
     else:
       mask = float('inf')
+    if metrics is None:
+      metrics = []
+    iter(metrics)  # TypeError if not iterable
     for metric in metrics:
       name, args = self._parseMetric(metric)
       if name not in METRICS:
         raise ValueError(f'"{metric}" is not a valid metric')
-    return chromosome, target, matched, intermediate, mask, metrics
+    return chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length
 
   # given a query chromosome and a target chromosome as ordered lists of
   # functional annotations, the function computes a gene index pair for each
@@ -133,11 +144,10 @@ class RequestHandler:
     r = self._indexBlocksViaIndexPathTraceback(r_path_ends, r_pointers, r_scores, matched)
     return chain(f, r)
 
-  async def process(self, query_chromosome, target, matched, intermediate, mask, metrics):
+  async def process(self, query_chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length):
 
     # connect to the indexes
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
-    gene_index = Client('geneIdx', conn=self.redis_connection)
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
 
     # check if the target chromosome exists
     target_doc_id = f'chromosome:{target}'
@@ -146,10 +156,15 @@ class RequestHandler:
     if not hasattr(target_doc, 'name'):
       return None
 
+    # exit if the chromosome is too short
+    if int(target_doc.length) < chromosome_length:
+      return []
+
     # count how many genes are on the target chromosome
     num_genes = await self.redis_connection.llen(f'{target_doc_id}:genes')
-    # exit if there aren't enough genes to construct even a single block
-    if num_genes < matched:
+
+    # exit if there aren't enough genes on the chromosome or for a single block
+    if num_genes < matched or num_genes < chromosome_genes:
       return []
 
     # get the functional annotations of the genes on the target chromosome

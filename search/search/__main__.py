@@ -3,7 +3,10 @@
 # Python
 import argparse
 import asyncio
+import logging
 import os
+import signal
+# dependencies
 import uvloop
 # module
 import search
@@ -11,6 +14,15 @@ from search.grpc_server import run_grpc_server
 from search.http_server import run_http_server
 from search.query_parser import makeQueryParser
 from search.request_handler import RequestHandler
+
+
+LOG_LEVELS = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'ERROR': logging.ERROR,
+    'CRITICAL': logging.CRITICAL,
+  }
 
 
 # a class that loads argument values from command line variables, resulting in a
@@ -40,6 +52,29 @@ def parseArgs():
     action='version',
     version=f'%(prog)s {search.__version__}',
   )
+
+  # logging args
+  loglevel_envvar = 'LOG_LEVEL'
+  parser.add_argument(
+    '--log-level',
+    dest='log_level',
+    action=EnvArg,
+    envvar=loglevel_envvar,
+    type=str,
+    choices=list(LOG_LEVELS.keys()),
+    default='WARNING',
+    help=('What level of events should be logged (can also be specified using '
+          f'the {loglevel_envvar} environment variable).'))
+  logfile_envvar = 'LOG_FILE'
+  parser.add_argument(
+    '--log-file',
+    dest='log_file',
+    action=EnvArg,
+    default=argparse.SUPPRESS,  # removes "(default: None)" from help text
+    envvar=logfile_envvar,
+    type=str,
+    help=('The file events should be logged in (can also be specified using '
+          f'the {logfile_envvar} environment variable).'))
 
   # Async HTTP args
   parser.add_argument('--no-http', dest='nohttp', action='store_true', help='Don\'t run the HTTP server.')
@@ -71,19 +106,26 @@ def parseArgs():
   return parser.parse_args()
 
 
-async def main_coroutine(args):
-  query_parser = makeQueryParser(args.chars)
-  handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
-  tasks = []
-  if not args.nohttp:
-    http_coro = run_http_server(args.hhost, args.hport, handler)
-    http_task = asyncio.create_task(http_coro)
-    tasks.append(http_task)
-  if not args.nogrpc:
-    grpc_coro = run_grpc_server(args.ghost, args.gport, handler)
-    grpc_task = asyncio.create_task(grpc_coro)
-    tasks.append(grpc_task)
-  await asyncio.gather(*tasks)
+# graceful shutdown
+async def shutdown(loop, signal=None):
+  # report what signal (if any) initiated the shutdown
+  if signal:
+    logging.info(f'Received exit signal {signal.name}')
+  # cancel all running tasks (they know how to cleanup themselves)
+  logging.info('Cancelling outstanding tasks')
+  tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+  [task.cancel() for task in tasks]
+  await asyncio.gather(*tasks, return_exceptions=True)
+  # stop the asyncio loop
+  loop.stop()
+
+
+# the asyncio exception handler that will initiate a shutdown
+def handleException(loop, context):
+  msg = context.get('exception', context['message'])
+  logging.critical(f'Caught exception: {msg}')
+  logging.info('Shutting down')
+  asyncio.create_task(shutdown(loop))
 
 
 def main():
@@ -93,13 +135,50 @@ def main():
   if args.nohttp and args.nogrpc:
     exit('--no-http and --no-grpc can\'t both be given')
 
+  # setup logging
+  log_config = {
+      'format': '%(asctime)s,%(msecs)d %(levelname)s: %(message)s',
+      'datefmt': '%H:%M:%S',
+      'level': LOG_LEVELS[args.log_level],
+    }
+  if 'log_file' in args:
+    log_config['filename'] = args.log_file
+  logging.basicConfig(**log_config)
+
   # initialize asyncio
-  uvloop.install()
-  loop = asyncio.get_event_loop()
+  loop = uvloop.new_event_loop()
+  asyncio.set_event_loop(loop)
+
+  # setup asyncio exception handling
+  signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+  for s in signals:
+    loop.add_signal_handler(
+      s, lambda s=s: loop.create_task(shutdown(loop, signal=s))
+    )
+  loop.set_exception_handler(handleException)
 
   # run the program
-  loop.create_task(main_coroutine(args))
-  loop.run_forever()
+  try:
+    # create the query parser
+    query_parser = makeQueryParser(args.chars)
+    # create the request handler
+    handler = RequestHandler(query_parser, args.geneaddr, args.chromosomeaddr, args.regionaddr)
+    # start the HTTP server
+    if not args.nohttp:
+      loop.create_task(run_http_server(args.hhost, args.hport, handler))
+    # start the gRPC server
+    if not args.nogrpc:
+      loop.create_task(run_grpc_server(args.ghost, args.gport, handler))
+    # run the main loop
+    loop.run_forever()
+  # catch exceptions not handled by asyncio
+  except Exception as e:
+    context = {'exception': e, 'message': str(e)}
+    loop.call_exception_handler(context)
+  # finalize the shutdown
+  finally:
+    loop.close()
+    logging.info('Successfully shutdown.')
 
 
 if __name__ == '__main__':

@@ -3,15 +3,15 @@ import asyncio
 from collections import defaultdict
 from itertools import chain
 # dependencies
-from redisearch import NumericFilter, Query
-# module
-from micro_synteny_search.aioredisearch import Client
+from redis.commands.search.query import Query
+from redis.commands.search import AsyncSearch
 
 
 class RequestHandler:
 
-  def __init__(self, redis_connection):
+  def __init__(self, redis_connection, breakpoint_characters=',.<>{}[]"\':;!@#$%^&*()-+=~'):
     self.redis_connection = redis_connection
+    self.breakpoint_characters = set(breakpoint_characters)
 
   def parseArguments(self, query_track, matched, intermediate):
     iter(query_track)  # TypeError if not iterable
@@ -51,17 +51,19 @@ class RequestHandler:
     families.discard('')
     chromosome_match_indices = defaultdict(list)
     for family in families:
+      cleaned_family = ''
+      for c in family:
+        if c in self.breakpoint_characters:
+          cleaned_family += '\\'
+        cleaned_family += c
       # count how many genes are in the family
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query_string = '@family:{' + cleaned_family + '}'
+      query = Query(query_string)\
                 .paging(0, 0)
       result = await gene_index.search(query)
       num_genes = result.total
       # get the genes
-      query = Query(family)\
-                .limit_fields('family')\
-                .verbatim()\
+      query = Query(query_string)\
                 .return_fields('chromosome', 'index')\
                 .paging(0, num_genes)
       result = await gene_index.search(query)
@@ -96,8 +98,8 @@ class RequestHandler:
 
   async def process(self, query_track, matched, intermediate):
     # connect to the index
-    gene_index = Client('geneIdx', conn=self.redis_connection)
-    chromosome_index = Client('chromosomeIdx', conn=self.redis_connection)
+    gene_index = AsyncSearch(self.redis_connection, index_name='geneIdx')
+    chromosome_index = AsyncSearch(self.redis_connection, index_name='chromosomeIdx')
     # search the gene index
     # TODO: is there a way to query for all genes exactly at once?
     chromosome_match_indexes = await self._queryToChromosomeGeneMatchIndexes(query_track, gene_index)
