@@ -44,7 +44,7 @@ protobuf==4.21.9
     # via grpcio-tools
 pyparsing==3.0.9
     # via packaging
-redis==4.3.4
+redis==4.4.0
     # via chromosome (setup.py)
 six==1.16.0
     # via grpcio
