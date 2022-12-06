@@ -1,0 +1,8 @@
+services:
+  linkouts:
+    image: ghcr.io/legumeinfo/microservices-linkouts:1.0.0
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - ${DATA}:/data
+    restart: always

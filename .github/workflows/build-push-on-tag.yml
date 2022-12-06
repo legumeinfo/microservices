@@ -13,6 +13,7 @@ on:
       - 'pairwise_macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
       - 'redis_loader@v[0-9]+.[0-9]+.[0-9]+'
       - 'search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'linkouts@v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io
