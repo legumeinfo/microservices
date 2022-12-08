@@ -14,7 +14,7 @@ deprecated==1.2.13
     # via redis
 gffutils==0.11.1
     # via redis-loader (setup.py)
-packaging==21.3
+packaging==22.0
     # via redis
 psycopg2==2.9.4
     # via redis-loader (setup.py)
