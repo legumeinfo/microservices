@@ -46,4 +46,4 @@ The microservice can be queried via HTTP GET.
 
 The default request URLs are :
 - `localhost:8080/gene_linkouts?genes=<comma-delimited geneid list>`
-- `localhost:8080/genomic_region_linkouts=<comma-delimited list of seqid:start-end`
+- `localhost:8080/genomic_region_linkouts?genomic_regions=<comma-delimited list of seqid:start-end>`

@@ -5,6 +5,8 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
+# dependencies
 import uvloop
 # module
 import linkouts
@@ -95,13 +97,40 @@ def main():
   # parse the command line arguments / environment variables
   args = parseArgs()
 
+  # setup logging
+  log_config = {
+    'format': '%(asctime)s,%(msecs)d %(levelname)s: %(message)s',
+    'datefmt': '%H:%M:%S',
+    'level': LOG_LEVELS[args.log_level],
+  }
+  if 'log_file' in args:
+    log_config['filename'] = args.log_file
+  logging.basicConfig(**log_config)
+
   # initialize asyncio
   #uvloop.install()
   loop = uvloop.new_event_loop()
   asyncio.set_event_loop(loop)
 
+  # setup asyncio exception handling
+  signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+  for s in signals:
+    loop.add_signal_handler(
+      s, lambda s=s: loop.create_task(shutdown(loop, signal=s))
+    )
+  loop.set_exception_handler(handleException)
+
   # run the program
-  main_coroutine(args)
+  try:
+    main_coroutine(args)
+  # catch exceptions not handled by asyncio
+  except Exception as e:
+    context = {'exception': e, 'message': str(e)}
+    loop.call_exception_handler(context)
+  # finalize the shutdown
+  finally:
+    loop.close()
+    logging.info('Successfully shutdown.')
 
 # the asyncio exception handler that will initiate a shutdown
 def handleException(loop, context):
