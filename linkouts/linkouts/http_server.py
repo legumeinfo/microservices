@@ -12,7 +12,7 @@ async def http_genes_get_handler(request):
   ids = request.rel_url.query[GENES_QUERY]
   ids = ids.split(",")
   handler = request.app['handler']
-  linkouts = await handler.process_genes(ids)
+  linkouts = handler.process_genes(ids)
   return web.json_response(linkouts)
 
 async def http_genes_post_handler(request):
@@ -20,7 +20,7 @@ async def http_genes_post_handler(request):
   data = await request.json()
   ids = data.get(GENES_QUERY, [])
   handler = request.app['handler']
-  linkouts = await handler.process_genes(ids)
+  linkouts = handler.process_genes(ids)
   return web.json_response(linkouts)
 
 async def http_genomic_regions_get_handler(request):
@@ -28,7 +28,7 @@ async def http_genomic_regions_get_handler(request):
   ids = request.rel_url.query[GENOMIC_REGIONS_QUERY]
   ids = ids.split(",")
   handler = request.app['handler']
-  linkouts = await handler.process_genomic_regions(ids)
+  linkouts = handler.process_genomic_regions(ids)
   return web.json_response(linkouts)
 
 async def http_genomic_regions_post_handler(request):
@@ -36,7 +36,7 @@ async def http_genomic_regions_post_handler(request):
   data = await request.json()
   ids = data.get(GENOMIC_REGIONS_QUERY, [])
   handler = request.app['handler']
-  linkouts = await handler.process_genomic_regions(ids)
+  linkouts = handler.process_genomic_regions(ids)
   return web.json_response(linkouts)
 
 

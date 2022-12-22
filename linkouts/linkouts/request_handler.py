@@ -44,7 +44,7 @@ class RequestHandler:
             type_lookup[prefix] = []
           type_lookup[prefix].append(linkout)
 
-  async def process_genes(self, ids):
+  def process_genes(self, ids):
     linkouts = []
     if self.linkout_lookup.get(GENE_LINKOUTS) == None:
       return linkouts 
@@ -64,7 +64,7 @@ class RequestHandler:
           linkouts.append(linkout)
     return linkouts
 
-  async def process_genomic_regions(self, ids):
+  def process_genomic_regions(self, ids):
     linkouts = []
     if self.linkout_lookup.get(GENOMIC_REGION_LINKOUTS) == None:
       return linkouts 

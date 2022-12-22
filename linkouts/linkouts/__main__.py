@@ -80,8 +80,8 @@ def parseArgs():
   parser.add_argument('--hhost', action=EnvArg, envvar=hhost_envvar, type=str, default='127.0.0.1', help=f'The HTTP server host (can also be specified using the {hhost_envvar} environment variable).')
   hport_envvar = 'HTTP_PORT'
   parser.add_argument('--hport', action=EnvArg, envvar=hport_envvar, type=str, default='8880', help=f'The HTTP server port (can also be specified using the {hport_envvar} environment variable).')
-  lglob_root_envvar = ''
-  parser.add_argument('--lglob_root', action=EnvArg, envvar=lglob_root_envvar, type=str, default='/data', help=f'The root folder to be searched for linkouts.*.yml files containing linkout specifications')
+  lglob_root_envvar = 'LGLOB_ROOT'
+  parser.add_argument('--lglob_root', action=EnvArg, envvar=lglob_root_envvar, type=str, default='/data', help=f'The root folder to be searched for linkouts.*.yml files containing linkout specifications (can also be specified using the {lglob_root_envvar} environment variable).')
 
   return parser.parse_args()
 
@@ -108,7 +108,6 @@ def main():
   logging.basicConfig(**log_config)
 
   # initialize asyncio
-  #uvloop.install()
   loop = uvloop.new_event_loop()
   asyncio.set_event_loop(loop)
 
