@@ -27,6 +27,7 @@ def chado(redisearch_loader, args):
     args.postgres_host,
     args.postgres_port,
     args.uniquename,
+    args.sequence_types,
   )
 
 
@@ -169,6 +170,32 @@ def parseArgs():
     default='append',
     help=(f'How the data should be loaded into Redis:\n{loadtype_help}'
           f'(can also be specified using the {loadtype_envvar} environment '
+          'variable).'))
+
+  sequence_types = {
+      'chromosome': 'full nuclear chromosomes',
+      'supercontig': 'scaffolds and contigs',
+      'chloroplast': 'chloroplast organelle',
+      'mitochondrion': 'mitochondrial organelle',
+    }
+  # TODO: add "all" option
+  # TODO: prevent argparse from removing line breaks in help text
+  sequencetypes_help = ''.join([
+      f'\t{type} - {description} \n '
+      for type, description in sequence_types.items()
+    ])
+  sequencetypes_envvar = 'SEQUENCE_TYPES'
+  parser.add_argument(
+    '--sequence-types',
+    dest='sequence_types',
+    action=EnvAction,
+    envvar=sequencetypes_envvar,
+    type=str,
+    nargs='+',
+    choices=list(sequence_types.keys()),
+    default='chromosome',
+    help=(f'What sequence types should be loaded into Redis:\n{sequencetypes_help}'
+          f'(can also be specified using the {sequencetypes_envvar} environment '
           'variable).'))
 
   # Chado args
@@ -315,6 +342,7 @@ def main():
       'db': args.redis_db,
       'password': args.redis_password,
       'load_type': args.load_type,
+      'sequence_types': args.sequence_types,
       'no_save': args.no_save,
       'chunk_size': args.chunk_size,
     }

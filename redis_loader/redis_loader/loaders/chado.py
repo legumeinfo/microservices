@@ -63,7 +63,7 @@ def getCvterm(c, name, cv=None):
   return term
 
 
-def transferChromosomes(postgres_connection, redisearch_loader, uniquename):
+def transferChromosomes(postgres_connection, redisearch_loader, uniquename, sequence_types):
   '''
   Loads chromosomes from a Chado (PostgreSQL) database into a RediSearch
   database.
@@ -86,7 +86,8 @@ def transferChromosomes(postgres_connection, redisearch_loader, uniquename):
   with postgres_connection.cursor() as c:
 
     # get cvterms
-    chromosome_id = getCvterm(c, 'chromosome', 'sequence')
+    sequencetype_ids = [getCvterm(c, s, 'sequence') for s in sequence_types]
+    #chromosome_id = getCvterm(c, 'chromosome', 'sequence')
     #supercontig_id = getCvterm(c, 'supercontig', 'sequence')
 
     # get all the organisms
@@ -101,7 +102,7 @@ def transferChromosomes(postgres_connection, redisearch_loader, uniquename):
     name_field = 'uniquename' if uniquename else 'name'
     query = (f'SELECT feature_id, {name_field}, organism_id, seqlen '
              'FROM feature '
-             'WHERE type_id=' + str(chromosome_id) + ';')
+             'WHERE type_id IN (' + str(','.join(sequencetype_ids)) + ');')
     #         'OR type_id=' + str(supercontig_id) + ';')
     c.execute(query)
 
@@ -174,7 +175,7 @@ chromosome_id_name_map, uniquename):
 
 
 def loadFromChado(redisearch_loader, database, user, password, host, port,
-uniquename):
+uniquename, sequence_types):
   '''
   Loads data from a Chado (PostgreSQL) database into a RediSearch database.
 
@@ -198,7 +199,7 @@ uniquename):
   with psycopg2.connect(postgres_connection_string) as postgres_connection:
     # load chromosomes
     chromosome_id_name_map = \
-      transferChromosomes(postgres_connection, redisearch_loader, uniquename)
+      transferChromosomes(postgres_connection, redisearch_loader, uniquename, sequence_types)
     # load genes
     transferGenes(
       postgres_connection,
