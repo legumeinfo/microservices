@@ -24,7 +24,7 @@ pyparsing==3.0.9
     # via packaging
 redis==4.3.4
     # via redis-loader (setup.py)
-simplejson==3.17.6
+simplejson==3.18.1
     # via gffutils
 six==1.16.0
     # via
