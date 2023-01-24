@@ -4,5 +4,5 @@ def int_or_str(value):
     except ValueError:
         return value
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 VERSION = tuple(map(int_or_str, __version__.split('.')))
