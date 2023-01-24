@@ -10,28 +10,20 @@ argh==0.26.2
     # via gffutils
 async-timeout==4.0.2
     # via redis
-deprecated==1.2.13
-    # via redis
 gffutils==0.11.1
     # via redis-loader (setup.py)
-packaging==21.3
-    # via redis
-psycopg2==2.9.4
+psycopg2==2.9.5
     # via redis-loader (setup.py)
 pyfaidx==0.7.1
     # via gffutils
-pyparsing==3.0.9
-    # via packaging
-redis==4.3.4
+redis==4.4.2
     # via redis-loader (setup.py)
-simplejson==3.17.6
+simplejson==3.18.1
     # via gffutils
 six==1.16.0
     # via
     #   gffutils
     #   pyfaidx
-wrapt==1.14.1
-    # via deprecated
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
