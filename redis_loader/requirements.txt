@@ -22,7 +22,7 @@ pyfaidx==0.7.1
     # via gffutils
 pyparsing==3.0.9
     # via packaging
-redis==4.3.4
+redis==4.4.2
     # via redis-loader (setup.py)
 simplejson==3.17.6
     # via gffutils
