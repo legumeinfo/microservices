@@ -1,4 +1,4 @@
-FROM python:3.11.1-alpine3.15 AS builder
+FROM python:3.11.1-alpine3.17 AS builder
 
 RUN apk add --no-cache \
   gcc \
