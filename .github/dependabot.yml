@@ -41,6 +41,16 @@ updates:
     schedule:
       interval: 'daily'
 
+  # linkouts service
+  - package-ecosystem: 'pip'
+    directory: '/linkouts'
+    schedule:
+      interval: 'daily'
+  - package-ecosystem: 'docker'
+    directory: '/linkouts'
+    schedule:
+      interval: 'daily'
+
   # gene search service
   - package-ecosystem: 'pip'
     directory: '/gene_search'
