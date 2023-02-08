@@ -38,7 +38,7 @@ multidict==6.0.4
     #   yarl
 protobuf==4.21.12
     # via grpcio-tools
-redis==4.4.2
+redis==4.5.1
     # via gene-search (setup.py)
 uvloop==0.17.0
     # via gene-search (setup.py)
