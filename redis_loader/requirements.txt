@@ -6,7 +6,7 @@
 #
 argcomplete==2.0.0
     # via gffutils
-argh==0.26.2
+argh==0.27.2
     # via gffutils
 async-timeout==4.0.2
     # via redis
