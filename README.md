@@ -15,5 +15,7 @@ If you wish to communicate with these containers from a Web client using gRPC We
 The example configures microservices to communicate and supports gRPC Web requests.
 
 ## Development
+Please so our [contribution guidelines](.github/CONTRIBUTING.md) before contributing to this repository.
+
 See the directories of microservices you wish to compile manually for instructions on doing so.
 Generally, we recommend still using a solution like Docker Compose to orchestrate container building and cross-talk, even during development.
