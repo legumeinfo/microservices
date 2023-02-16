@@ -17,7 +17,6 @@ from chromosome_region.grpc_server import run_grpc_server
 from chromosome_region.http_server import run_http_server
 from chromosome_region.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

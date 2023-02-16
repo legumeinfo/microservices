@@ -2,7 +2,7 @@
 import asyncio
 
 # module
-from search.grpc_client import gene_search, chromosome_search, chromosome_region
+from search.grpc_client import chromosome_region, chromosome_search, gene_search
 
 
 class RequestHandler:

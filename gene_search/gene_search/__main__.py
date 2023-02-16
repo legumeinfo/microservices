@@ -17,7 +17,6 @@ from gene_search.grpc_server import run_grpc_server
 from gene_search.http_server import run_http_server
 from gene_search.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

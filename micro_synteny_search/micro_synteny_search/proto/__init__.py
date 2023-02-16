@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 # protoc can't generate Python files with relative imports and Python 3 doesn't
 # have implicit relative imports like Python 2. This is unfortunate because we
 # don't want to add service-specific absolute import paths to .proto files

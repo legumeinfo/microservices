@@ -17,7 +17,6 @@ from micro_synteny_search.grpc_server import run_grpc_server
 from micro_synteny_search.http_server import run_http_server
 from micro_synteny_search.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

@@ -1,7 +1,8 @@
-import yaml
+import glob
 import logging
 import re
-import glob
+
+import yaml
 
 HREF = "href"
 METHOD = "method"

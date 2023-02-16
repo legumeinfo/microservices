@@ -2,7 +2,10 @@
 import grpc
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from chromosome.proto.chromosome_service.v1 import chromosome_pb2
 # from chromosome.proto.chromosome_service.v1 import chromosome_pb2_grpc
 # from chromosome.proto.track.v1 import track_pb2
@@ -10,9 +13,10 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from chromosome import proto  # noqa: F401
-from chromosome_service.v1 import chromosome_pb2
-from chromosome_service.v1 import chromosome_pb2_grpc
+from chromosome_service.v1 import chromosome_pb2, chromosome_pb2_grpc
 from track.v1 import track_pb2
+
+# isort: on
 
 
 class Chromosome(chromosome_pb2_grpc.ChromosomeServicer):

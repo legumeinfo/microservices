@@ -7,7 +7,6 @@ from redis.commands.search.indexDefinition import IndexDefinition
 # module
 import redis_loader
 
-
 VERSION_KEY = "GCV_SCHEMA_VERSION"
 COMPATIBLE_KEY = "GCV_COMPATIBLE_SCHEMA_VERSIONS"
 

@@ -2,7 +2,10 @@
 import grpc
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from genes.proto.genes_service.v1 import genes_pb2
 # from genes.proto.genes_service.v1 import genes_pb2_grpc
 # from genes.proto.gene.v1 import gene_pb2
@@ -10,9 +13,10 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from genes import proto  # noqa: F401
-from genes_service.v1 import genes_pb2
-from genes_service.v1 import genes_pb2_grpc
+from genes_service.v1 import genes_pb2, genes_pb2_grpc
 from gene.v1 import gene_pb2
+
+# isort: on
 
 
 class Genes(genes_pb2_grpc.GenesServicer):

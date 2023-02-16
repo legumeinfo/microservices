@@ -17,7 +17,6 @@ from genes.grpc_server import run_grpc_server
 from genes.http_server import run_http_server
 from genes.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

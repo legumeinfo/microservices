@@ -1,6 +1,6 @@
 from array import array
-from itertools import chain
 from collections import Counter
+from itertools import chain
 
 
 def jaccard(a, b, n=1, reversals=False, multiset=False):

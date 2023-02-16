@@ -17,7 +17,6 @@ from search.http_server import run_http_server
 from search.query_parser import makeQueryParser
 from search.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

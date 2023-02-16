@@ -1,7 +1,7 @@
 # dependencies
 from redis.commands.search import AsyncSearch
-from redis.commands.search.document import Document
 from redis.commands.search._util import to_string
+from redis.commands.search.document import Document
 
 
 class RequestHandler:

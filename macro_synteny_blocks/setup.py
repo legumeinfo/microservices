@@ -7,7 +7,6 @@ from setuptools.command.build_py import build_py
 # package
 from macro_synteny_blocks import commands
 
-
 PACKAGE_DIRECTORIES = {
     "": ".",
 }

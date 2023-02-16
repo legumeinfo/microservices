@@ -2,7 +2,10 @@
 import grpc
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from chromosome_search.proto.chromosomesearch_service.v1 import chromosomesearch_pb2
 # from chromosome_search.proto.chromosomesearch_service.v1
 #   import chromosomesearch_pb2_grpc
@@ -11,8 +14,9 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from chromosome_search import proto  # noqa: F401
-from chromosomesearch_service.v1 import chromosomesearch_pb2
-from chromosomesearch_service.v1 import chromosomesearch_pb2_grpc
+from chromosomesearch_service.v1 import chromosomesearch_pb2, chromosomesearch_pb2_grpc
+
+# isort: on
 
 
 class ChromosomeSearch(chromosomesearch_pb2_grpc.ChromosomeSearchServicer):

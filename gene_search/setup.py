@@ -6,7 +6,6 @@ from setuptools.command.build_py import build_py
 # package
 from gene_search import commands
 
-
 PACKAGE_DIRECTORIES = {
     "": ".",
 }

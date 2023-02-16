@@ -1,12 +1,12 @@
 # Python
 import codecs
 import csv
+import gzip
 from collections import defaultdict
+from urllib.request import urlopen, urlparse
 
 # dependencies
 import gffutils
-import gzip
-from urllib.request import urlopen, urlparse
 
 
 def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):

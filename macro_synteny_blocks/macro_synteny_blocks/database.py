@@ -4,7 +4,6 @@ import redis.asyncio as redis
 # module
 import macro_synteny_blocks
 
-
 COMPATIBLE_KEY = "GCV_COMPATIBLE_SCHEMA_VERSIONS"
 
 
