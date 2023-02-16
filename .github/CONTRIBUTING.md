@@ -50,7 +50,12 @@ Scan through our [existing issues](https://github.com/github/microservices/issue
 
 The repository uses pre-commit hooks to style and lint the code. Specifically, we use the [pre-commit framework](https://pre-commit.com/). Make sure you have that installed on your machine before proceeding.
 
-Now commit your changes. This will run the pre-commit hooks. Some errors will be fixed automatically. Others will require manual intervention. If any errors require intervention, the commit will fail and you will need to fix the errors. Once the errors you will need to commit again. Note that you can use the same commit message because the previous commit failed and therefore wasn't added to the commit log.
+Once you have pre-commit installed, setup our pre-commit hooks by running the following command in the root of the repository:
+```console
+pre-commit install
+```
+
+Now you can commit your changes. This will automatically run the pre-commit hooks. If there are any errors, some will be fixed automatically but others will require manual intervention. If any errors require intervention, the commit will fail and you will need to fix the errors before trying to commit again. When committing after fixing errors you can use the same commit message as the previous commit because the previous commit failed and therefore wasn't added to the commit log.
 
 ### Pull Request
 
