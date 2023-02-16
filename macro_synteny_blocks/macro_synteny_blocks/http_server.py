@@ -37,7 +37,7 @@ async def http_post_handler(request):
             chromosome_genes,
             chromosome_length,
         )
-    except:
+    except Exception:
         return web.HTTPBadRequest(
             text="Required arguments are missing or have invalid values"
         )

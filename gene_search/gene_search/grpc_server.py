@@ -8,7 +8,7 @@ from grpc.experimental import aio
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from gene_search import proto
+from gene_search import proto  # noqa: F401
 from genesearch_service.v1 import genesearch_pb2
 from genesearch_service.v1 import genesearch_pb2_grpc
 

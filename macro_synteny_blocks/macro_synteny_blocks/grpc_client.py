@@ -5,12 +5,14 @@ import logging
 from grpc.experimental import aio
 
 # module
-# from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
-# from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+# from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
+#   import pairwisemacrosyntenyblocks_pb2
+# from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
+#   import pairwisemacrosyntenyblocks_pb2_grpc
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from macro_synteny_blocks import proto
+from macro_synteny_blocks import proto  # noqa: F401
 from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
 from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
 

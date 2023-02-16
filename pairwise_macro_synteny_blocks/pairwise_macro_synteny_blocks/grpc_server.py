@@ -3,21 +3,23 @@ import grpc
 from grpc.experimental import aio
 
 # module
-# from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
-# from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+# from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
+#   import pairwisemacrosyntenyblocks_pb2
+# from pairwise_macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
+#   import pairwisemacrosyntenyblocks_pb2_grpc
 # from pairwise_macro_synteny_blocks.proto.block.v1 import block_pb2
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from pairwise_macro_synteny_blocks import proto
+from pairwise_macro_synteny_blocks import proto  # noqa: F401
 from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
-from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+from pairwisemacrosyntenyblocks_service.v1 import (
+    pairwisemacrosyntenyblocks_pb2_grpc as pwb_pb2_grpc,
+)
 from block.v1 import block_pb2
 
 
-class PairwiseMacroSyntenyBlocks(
-    pairwisemacrosyntenyblocks_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
-):
+class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer):
     def __init__(self, handler):
         self.handler = handler
 
@@ -60,7 +62,7 @@ class PairwiseMacroSyntenyBlocks(
                 chromosome_genes,
                 chromosome_length,
             )
-        except:
+        except Exception:
             # raise a gRPC INVALID ARGUMENT error
             await context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
@@ -117,9 +119,7 @@ async def run_grpc_server(host, port, handler):
     server = aio.server()
     server.add_insecure_port(f"{host}:{port}")
     servicer = PairwiseMacroSyntenyBlocks(handler)
-    pairwisemacrosyntenyblocks_pb2_grpc.add_PairwiseMacroSyntenyBlocksServicer_to_server(
-        servicer, server
-    )
+    pwb_pb2_grpc.add_PairwiseMacroSyntenyBlocksServicer_to_server(servicer, server)
     await server.start()
     await server.wait_for_termination()
     # TODO: what about teardown? server.stop(None)

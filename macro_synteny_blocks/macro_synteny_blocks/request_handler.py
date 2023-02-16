@@ -56,7 +56,10 @@ class RequestHandler:
             or chromosome_length <= 0
         ):
             raise ValueError(
-                "matched, intermediate, chromosome genes, and chromosome length must be positive"
+                """
+                matched, intermediate, chromosome genes, and chromosome length must be
+                positive
+            """
             )
         if mask is not None:
             mask = int(mask)

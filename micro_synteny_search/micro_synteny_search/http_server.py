@@ -14,7 +14,7 @@ async def http_post_handler(request):
         query, matched, intermediate = handler.parseArguments(
             query, matched, intermediate
         )
-    except:
+    except Exception:
         return web.HTTPBadRequest(
             text="Required arguments are missing or have invalid values"
         )

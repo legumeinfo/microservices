@@ -45,13 +45,18 @@ def parseArgs():
     # create the parser
     parser = argparse.ArgumentParser(
         prog=pairwise_macro_synteny_blocks.__name__,
-        description="A microservice for finding chromosome names similar to the given query.",
+        description="""
+        A microservice for finding chromosome names similar to the given query.
+        """,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {pairwise_macro_synteny_blocks.__version__} schema {pairwise_macro_synteny_blocks.__schema_version__}",
+        version=f"""
+        %(prog)s {pairwise_macro_synteny_blocks.__version__} schema
+        {pairwise_macro_synteny_blocks.__schema_version__}
+        """,
     )
 
     # logging args
@@ -64,10 +69,10 @@ def parseArgs():
         type=str,
         choices=list(LOG_LEVELS.keys()),
         default="WARNING",
-        help=(
-            "What level of events should be logged (can also be specified using "
-            f"the {loglevel_envvar} environment variable)."
-        ),
+        help=f"""
+        What level of events should be logged (can also be specified using the
+        {loglevel_envvar} environment variable).
+        """,
     )
     logfile_envvar = "LOG_FILE"
     parser.add_argument(
@@ -77,10 +82,10 @@ def parseArgs():
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
         envvar=logfile_envvar,
         type=str,
-        help=(
-            "The file events should be logged in (can also be specified using "
-            f"the {logfile_envvar} environment variable)."
-        ),
+        help=f"""
+        The file events should be logged in (can also be specified using the
+        {logfile_envvar} environment variable).
+        """,
     )
 
     # Async HTTP args
@@ -98,7 +103,10 @@ def parseArgs():
         envvar=hhost_envvar,
         type=str,
         default="localhost",
-        help=f"The HTTP server host (can also be specified using the {hhost_envvar} environment variable).",
+        help=f"""
+        The HTTP server host (can also be specified using the {hhost_envvar} environment
+        variable).
+        """,
     )
     hport_envvar = "HTTP_PORT"
     parser.add_argument(
@@ -107,7 +115,10 @@ def parseArgs():
         envvar=hport_envvar,
         type=str,
         default="8080",
-        help=f"The HTTP server port (can also be specified using the {hport_envvar} environment variable).",
+        help=f"""
+        The HTTP server port (can also be specified using the {hport_envvar} environment
+        variable).
+        """,
     )
 
     # gRPC args
@@ -125,7 +136,10 @@ def parseArgs():
         envvar=ghost_envvar,
         type=str,
         default="[::]",
-        help=f"The gRPC server host (can also be specified using the {ghost_envvar} environment variable).",
+        help=f"""
+        The gRPC server host (can also be specified using the {ghost_envvar} environment
+        variable).
+        """,
     )
     gport_envvar = "GRPC_PORT"
     parser.add_argument(
@@ -134,7 +148,10 @@ def parseArgs():
         envvar=gport_envvar,
         type=str,
         default="8081",
-        help=f"The gRPC server port (can also be specified using the {gport_envvar} environment variable).",
+        help=f"""
+        The gRPC server port (can also be specified using the {gport_envvar} environment
+        variable).
+        """,
     )
 
     # Redis args
@@ -145,7 +162,10 @@ def parseArgs():
         envvar=rdb_envvar,
         type=int,
         default=0,
-        help=f"The Redis database (can also be specified using the {rdb_envvar} environment variable).",
+        help=f"""
+        The Redis database (can also be specified using the {rdb_envvar} environment
+        variable).
+        """,
     )
     rpassword_envvar = "REDIS_PASSWORD"
     parser.add_argument(
@@ -153,7 +173,10 @@ def parseArgs():
         action=EnvArg,
         envvar=rpassword_envvar,
         type=str,
-        help=f"The Redis password (can also be specified using the {rpassword_envvar} environment variable).",
+        help=f"""
+        The Redis password (can also be specified using the {rpassword_envvar}
+        environment variable).
+        """,
     )
     rhost_envvar = "REDIS_HOST"
     parser.add_argument(
@@ -162,7 +185,10 @@ def parseArgs():
         envvar=rhost_envvar,
         type=str,
         default="localhost",
-        help=f"The Redis host (can also be specified using the {rhost_envvar} environment variable).",
+        help=f"""
+        The Redis host (can also be specified using the {rhost_envvar} environment
+        variable).
+        """,
     )
     rport_envvar = "REDIS_PORT"
     parser.add_argument(
@@ -171,7 +197,10 @@ def parseArgs():
         envvar=rport_envvar,
         type=int,
         default=6379,
-        help=f"The Redis port (can also be specified using the {rport_envvar} environment variable).",
+        help=f"""
+        The Redis port (can also be specified using the {rport_envvar} environment
+        variable).
+        """,
     )
 
     return parser.parse_args()
