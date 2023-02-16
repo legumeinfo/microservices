@@ -14,7 +14,7 @@ gffutils==0.11.1
     # via redis-loader (setup.py)
 psycopg2==2.9.5
     # via redis-loader (setup.py)
-pyfaidx==0.7.1
+pyfaidx==0.7.2.1
     # via gffutils
 redis==4.4.2
     # via redis-loader (setup.py)
