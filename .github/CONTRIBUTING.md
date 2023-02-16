@@ -19,7 +19,7 @@ The following are instructions on the different ways you may contribute to the p
 
 #### Create a new issue
 
-If you spot a problem with the microservices, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If a related issue doesn't exist, you can open a new issue using. 
+If you spot a problem with the microservices, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If a related issue doesn't exist, you can open a new issue. 
 
 #### Solve an issue
 
@@ -37,14 +37,7 @@ Scan through our [existing issues](https://github.com/github/microservices/issue
 - Using the command line:
   - [Fork the repo](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo#fork-an-example-repository) so that you can make your changes without affecting the original project until you're ready to merge them.
 2.  Follow the instructions for how to setup and run the specific microservice(s) you want to change (see each microservice's directory for details)
-3. Create a working branch and start with your changes!
-
-3.  Make the changes in your fork
-3.  Committing your changes will run the pre-commit hooks. Make sure you fix any errors that weren't automatically fixed for you.
-6.  If you like the change and think the project could use it, make a pull request
-
-
-3. Create a working branch and start with your changes!
+3.  Create a working branch and start making changes!
 
 ### Commit your changes
 
@@ -55,12 +48,12 @@ Once you have pre-commit installed, setup our pre-commit hooks by running the fo
 pre-commit install
 ```
 
-Now you can commit your changes. This will automatically run the pre-commit hooks. If there are any errors, some will be fixed automatically but others will require manual intervention. If any errors require intervention, the commit will fail and you will need to fix the errors before trying to commit again. When committing after fixing errors you can use the same commit message as the previous commit because the previous commit failed and therefore wasn't added to the commit log.
+Now you can commit your changes. This will automatically run the pre-commit hooks. If there are errors, some may be fixed automatically but others may require manual intervention. If any errors require intervention, the commit will fail and you will need to fix the errors before trying to commit again. When committing after fixing errors you can use the same commit message as the previous commit because the previous commit failed and therefore wasn't added to the commit log.
 
 ### Pull Request
 
 When you're finished with the changes, create a pull request, also known as a PR.
-- Don't forget to [link PR to issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) if you are solving one.
+- Don't forget to [link the PR to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) if you are solving one.
 - Enable the checkbox to [allow maintainer edits](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/allowing-changes-to-a-pull-request-branch-created-from-a-fork) so the branch can be updated for a merge.
 Once you submit your PR, a team member will review your proposal. We may ask questions or request additional information.
 - We may ask for changes to be made before a PR can be merged, either using [suggested changes](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/incorporating-feedback-in-your-pull-request) or pull request comments. You can apply suggested changes directly through the UI. You can make any other changes in your fork, then commit them to your branch.
