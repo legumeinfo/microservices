@@ -2,7 +2,10 @@
 import grpc
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from micro_synteny_search.proto.microsyntenysearch_service.v1
 #   import microsyntenysearch_pb2
 # from micro_synteny_search.proto.microsyntenysearch_service.v1
@@ -12,9 +15,13 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from micro_synteny_search import proto  # noqa: F401
-from microsyntenysearch_service.v1 import microsyntenysearch_pb2
-from microsyntenysearch_service.v1 import microsyntenysearch_pb2_grpc
+from microsyntenysearch_service.v1 import (
+    microsyntenysearch_pb2,
+    microsyntenysearch_pb2_grpc,
+)
 from track.v1 import track_pb2
+
+# isort: on
 
 
 class MicroSyntenySearch(microsyntenysearch_pb2_grpc.MicroSyntenySearchServicer):

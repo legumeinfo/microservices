@@ -23,9 +23,10 @@ Provides distutils command classes for the macro-synteny blocks Python setup pro
 
 
 import os
+import sys
+
 import pkg_resources
 import setuptools
-import sys
 
 
 class BuildProtos(setuptools.Command):

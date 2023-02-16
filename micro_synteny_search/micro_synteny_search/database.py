@@ -4,7 +4,6 @@ import redis.asyncio as redis
 # module
 import micro_synteny_search
 
-
 COMPATIBLE_KEY = "GCV_COMPATIBLE_SCHEMA_VERSIONS"
 
 

@@ -3,9 +3,10 @@ import asyncio
 from collections import defaultdict
 from itertools import chain
 
+from redis.commands.search import AsyncSearch
+
 # dependencies
 from redis.commands.search.query import Query
-from redis.commands.search import AsyncSearch
 
 
 class RequestHandler:

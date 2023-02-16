@@ -1,10 +1,15 @@
 # Python
 import logging
 
+# isort: split
+
 # dependencies
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from search.proto.genesearch_service.v1 import genesearch_pb2
 # from search.proto.genesearch_service.v1 import genesearch_pb2_grpc
 # from search.proto.chromosomesearch_service.v1 import chromosomesearch_pb2
@@ -15,12 +20,11 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from search import proto  # noqa: F401
-from genesearch_service.v1 import genesearch_pb2
-from genesearch_service.v1 import genesearch_pb2_grpc
-from chromosomesearch_service.v1 import chromosomesearch_pb2
-from chromosomesearch_service.v1 import chromosomesearch_pb2_grpc
-from chromosomeregion_service.v1 import chromosomeregion_pb2
-from chromosomeregion_service.v1 import chromosomeregion_pb2_grpc
+from genesearch_service.v1 import genesearch_pb2, genesearch_pb2_grpc
+from chromosomesearch_service.v1 import chromosomesearch_pb2, chromosomesearch_pb2_grpc
+from chromosomeregion_service.v1 import chromosomeregion_pb2, chromosomeregion_pb2_grpc
+
+# isort: on
 
 
 async def gene_search(query, address):

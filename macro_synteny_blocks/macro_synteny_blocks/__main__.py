@@ -17,7 +17,6 @@ from macro_synteny_blocks.grpc_server import run_grpc_server
 from macro_synteny_blocks.http_server import run_http_server
 from macro_synteny_blocks.request_handler import RequestHandler
 
-
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,

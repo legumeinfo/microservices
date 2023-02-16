@@ -7,7 +7,6 @@ from setuptools.command.build_py import build_py
 # package
 from chromosome import commands
 
-
 PACKAGE_DIRECTORIES = {
     "": ".",
 }

@@ -1,10 +1,15 @@
 # Python
 import logging
 
+# isort: split
+
 # dependencies
 from grpc.experimental import aio
 
+# isort: split
+
 # module
+# isort: off
 # from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
 #   import pairwisemacrosyntenyblocks_pb2
 # from macro_synteny_blocks.proto.pairwisemacrosyntenyblocks_service.v1
@@ -13,8 +18,12 @@ from grpc.experimental import aio
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
 from macro_synteny_blocks import proto  # noqa: F401
-from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2
-from pairwisemacrosyntenyblocks_service.v1 import pairwisemacrosyntenyblocks_pb2_grpc
+from pairwisemacrosyntenyblocks_service.v1 import (
+    pairwisemacrosyntenyblocks_pb2,
+    pairwisemacrosyntenyblocks_pb2_grpc,
+)
+
+# isort: on
 
 
 async def computePairwiseMacroSyntenyBlocks(
