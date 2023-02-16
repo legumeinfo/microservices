@@ -3,12 +3,14 @@ import grpc
 from grpc.experimental import aio
 
 # module
-# from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2
-# from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2_grpc
+# from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1
+#   import macrosyntenyblocks_pb2
+# from macro_synteny_blocks.proto.macrosyntenyblocks_service.v1
+#   import macrosyntenyblocks_pb2_grpc
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from macro_synteny_blocks import proto
+from macro_synteny_blocks import proto  # noqa: F401
 from macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2
 from macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2_grpc
 
@@ -56,7 +58,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_genes,
                 chromosome_length,
             )
-        except:
+        except Exception:
             # raise a gRPC INVALID ARGUMENT error
             await context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,

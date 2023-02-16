@@ -128,8 +128,10 @@ class RediSearchLoader(object):
 
         Parameters:
           name (str): The name of the RediSearch index to be loaded.
-          fields (list[redis.commands.search.field.Field]): The fields the index should contain.
-          definition (redis.commands.search.indexDefinition.IndexDefinition): A definition of the index.
+          fields (list[redis.commands.search.field.Field]): The fields the index should
+            contain.
+          definition (redis.commands.search.indexDefinition.IndexDefinition): A
+            definition of the index.
           chunk_size (int): The chunk size to be used for Redis batch processing.
 
         Returns:
@@ -171,15 +173,15 @@ class RediSearchLoader(object):
     def __checkChromosomeKeys(self):
         keys = self.redis_connection.keys("chromosome:*")
         if keys:
-            print(f'\tKeys that match "chromosome:*" already exists')
+            print('\tKeys that match "chromosome:*" already exists')
             if self.load_type == "new":
-                message = (
-                    f"Chromosome keys already exists but load type "
-                    f'"{self.load_type}" does not support preexisting keys.'
-                )
+                message = f"""
+                    Chromosome keys already exists but load type {self.load_type}" does
+                    not support preexisting keys.
+                 """
                 raise RediSearchExistsError(message)
             if self.load_type == "reload":
-                print(f'\tDropping keys that match "chromosome:*"')
+                print('\tDropping keys that match "chromosome:*"')
                 # NOTE: we create a pipeline and iterate instead of expanding keys into
                 # a single delete call in case there's A LOT of keys to avoid overflow
                 pipeline = self.redis_connection.pipeline()
@@ -187,7 +189,7 @@ class RediSearchLoader(object):
                     pipeline.delete(key)
                 pipeline.execute()
             elif self.load_type == "append":
-                print(f'\tNew "chromosome:*" keys will be appended')
+                print('\tNew "chromosome:*" keys will be appended')
 
     def __setupIndexes(self, chunk_size):
         """
@@ -197,23 +199,22 @@ class RediSearchLoader(object):
           chunk_size (int): The chunk size to be used for Redis batch processing.
 
         Returns:
-          redis.commands.search.Search.BatchIndexer: A batch processor for the chromosome
+          redis.commands.search.Search.BatchIndexer: A batch processor for the
+            chromosome index.
+          redis.commands.search.Search.BatchIndexer: A batch processor for the gene
             index.
-          redis.commands.search.Search.BatchIndexer: A batch processor for the gene index.
         """
 
         # create the chromosome index
         chromosome_fields = [
-            TextField(
-                "name"
-            ),  # TextField to support fuzzy search, use document ID for recovering specific chromosomes
+            # TextField to support fuzzy search, use document ID for recovering specific
+            # chromosomes
+            TextField("name"),
             NumericField("length"),
-            TagField(
-                "genus"
-            ),  # TagField since this is a foreign key, i.e. we only match exactly
-            TagField(
-                "species"
-            ),  # TagField since this is a foreign key, i.e. we only match exactly
+            # TagField since this is a foreign key, i.e. we only match exactly
+            TagField("genus"),
+            # TagField since this is a foreign key, i.e. we only match exactly
+            TagField("species"),
         ]
         chromosome_definition = IndexDefinition(prefix=["chromosome:"])
         chromosome_indexer = self.__makeOrGetIndex(
@@ -227,17 +228,15 @@ class RediSearchLoader(object):
 
         # create the gene index
         gene_fields = [
-            TagField(
-                "chromosome"
-            ),  # TagField since this is a foreign key, i.e. we only match exactly
-            TextField(
-                "name"
-            ),  # TextField to support fuzzy search, use document ID for recovering specific genes
+            # TagField since this is a foreign key, i.e. we only match exactly
+            TagField("chromosome"),
+            # TextField to support fuzzy search, use document ID for recovering specific
+            # genes
+            TextField("name"),
             NumericField("fmin"),
             NumericField("fmax"),
-            TagField(
-                "family"
-            ),  # TagField since this is a foreign key, i.e. we only match exactly
+            # TagField since this is a foreign key, i.e. we only match exactly
+            TagField("family"),
             NumericField("strand"),
             NumericField("index", sortable=True),
         ]
@@ -357,10 +356,10 @@ class RediSearchLoader(object):
                 gene_index.info()  # will throw an error if index doesn't exist
                 chromosome_index.info()  # ditto
                 print(
-                    (
-                        "found existing GCV database without schema version; "
-                        f"assuming version {default_version}"
-                    )
+                    f"""
+                    found existing GCV database without schema version; assuming version
+                    {default_version}
+                """
                 )
                 existing_version = default_version
             except redis.RedisError:

@@ -3,7 +3,6 @@
 # Python
 import argparse
 import os
-from collections import defaultdict
 
 # module
 import redis_loader
@@ -81,16 +80,18 @@ def parseArgs():
     # create the parser and command subparser
     parser = argparse.ArgumentParser(
         prog=redis_loader.__name__,
-        description=(
-            "Loads data from a Chado (PostreSQL) database or GFF files "
-            "into a RediSearch index for use by microservices."
-        ),
+        description="""
+        Loads data from a Chado (PostreSQL) database or GFF files into a RediSearch
+        index for use by microservices.
+        """,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {redis_loader.__version__} schema {redis_loader.__schema_version__}",
+        version=f"""
+        %(prog)s {redis_loader.__version__} schema {redis_loader.__schema_version__}
+        """,
     )
     subparsers = parser.add_subparsers(title="commands", dest="command", required=True)
 
@@ -103,10 +104,10 @@ def parseArgs():
         envvar=rdb_envvar,
         type=int,
         default=0,
-        help=(
-            f"The Redis database (can also be specified using the {rdb_envvar} "
-            "environment variable)."
-        ),
+        help=f"""
+        The Redis database (can also be specified using the {rdb_envvar} environment
+        variable).
+        """,
     )
     rpassword_envvar = "REDIS_PASSWORD"
     parser.add_argument(
@@ -116,10 +117,10 @@ def parseArgs():
         envvar=rpassword_envvar,
         type=str,
         default="",
-        help=(
-            "The Redis password (can also be specified using the "
-            f"{rpassword_envvar} environment variable)."
-        ),
+        help=f"""
+        The Redis password (can also be specified using the {rpassword_envvar}
+        environment variable).
+        """,
     )
     rhost_envvar = "REDIS_HOST"
     parser.add_argument(
@@ -129,10 +130,10 @@ def parseArgs():
         envvar=rhost_envvar,
         type=str,
         default="localhost",
-        help=(
-            f"The Redis host (can also be specified using the {rhost_envvar} "
-            "environment variable)."
-        ),
+        help=f"""
+        The Redis host (can also be specified using the {rhost_envvar} environment
+        variable).
+        """,
     )
     rport_envvar = "REDIS_PORT"
     parser.add_argument(
@@ -142,10 +143,10 @@ def parseArgs():
         envvar=rport_envvar,
         type=int,
         default=6379,
-        help=(
-            f"The Redis port (can also be specified using the {rport_envvar} "
-            "environment variable)."
-        ),
+        help=f"""
+        The Redis port (can also be specified using the {rport_envvar} environment
+        variable).
+        """,
     )
     rchunksize_envvar = "CHUNK_SIZE"
     parser.add_argument(
@@ -155,10 +156,10 @@ def parseArgs():
         envvar=rchunksize_envvar,
         type=int,
         default=100,
-        help=(
-            "The chunk size to be used for Redis batch processing (can also be "
-            f"specified using the {rchunksize_envvar} environment variable)."
-        ),
+        help=f"""
+        The chunk size to be used for Redis batch processing (can also be specified
+        using the {rchunksize_envvar} environment variable).
+        """,
     )
     parser.add_argument(
         "--no-save",
@@ -185,11 +186,10 @@ def parseArgs():
         type=str,
         choices=list(load_types.keys()),
         default="append",
-        help=(
-            f"How the data should be loaded into Redis:\n{loadtype_help}"
-            f"(can also be specified using the {loadtype_envvar} environment "
-            "variable)."
-        ),
+        help=f"""
+        How the data should be loaded into Redis:\n{loadtype_help} (can also be
+        specified using the {loadtype_envvar} environment variable).
+        """,
     )
 
     sequence_types = {
@@ -216,11 +216,10 @@ def parseArgs():
         nargs="+",
         choices=list(sequence_types.keys()),
         default="chromosome",
-        help=(
-            f"What sequence types should be loaded into Redis:\n{sequencetypes_help}"
-            f"(can also be specified using the {sequencetypes_envvar} environment "
-            "variable)."
-        ),
+        help=f"""
+        What sequence types should be loaded into Redis:\n{sequencetypes_help} (can also
+        be specified using the {sequencetypes_envvar} environment variable).
+        """,
     )
 
     # Chado args
@@ -238,10 +237,10 @@ def parseArgs():
         envvar=pdb_envvar,
         type=str,
         default="chado",
-        help=(
-            "The PostgreSQL database (can also be specified using the "
-            f"{pdb_envvar} environment variable)."
-        ),
+        help=f"""
+        The PostgreSQL database (can also be specified using the {pdb_envvar}
+        environment variable).
+        """,
     )
     puser_envvar = "POSTGRES_USER"
     chado_parser.add_argument(
@@ -251,10 +250,10 @@ def parseArgs():
         envvar=puser_envvar,
         type=str,
         default="chado",
-        help=(
-            "The PostgreSQL username (can also be specified using the "
-            f"{puser_envvar} environment variable)."
-        ),
+        help=f"""
+        The PostgreSQL username (can also be specified using the {puser_envvar}
+        environment variable).
+        """,
     )
     ppassword_envvar = "POSTGRES_PASSWORD"
     chado_parser.add_argument(
@@ -264,10 +263,10 @@ def parseArgs():
         envvar=ppassword_envvar,
         type=str,
         default=None,
-        help=(
-            "The PostgreSQL password (can also be specified using the "
-            f"{ppassword_envvar} environment variable)."
-        ),
+        help=f"""
+        The PostgreSQL password (can also be specified using the {ppassword_envvar}
+        environment variable).
+        """,
     )
     phost_envvar = "POSTGRES_HOST"
     chado_parser.add_argument(
@@ -277,10 +276,10 @@ def parseArgs():
         envvar=phost_envvar,
         type=str,
         default="localhost",
-        help=(
-            "The PostgreSQL host (can also be specified using the "
-            f"{phost_envvar} environment variable)."
-        ),
+        help=f"""
+        The PostgreSQL host (can also be specified using the {phost_envvar} environment
+        variable).
+        """,
     )
     pport_envvar = "POSTGRES_PORT"
     chado_parser.add_argument(
@@ -290,18 +289,18 @@ def parseArgs():
         envvar=pport_envvar,
         type=int,
         default=5432,
-        help=(
-            "The PostgreSQL port (can also be specified using the "
-            f"{pport_envvar} environment variable)."
-        ),
+        help=f"""
+        The PostgreSQL port (can also be specified using the {pport_envvar} environment
+        variable).
+        """,
     )
     chado_parser.add_argument(
         "--uniquename",
         action="store_true",
-        help=(
-            "Load names from the uniquename field of the Chado feature table, "
-            "otherwise use the name field."
-        ),
+        help="""
+        Load names from the uniquename field of the Chado feature table, otherwise use
+        the name field.
+        """,
     )
     chado_parser.set_defaults(uniquename=False)
 
@@ -320,10 +319,10 @@ def parseArgs():
         envvar=genus_envvar,
         type=str,
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-        help=(
-            "The genus of the organism being loaded (can also be specified using "
-            f"the {genus_envvar} environment variable)."
-        ),
+        help=f"""
+        The genus of the organism being loaded (can also be specified using the
+        {genus_envvar} environment variable).
+        """,
     )
     species_envvar = "SPECIES"
     gff_parser.add_argument(
@@ -333,10 +332,10 @@ def parseArgs():
         envvar=species_envvar,
         type=str,
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-        help=(
-            "The species of the organism being loaded (can also be specified "
-            f"using the {species_envvar} environment variable)."
-        ),
+        help=f"""
+        The species of the organism being loaded (can also be specified using the
+        {species_envvar} environment variable).
+        """,
     )
     strain_envvar = "STRAIN"
     gff_parser.add_argument(
@@ -344,10 +343,10 @@ def parseArgs():
         action=EnvAction,
         envvar=strain_envvar,
         type=str,
-        help=(
-            "The strain of the organism being loaded (can also be specified "
-            f"using the {strain_envvar} environment variable)."
-        ),
+        help=f"""
+        The strain of the organism being loaded (can also be specified using the
+        {strain_envvar} environment variable).
+        """,
     )
     gffgene_envvar = "GENE_GFF_FILE"
     gff_parser.add_argument(
@@ -357,10 +356,10 @@ def parseArgs():
         action=EnvAction,
         envvar=gffgene_envvar,
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-        help=(
-            "The GFF(.gz) file containing gene records (can also be specified "
-            f"using the {gffgene_envvar} environment variable)."
-        ),
+        help=f"""
+        The GFF(.gz) file containing gene records (can also be specified using the
+        {gffgene_envvar} environment variable).
+        """,
     )
     gffchr_envvar = "CHROMOSOME_GFF_FILE"
     gff_parser.add_argument(
@@ -370,10 +369,10 @@ def parseArgs():
         action=EnvAction,
         envvar=gffchr_envvar,
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-        help=(
-            "The GFF(.gz) file containing chromosome/supercontig records (can "
-            f"also be specified using the {gffchr_envvar} environment variable)."
-        ),
+        help=f"""
+        The GFF(.gz) file containing chromosome/supercontig records (can also be
+        specified using the {gffchr_envvar} environment variable).
+        """,
     )
     gfa_envvar = "GFA_FILE"
     gff_parser.add_argument(
@@ -382,10 +381,10 @@ def parseArgs():
         action=EnvAction,
         envvar=gfa_envvar,
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
-        help=(
-            "The GFA(.gz) file containing gene-gene family associations (can "
-            f"also be specified using the {gfa_envvar} environment variable)."
-        ),
+        help=f"""
+        The GFA(.gz) file containing gene-gene family associations (can also be
+        specified using the {gfa_envvar} environment variable).
+        """,
     )
 
     return parser.parse_args()

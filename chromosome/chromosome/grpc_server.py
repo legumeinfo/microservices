@@ -9,7 +9,7 @@ from grpc.experimental import aio
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from chromosome import proto
+from chromosome import proto  # noqa: F401
 from chromosome_service.v1 import chromosome_pb2
 from chromosome_service.v1 import chromosome_pb2_grpc
 from track.v1 import track_pb2

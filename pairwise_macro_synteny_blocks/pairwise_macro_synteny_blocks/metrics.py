@@ -40,12 +40,12 @@ def jaccard(a, b, n=1, reversals=False, multiset=False):
     aIDs, bIDs = map(gramID, na), map(gramID, nb)
 
     # generate a count map for each list
-    def multiSet(l):
+    def makeSet(IDs):
         if not multiset:
-            return Counter({e: 1 for e in l})
-        return Counter(l)
+            return Counter({e: 1 for e in IDs})
+        return Counter(IDs)
 
-    sa, sb = multiSet(aIDs), multiSet(bIDs)
+    sa, sb = makeSet(aIDs), makeSet(bIDs)
 
     # compute the Jaccard index
     intersection = sa & sb

@@ -3,7 +3,6 @@ import asyncio
 
 # module
 from search.grpc_client import gene_search, chromosome_search, chromosome_region
-from search.query_parser import makeQueryParser
 
 
 class RequestHandler:

@@ -17,7 +17,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Provides distutils command classes for the pairwise macro-synteny blocks Python setup process."""
+"""
+Provides distutils command classes for the pairwise macro-synteny blocks Python setup
+process.
+"""
 
 
 import os

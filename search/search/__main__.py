@@ -64,10 +64,10 @@ def parseArgs():
         type=str,
         choices=list(LOG_LEVELS.keys()),
         default="WARNING",
-        help=(
-            "What level of events should be logged (can also be specified using "
-            f"the {loglevel_envvar} environment variable)."
-        ),
+        help=f"""
+        What level of events should be logged (can also be specified using the
+        {loglevel_envvar} environment variable).
+        """,
     )
     logfile_envvar = "LOG_FILE"
     parser.add_argument(
@@ -77,10 +77,10 @@ def parseArgs():
         default=argparse.SUPPRESS,  # removes "(default: None)" from help text
         envvar=logfile_envvar,
         type=str,
-        help=(
-            "The file events should be logged in (can also be specified using "
-            f"the {logfile_envvar} environment variable)."
-        ),
+        help=f"""
+        The file events should be logged in (can also be specified using the
+        {logfile_envvar} environment variable).
+        """,
     )
 
     # Async HTTP args
@@ -98,7 +98,10 @@ def parseArgs():
         envvar=hhost_envvar,
         type=str,
         default="localhost",
-        help=f"The HTTP server host (can also be specified using the {hhost_envvar} environment variable).",
+        help=f"""
+        The HTTP server host (can also be specified using the {hhost_envvar} environment
+        variable).
+        """,
     )
     hport_envvar = "HTTP_PORT"
     parser.add_argument(
@@ -107,7 +110,10 @@ def parseArgs():
         envvar=hport_envvar,
         type=str,
         default="8080",
-        help=f"The HTTP server port (can also be specified using the {hport_envvar} environment variable).",
+        help=f"""
+        The HTTP server port (can also be specified using the {hport_envvar} environment
+        variable).
+        """,
     )
 
     # gRPC args
@@ -125,7 +131,10 @@ def parseArgs():
         envvar=ghost_envvar,
         type=str,
         default="[::]",
-        help=f"The gRPC server host (can also be specified using the {ghost_envvar} environment variable).",
+        help=f"""
+        The gRPC server host (can also be specified using the {ghost_envvar} environment
+        variable).
+        """,
     )
     gport_envvar = "GRPC_PORT"
     parser.add_argument(
@@ -134,7 +143,10 @@ def parseArgs():
         envvar=gport_envvar,
         type=str,
         default="8081",
-        help=f"The gRPC server port (can also be specified using the {gport_envvar} environment variable).",
+        help=f"""
+        The gRPC server port (can also be specified using the {gport_envvar} environment
+        variable).
+        """,
     )
 
     # Inter-microservice communication args
@@ -145,7 +157,10 @@ def parseArgs():
         envvar=geneaddr_envvar,
         type=str,
         required=True,
-        help=f"The address of the gene search microservice (can also be specified using the {geneaddr_envvar} environment variable).",
+        help=f"""
+        The address of the gene search microservice (can also be specified using the
+        {geneaddr_envvar} environment variable).
+        """,
     )
     chromosomeaddr_envvar = "CHROMOSOME_SEARCH_ADDR"
     parser.add_argument(
@@ -154,7 +169,10 @@ def parseArgs():
         envvar=chromosomeaddr_envvar,
         type=str,
         required=True,
-        help=f"The address of the chromosome search microservice (can also be specified using the {chromosomeaddr_envvar} environment variable).",
+        help=f"""
+        The address of the chromosome search microservice (can also be specified using
+        the {chromosomeaddr_envvar} environment variable).
+        """,
     )
     regionaddr_envvar = "CHROMOSOME_REGION_ADDR"
     parser.add_argument(
@@ -163,7 +181,10 @@ def parseArgs():
         envvar=regionaddr_envvar,
         type=str,
         required=True,
-        help=f"The address of the chromosome region microservice (can also be specified using the {regionaddr_envvar} environment variable).",
+        help=f"""
+        The address of the chromosome region microservice (can also be specified using
+        the {regionaddr_envvar} environment variable).
+        """,
     )
 
     # query parser args

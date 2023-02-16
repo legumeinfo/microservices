@@ -4,12 +4,13 @@ from grpc.experimental import aio
 
 # module
 # from chromosome_region.proto.chromosomeregion_service.v1 import chromosomeregion_pb2
-# from chromosome_region.proto.chromosomeregion_service.v1 import chromosomeregion_pb2_grpc
+# from chromosome_region.proto.chromosomeregion_service.v1
+#   import chromosomeregion_pb2_grpc
 # from chromosome_region.proto.region.v1 import region_pb2
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from chromosome_region import proto
+from chromosome_region import proto  # noqa: F401
 from chromosomeregion_service.v1 import chromosomeregion_pb2
 from chromosomeregion_service.v1 import chromosomeregion_pb2_grpc
 from region.v1 import region_pb2

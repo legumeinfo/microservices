@@ -8,7 +8,7 @@ def parseInt(int_str):
         i = int(float(int_str))
         assert i >= 0
         return i
-    except:
+    except Exception:
         return 0
 
 

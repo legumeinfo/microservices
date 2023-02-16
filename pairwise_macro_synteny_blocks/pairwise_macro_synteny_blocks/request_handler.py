@@ -48,7 +48,10 @@ class RequestHandler:
             or chromosome_length <= 0
         ):
             raise ValueError(
-                "matched, intermediate, chromosome genes, and chromosome length must be positive"
+                """
+                matched, intermediate, chromosome genes, and chromosome length must be
+                positive
+            """
             )
         if mask is not None:
             mask = int(mask)
@@ -132,7 +135,8 @@ class RequestHandler:
         r_path_ends = []
         r_pointers = {}
         r_scores = {}
-        # iterate nodes (pairs), assumed to be in DAG order ((0, 0), (0, 1), (2, 1), (2, 3), ...)
+        # iterate nodes (pairs), assumed to be in DAG order
+        # ((0, 0), (0, 1), (2, 1), (2, 3), ...)
         for i, p1 in enumerate(pairs):
             n1, n2 = p1
             f_scores[p1] = r_scores[p1] = 1
@@ -148,9 +152,9 @@ class RequestHandler:
                     # are the nodes close enough to be in the same path?
                     if d1 <= intermediate and d2 <= intermediate:
                         s = f_scores[p2] + 1
-                        if s > f_scores[p1] or (
-                            s == f_scores[p1] and p2[0] == p2[1]
-                        ):  # in case trivial block ends on gene family with multiple successive copies
+                        # second check is in case trivial block ends on gene family with
+                        # multiple successive copies
+                        if s > f_scores[p1] or (s == f_scores[p1] and p2[0] == p2[1]):
                             f_scores[p1] = s
                             f_pointers[p1] = p2
                 # reverse blocks
@@ -225,6 +229,10 @@ class RequestHandler:
         if len(index_pairs) < matched:
             return []
 
+        # create a filter for removing masked families
+        def maskFilter(f):
+            return f not in masked_families
+
         # index blocks from the index pairs
         index_blocks = self._indexPairsToIndexBlocks(index_pairs, intermediate, matched)
 
@@ -255,17 +263,16 @@ class RequestHandler:
             }
             # compute optional metrics on the block
             if metrics:
-                mask_filter = lambda f: f not in masked_families
                 block["optionalMetrics"] = []
                 query_families = list(
                     filter(
-                        mask_filter,
+                        maskFilter,
                         query_chromosome[query_start_index : query_stop_index + 1],
                     )
                 )
                 target_families = list(
                     filter(
-                        mask_filter,
+                        maskFilter,
                         target_chromosome[target_start_index : target_stop_index + 1],
                     )
                 )

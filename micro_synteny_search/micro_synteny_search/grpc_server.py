@@ -3,13 +3,15 @@ import grpc
 from grpc.experimental import aio
 
 # module
-# from micro_synteny_search.proto.microsyntenysearch_service.v1 import microsyntenysearch_pb2
-# from micro_synteny_search.proto.microsyntenysearch_service.v1 import microsyntenysearch_pb2_grpc
+# from micro_synteny_search.proto.microsyntenysearch_service.v1
+#   import microsyntenysearch_pb2
+# from micro_synteny_search.proto.microsyntenysearch_service.v1
+#   import microsyntenysearch_pb2_grpc
 # from micro_synteny_search.proto.track.v1 import track_pb2
 # NOTE: the following imports are a temporary workaround for a known protobuf
 # bug; the commented imports above should be used when the bug is fixed:
 # https://github.com/protocolbuffers/protobuf/issues/10075
-from micro_synteny_search import proto
+from micro_synteny_search import proto  # noqa: F401
 from microsyntenysearch_service.v1 import microsyntenysearch_pb2
 from microsyntenysearch_service.v1 import microsyntenysearch_pb2_grpc
 from track.v1 import track_pb2
@@ -33,7 +35,7 @@ class MicroSyntenySearch(microsyntenysearch_pb2_grpc.MicroSyntenySearchServicer)
         intermediate = request.intermediate
         try:
             self.handler.parseArguments(query, matched, intermediate)
-        except:
+        except Exception:
             # raise a gRPC INVALID ARGUMENT error
             await context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,

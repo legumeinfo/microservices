@@ -11,7 +11,7 @@ GENE_LINKOUTS = "gene_linkouts"
 GENE_REGEX = re.compile("{GENE_ID}")
 
 GENOMIC_REGION_LINKOUTS = "genomic_region_linkouts"
-GENOMIC_REGION_SPECIFIER_REGEX = re.compile("^([^:]+):(\d+)(-|\.\.)(\d+)$")
+GENOMIC_REGION_SPECIFIER_REGEX = re.compile(r"^([^:]+):(\d+)(-|\.\.)(\d+)$")
 GENOMIC_REGION_REGEX = re.compile("{GENOMIC_REGION}")
 GENOMIC_REGION_CHR_ID_REGEX = re.compile("{GENOMIC_REGION_CHR_ID}")
 GENOMIC_REGION_START_REGEX = re.compile("{GENOMIC_REGION_START}")
@@ -36,30 +36,31 @@ class RequestHandler:
         prefix = yml["prefix"]
 
         for linkable_type in [GENE_LINKOUTS, GENOMIC_REGION_LINKOUTS]:
-            if yml.get(linkable_type) != None:
+            if yml.get(linkable_type) is not None:
                 for linkout in yml[linkable_type]:
-                    if self.linkout_lookup.get(linkable_type) == None:
+                    if self.linkout_lookup.get(linkable_type) is None:
                         self.linkout_lookup[linkable_type] = {}
                     type_lookup = self.linkout_lookup[linkable_type]
-                    if type_lookup.get(prefix) == None:
+                    if type_lookup.get(prefix) is None:
                         type_lookup[prefix] = []
                     type_lookup[prefix].append(linkout)
 
     def process_genes(self, ids):
         linkouts = []
-        if self.linkout_lookup.get(GENE_LINKOUTS) == None:
+        if self.linkout_lookup.get(GENE_LINKOUTS) is None:
             return linkouts
 
         type_lookup = self.linkout_lookup.get(GENE_LINKOUTS)
 
         for id in ids:
             prefix = ".".join(id.split(".")[0:4])
-            if type_lookup.get(prefix) != None:
+            if type_lookup.get(prefix) is not None:
                 templates = type_lookup[prefix]
                 for template in templates:
                     linkout = {}
                     linkout[METHOD] = template[METHOD]
-                    # TODO: if method is POST, we probably need to do something with the request body content
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
                     linkout[HREF] = GENE_REGEX.sub(id, template[HREF])
                     linkout[TEXT] = GENE_REGEX.sub(id, template[TEXT])
                     linkouts.append(linkout)
@@ -67,26 +68,27 @@ class RequestHandler:
 
     def process_genomic_regions(self, ids):
         linkouts = []
-        if self.linkout_lookup.get(GENOMIC_REGION_LINKOUTS) == None:
+        if self.linkout_lookup.get(GENOMIC_REGION_LINKOUTS) is None:
             return linkouts
 
         type_lookup = self.linkout_lookup.get(GENOMIC_REGION_LINKOUTS)
 
         for id in ids:
             m = GENOMIC_REGION_SPECIFIER_REGEX.match(id)
-            if m == None:
+            if m is None:
                 continue
             chr = m.group(1)
             start = m.group(2)
             end = m.group(4)
 
             prefix = ".".join(chr.split(".")[0:3])
-            if type_lookup.get(prefix) != None:
+            if type_lookup.get(prefix) is not None:
                 templates = type_lookup[prefix]
                 for template in templates:
                     linkout = {}
                     linkout[METHOD] = template[METHOD]
-                    # TODO: if method is POST, we probably need to do something with the request body content
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
                     linkout_href = GENOMIC_REGION_REGEX.sub(id, template[HREF])
                     linkout_href = GENOMIC_REGION_CHR_ID_REGEX.sub(chr, linkout_href)
                     linkout_href = GENOMIC_REGION_START_REGEX.sub(start, linkout_href)

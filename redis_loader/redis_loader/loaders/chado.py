@@ -90,7 +90,6 @@ def transferChromosomes(
         # supercontig_id = getCvterm(c, 'supercontig', 'sequence')
 
         # get all the organisms
-        i = 0
         query = "SELECT organism_id, genus, species FROM organism;"
         c.execute(query)
         organism_id_map = {}
