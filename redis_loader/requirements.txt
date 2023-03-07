@@ -4,7 +4,7 @@
 #
 #    pip-compile
 #
-argcomplete==2.0.0
+argcomplete==2.1.1
     # via gffutils
 argh==0.26.2
     # via gffutils
