@@ -18,7 +18,7 @@ pyfaidx==0.7.1
     # via gffutils
 redis==4.4.2
     # via redis-loader (setup.py)
-simplejson==3.18.1
+simplejson==3.19.1
     # via gffutils
 six==1.16.0
     # via
