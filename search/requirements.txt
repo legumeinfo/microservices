@@ -34,7 +34,7 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
-protobuf==4.21.12
+protobuf==4.22.3
     # via grpcio-tools
 pyparsing==3.0.9
     # via search (setup.py)
