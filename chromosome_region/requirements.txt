@@ -28,7 +28,7 @@ grpcio==1.51.1
     # via
     #   chromosome-region (setup.py)
     #   grpcio-tools
-grpcio-tools==1.51.1
+grpcio-tools==1.54.0
     # via chromosome-region (setup.py)
 idna==3.4
     # via yarl
