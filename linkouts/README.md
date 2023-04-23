@@ -47,3 +47,7 @@ The microservice can be queried via HTTP GET.
 The default request URLs are :
 - `localhost:8080/gene_linkouts?genes=<comma-delimited geneid list>`
 - `localhost:8080/genomic_region_linkouts?genomic_regions=<comma-delimited list of seqid:start-end>`
+
+The **production** URLs are:
+- `https://linkouts.services.legumeinfo.org/gene_linkouts?genes=<comma-delimited geneid list>`
+- `https://linkouts.services.legumeinfo.org/genomic_region_linkouts?genomic_regions=<comma-delimited list of seqid:start-end>`
