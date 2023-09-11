@@ -10,7 +10,10 @@ GENOMIC_REGIONS_QUERY = "genomic_regions"
 
 async def http_genes_get_handler(request):
     # parse the query from the request query string
-    ids = request.rel_url.query[GENES_QUERY]
+    try:
+        ids = request.rel_url.query[GENES_QUERY]
+    except KeyError:
+        raise web.HTTPBadRequest(text="No " + GENES_QUERY + " supplied")
     ids = ids.split(",")
     handler = request.app["handler"]
     linkouts = handler.process_genes(ids)
@@ -21,6 +24,11 @@ async def http_genes_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GENES_QUERY, [])
+    if type(ids) != list:
+        raise web.HTTPBadRequest(text=GENES_QUERY + " must be given as list")
+    if len(ids) == 0:
+        raise web.HTTPBadRequest(text="No " + GENES_QUERY + " supplied")
+
     handler = request.app["handler"]
     linkouts = handler.process_genes(ids)
     return web.json_response(linkouts)
@@ -28,7 +36,10 @@ async def http_genes_post_handler(request):
 
 async def http_genomic_regions_get_handler(request):
     # parse the query from the request query string
-    ids = request.rel_url.query[GENOMIC_REGIONS_QUERY]
+    try:
+        ids = request.rel_url.query[GENOMIC_REGIONS_QUERY]
+    except KeyError:
+        raise web.HTTPBadRequest(text="No " + GENOMIC_REGIONS_QUERY + " supplied")
     ids = ids.split(",")
     handler = request.app["handler"]
     linkouts = handler.process_genomic_regions(ids)
@@ -39,6 +50,11 @@ async def http_genomic_regions_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GENOMIC_REGIONS_QUERY, [])
+    if type(ids) != list:
+        raise web.HTTPBadRequest(text=GENOMIC_REGIONS_QUERY + " must be given as list")
+    if len(ids) == 0:
+        raise web.HTTPBadRequest(text="No " + GENOMIC_REGIONS_QUERY + " supplied")
+
     handler = request.app["handler"]
     linkouts = handler.process_genomic_regions(ids)
     return web.json_response(linkouts)
