@@ -46,3 +46,5 @@ If the program was built as a docker container, it can be run as follows
 Any `*.sh` scripts in the container /docker-entrypoint-initdb.d directory will be processed if the `REDIS_DB` (default 0) at `REDIS_HOST` (default 'localhost') on port `REDIS_PORT` (default 6379) is empty:
 
     $ docker run -e REDIS_HOST=my-redis-db-host -v $PWD/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d redis_loader
+
+See [gcv-docker-compose](https://github.com/legumeinfo/gcv-docker-compose#redis_loader) instructions for running in the context of the system for which the service was conceived (example with actual data given there!).
