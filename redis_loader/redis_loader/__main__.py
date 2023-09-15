@@ -185,7 +185,7 @@ def parseArgs():
         envvar=loadtype_envvar,
         type=str,
         choices=list(load_types.keys()),
-        default="append",
+        default="new",
         help=f"""
         How the data should be loaded into Redis:\n{loadtype_help} (can also be
         specified using the {loadtype_envvar} environment variable).
