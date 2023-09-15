@@ -2,7 +2,7 @@
 
 set -o errexit
 
-if python <<END
+if [ $# -eq 0 ] && python <<END
 import sys, redis
 r = redis.Redis(host='${REDIS_HOST:-localhost}',
                 port=${REDIS_PORT:-6379},

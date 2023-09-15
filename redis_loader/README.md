@@ -35,6 +35,12 @@ The loading script can be run as follows
 
     $ python -m redis_loader
 
+By default, the loading script will only load new databases, i.e. no data will be loaded if the indexes it creates already exist.
+This behavior can be changed using the `--load-type` flag.
+For example, the following command will create a new database or append data to an existing database:
+
+    $ python -m redis_loader --load-type append
+
 For more information about the script and additional commands and arguments, run
 
     $ python -m redis_loader --help
@@ -43,8 +49,11 @@ If the program was built as a docker container, it can be run as follows
 
     $ docker run redis_loader
 
-Any `*.sh` scripts in the container /docker-entrypoint-initdb.d directory will be processed if the `REDIS_DB` (default 0) at `REDIS_HOST` (default 'localhost') on port `REDIS_PORT` (default 6379) is empty:
+When the loading script is run without any arguments AND the target Redis database is empty, any `*.sh` scripts in the container's `/docker-entrypoint-initdb.d/` directory will be executed in alphabetical order.
+Custom `*sh` scripts can be put in the container's `/docker-entrypoint-initdb/` directory using [volumes](https://docs.docker.com/storage/volumes/):
 
-    $ docker run -e REDIS_HOST=my-redis-db-host -v $PWD/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d redis_loader
+    $ docker run -v /path/to/local/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:rw redis_loader
 
-See [gcv-docker-compose](https://github.com/legumeinfo/gcv-docker-compose#redis_loader) instructions for running in the context of the system for which the service was conceived (example with actual data given there!).
+These scripts should use the Python command above to load data.
+
+See the [gcv-docker-compose instructions](https://github.com/legumeinfo/gcv-docker-compose#loading-data) for examples of using the loading script.
