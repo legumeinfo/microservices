@@ -28,7 +28,8 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # populate objects for graphDB
-RUN lis-autocontent populate-dscensor --from_github /data/datastore-metadata/ --taxa_list /data/taxon_list.yaml --nodes_out ./autocontent
+#RUN ls -ltr /
+#RUN lis-autocontent populate-dscensor --from_github /data/datastore-metadata/ --taxa_list /data/taxon_list.yaml --nodes_out ./autocontent
 
 # install (and implicitly build) the package
 
