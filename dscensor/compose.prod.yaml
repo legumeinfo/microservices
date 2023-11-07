@@ -1,5 +1,5 @@
 services:
-  linkouts:
+  dscensor:
     image: ghcr.io/legumeinfo/microservices-dscensor:0.0.1
     ports:
       - "${PORT:-8080}:8080"
