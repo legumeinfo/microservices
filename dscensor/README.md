@@ -1,24 +1,26 @@
 # DSCensor
-Process LIS Datastore and Provide Web Facing RESTFUL API
+Provide Web Facing RESTFUL API of LIS-Datastore Formatted Nodes
 
-# Run
+# Setup
 
-Run the application using aiohttp.web
+Generate a set of DSCensor nodes using LIS-autocontent. This will be in "./autocontent" by default.
 
-`python -m aiohttp.web dscensor.app:create_app`
+[Generate DSCensor Nodes](https://github.com/legumeinfo/LIS-autocontent)
+
+The "./autocontent" directory will be read by the app when docker compose is run.
 
 # Docker
 
-Build the docker container locally
+Run local development build from cwd.
 
-`sudo docker build -t dscensor-openapi .`
+`sudo docker compose -f ./compose.dev.yaml up`
 
-Run the container
+Run production build from tagged image.
 
-`sudo docker run -p 127.0.0.1:8080:8080 dscensor-openapi`
+`sudo docker compose -f ./compose.prod.yaml up`
 
 # Develop
 
-Install pre-commit hooks before developing
+Install pre-commit hooks before developing. The github will force you to subscribe on PR if you don't so please do!
 
 `pre-commit install`
