@@ -14,6 +14,7 @@ on:
       - 'redis_loader@v[0-9]+.[0-9]+.[0-9]+'
       - 'search@v[0-9]+.[0-9]+.[0-9]+'
       - 'linkouts@v[0-9]+.[0-9]+.[0-9]+'
+      - 'dscensor@v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io
