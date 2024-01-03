@@ -65,6 +65,26 @@ paths:
     get:
       description: |
         Returns all of the gene_models_main objects from the digraph.
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+          description: Return only genomes matching optional genus
+          required: false
+        - in: query
+          name: species
+          schema:
+            type: string
+          description: Return only genomes matching optional species
+          required: false
+        - in: query
+          name: results
+          schema:
+            type: int
+            minimum: 1
+          description: Return only int(results) at most
+          required: false
       operationId: getGeneModelsMain
       responses:
         "200":
