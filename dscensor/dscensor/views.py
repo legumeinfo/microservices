@@ -1,7 +1,7 @@
 import logging
 
 from aiohttp import web
-from rororo import OperationTableDef
+from rororo import openapi_context, OperationTableDef
 
 # from rororo import OperationTableDef, openapi_context
 # from rororo.openapi import get_validated_data, get_validated_parameters
@@ -35,17 +35,23 @@ async def list_species(request: web.Request) -> web.Response:
 
 @operations.register("getGenomes")
 async def list_genomes(request: web.Request) -> web.Response:
-    genomes_main = {}
-    for node in list(request.app["digraph"].digraph.nodes(data=True)):
-        if node[1]["metadata"]["canonical_type"] == "genome_main":
-            genomes_main[node[0]] = node[1]
-    return web.json_response([genomes_main[genome] for genome in genomes_main])
+    with openapi_context(request) as context:
+        genomes_main = {}
+        genus = context.parameters.query.get("genus")
+        species = context.parameters.query.get("species")
+        for node in list(request.app["digraph"].digraph.nodes(data=True)):
+            if node[1]["metadata"]["canonical_type"] == "genome_main":
+                genomes_main[node[0]] = node[1]
+        return web.json_response([genomes_main[genome] for genome in genomes_main])
 
 
 @operations.register("getGeneModelsMain")
 async def list_gene_models(request: web.Request) -> web.Response:
-    gene_models_main = {}
-    for node in list(request.app["digraph"].digraph.nodes(data=True)):
-        if node[1]["metadata"]["canonical_type"] == "gene_models_main":
-            gene_models_main[node[0]] = node[1]
-    return web.json_response([gene_models_main[genome] for genome in gene_models_main])
+    with openapi_context(request) as context:
+        gene_models_main = {}
+        genus = context.parameters.query.get("genus")
+        species = context.parameters.query.get("species")
+        for node in list(request.app["digraph"].digraph.nodes(data=True)):
+            if node[1]["metadata"]["canonical_type"] == "gene_models_main":
+                gene_models_main[node[0]] = node[1]
+        return web.json_response([gene_models_main[genome] for genome in gene_models_main])
