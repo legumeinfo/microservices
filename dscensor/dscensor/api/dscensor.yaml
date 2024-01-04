@@ -47,9 +47,9 @@ paths:
         - in: query
           name: results
           schema:
-            type: int
+            type: integer
             minimum: 1
-          description: Return only int(results) at most
+          description: Return only int genome results at most
           required: false
       operationId: getGenomes
       responses:
@@ -81,9 +81,9 @@ paths:
         - in: query
           name: results
           schema:
-            type: int
+            type: integer
             minimum: 1
-          description: Return only int(results) at most
+          description: Return only int annotation results at most
           required: false
       operationId: getGeneModelsMain
       responses:
