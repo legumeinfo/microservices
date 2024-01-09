@@ -25,6 +25,7 @@ GENE_FAMILY_REGEX = re.compile("{GENE_FAMILY_ID}")
 PAN_GENE_SET_LINKOUTS = "pan_gene_set_linkouts"
 PAN_GENE_SET_REGEX = re.compile("{PAN_GENE_SET_ID}")
 
+
 class RequestHandler:
     def __init__(self, lglob_root):
         self.linkout_lookup = {}
@@ -42,7 +43,12 @@ class RequestHandler:
         yml = yaml.load(f.read(), Loader=yaml.FullLoader)
         prefix = yml["prefix"]
 
-        for linkable_type in [GENE_LINKOUTS, GENOMIC_REGION_LINKOUTS, GENE_FAMILY_LINKOUTS, PAN_GENE_SET_LINKOUTS]:
+        for linkable_type in [
+            GENE_LINKOUTS,
+            GENOMIC_REGION_LINKOUTS,
+            GENE_FAMILY_LINKOUTS,
+            PAN_GENE_SET_LINKOUTS,
+        ]:
             if yml.get(linkable_type) is not None:
                 for linkout in yml[linkable_type]:
                     if self.linkout_lookup.get(linkable_type) is None:
@@ -70,9 +76,13 @@ class RequestHandler:
                     # TODO: if method is POST, we probably need to do something with the
                     # request body content
                     linkout[HREF] = GENE_REGEX.sub(id, template[HREF])
-                    linkout[HREF] = UNPREFIXED_GENE_REGEX.sub(unprefixed_id, linkout[HREF])
+                    linkout[HREF] = UNPREFIXED_GENE_REGEX.sub(
+                        unprefixed_id, linkout[HREF]
+                    )
                     linkout[TEXT] = GENE_REGEX.sub(id, template[TEXT])
-                    linkout[TEXT] = UNPREFIXED_GENE_REGEX.sub(unprefixed_id, linkout[TEXT])
+                    linkout[TEXT] = UNPREFIXED_GENE_REGEX.sub(
+                        unprefixed_id, linkout[TEXT]
+                    )
                     linkouts.append(linkout)
         return linkouts
 
@@ -149,4 +159,3 @@ class RequestHandler:
                     linkout[TEXT] = PAN_GENE_SET_REGEX.sub(id, template[TEXT])
                     linkouts.append(linkout)
         return linkouts
-
