@@ -63,6 +63,7 @@ async def http_genomic_regions_post_handler(request):
     linkouts = handler.process_genomic_regions(ids)
     return web.json_response(linkouts)
 
+
 async def http_gene_families_get_handler(request):
     # parse the query from the request query string
     try:
@@ -88,6 +89,7 @@ async def http_gene_families_post_handler(request):
     linkouts = handler.process_gene_families(ids)
     return web.json_response(linkouts)
 
+
 async def http_pan_gene_sets_get_handler(request):
     # parse the query from the request query string
     try:
@@ -112,6 +114,7 @@ async def http_pan_gene_sets_post_handler(request):
     handler = request.app["handler"]
     linkouts = handler.process_pan_gene_sets(ids)
     return web.json_response(linkouts)
+
 
 def run_http_server(host, port, handler):
     # make the app
