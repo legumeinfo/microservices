@@ -5,9 +5,9 @@ info:
 servers:
   - url: /api
 paths:
-  /genus:
+  /genera:
     get:
-      summary: Get list of all Genus
+      summary: Get list of all Genera
       operationId: getGenus
       responses:
         "200":

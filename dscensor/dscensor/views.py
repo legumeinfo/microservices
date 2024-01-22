@@ -37,11 +37,24 @@ async def list_species(request: web.Request) -> web.Response:
 async def list_genomes(request: web.Request) -> web.Response:
     with openapi_context(request) as context:
         genomes_main = {}
-        genus = context.parameters.query.get("genus")
-        species = context.parameters.query.get("species")
+        genus = context.parameters.query.get("genus", "").lower()
+        species = context.parameters.query.get("species", "").lower()
         for node in list(request.app["digraph"].digraph.nodes(data=True)):
-            if node[1]["metadata"]["canonical_type"] == "genome_main":
-                genomes_main[node[0]] = node[1]
+            node_genus = node[1]["metadata"]["genus"].lower()
+            node_species = node[1]["metadata"]["species"].lower()
+            node_canonical_type = node[1]["metadata"]["canonical_type"]
+            if node_canonical_type != "genome_main":
+                continue
+            if genus:  # if genus provided only take matching genus
+                if node_genus != genus:
+                    continue
+                if species:  # if genus and species make sure species within genus
+                    if node_species != species:
+                        continue
+            if species:  # lets you specify species without genus which is probably stupid
+                if node_species != species:
+                    continue
+            genomes_main[node[0]] = node[1]
         return web.json_response([genomes_main[genome] for genome in genomes_main])
 
 
@@ -52,6 +65,19 @@ async def list_gene_models(request: web.Request) -> web.Response:
         genus = context.parameters.query.get("genus")
         species = context.parameters.query.get("species")
         for node in list(request.app["digraph"].digraph.nodes(data=True)):
-            if node[1]["metadata"]["canonical_type"] == "gene_models_main":
-                gene_models_main[node[0]] = node[1]
+            node_genus = node[1]["metadata"]["genus"].lower()
+            node_species = node[1]["metadata"]["species"].lower()
+            node_canonical_type = node[1]["metadata"]["canonical_type"]
+            if node_canonical_type != "gene_models_main":
+                continue
+            if genus:  # if genus provided only take matching genus
+                if node_genus != genus:
+                    continue
+                if species:  # if genus and species make sure species within genus
+                    if node_species != species:
+                        continue
+            if species:  # lets you specify species without genus which is probably stupid
+                if node_species != species:
+                    continue
+            gene_models_main[node[0]] = node[1]
         return web.json_response([gene_models_main[genome] for genome in gene_models_main])
