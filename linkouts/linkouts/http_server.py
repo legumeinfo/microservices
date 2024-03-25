@@ -3,13 +3,17 @@ import aiohttp_cors
 from aiohttp import web
 
 GENES_PATH = "/gene_linkouts"
-GENOMIC_REGIONS_PATH = "/genomic_region_linkouts"
-GENE_FAMILIES_PATH = "/gene_family_linkouts"
-PAN_GENE_SETS_PATH = "/pan_gene_set_linkouts"
 GENES_QUERY = "genes"
+GENOMIC_REGIONS_PATH = "/genomic_region_linkouts"
 GENOMIC_REGIONS_QUERY = "genomic_regions"
+GENE_FAMILIES_PATH = "/gene_family_linkouts"
 GENE_FAMILIES_QUERY = "gene_families"
+PAN_GENE_SETS_PATH = "/pan_gene_set_linkouts"
 PAN_GENE_SETS_QUERY = "pan_gene_sets"
+GWAS_PATH = "/gwas_linkouts"
+GWAS_QUERY = "gwas"
+QTL_STUDIES_PATH = "/qtl_study_linkouts"
+QTL_STUDIES_QUERY = "qtl_studies"
 
 
 async def http_genes_get_handler(request):
@@ -116,6 +120,58 @@ async def http_pan_gene_sets_post_handler(request):
     return web.json_response(linkouts)
 
 
+async def http_gwas_get_handler(request):
+    # parse the query from the request query string
+    try:
+        ids = request.rel_url.query[GWAS_QUERY]
+    except KeyError:
+        raise web.HTTPBadRequest(text="No " + GWAS_QUERY + " supplied")
+    ids = ids.split(",")
+    handler = request.app["handler"]
+    linkouts = handler.process_gwas(ids)
+    return web.json_response(linkouts)
+
+
+async def http_gwas_post_handler(request):
+    # parse the query from the request POST data
+    data = await request.json()
+    ids = data.get(GWAS_QUERY, [])
+    if type(ids) != list:
+        raise web.HTTPBadRequest(text=GWAS_QUERY + " must be given as list")
+    if len(ids) == 0:
+        raise web.HTTPBadRequest(text="No " + GWAS_QUERY + " supplied")
+
+    handler = request.app["handler"]
+    linkouts = handler.process_gwas(ids)
+    return web.json_response(linkouts)
+
+
+async def http_qtl_studies_get_handler(request):
+    # parse the query from the request query string
+    try:
+        ids = request.rel_url.query[QTL_STUDIES_QUERY]
+    except KeyError:
+        raise web.HTTPBadRequest(text="No " + QTL_STUDIES_QUERY + " supplied")
+    ids = ids.split(",")
+    handler = request.app["handler"]
+    linkouts = handler.process_qtl_studies(ids)
+    return web.json_response(linkouts)
+
+
+async def http_qtl_studies_post_handler(request):
+    # parse the query from the request POST data
+    data = await request.json()
+    ids = data.get(QTL_STUDIES_QUERY, [])
+    if type(ids) != list:
+        raise web.HTTPBadRequest(text=QTL_STUDIES_QUERY + " must be given as list")
+    if len(ids) == 0:
+        raise web.HTTPBadRequest(text="No " + QTL_STUDIES_QUERY + " supplied")
+
+    handler = request.app["handler"]
+    linkouts = handler.process_qtl_studies(ids)
+    return web.json_response(linkouts)
+
+
 def run_http_server(host, port, handler):
     # make the app
     app = web.Application()
@@ -146,6 +202,14 @@ def run_http_server(host, port, handler):
     route = app.router.add_post(PAN_GENE_SETS_PATH, http_pan_gene_sets_post_handler)
     cors.add(route)
     route = app.router.add_get(PAN_GENE_SETS_PATH, http_pan_gene_sets_get_handler)
+    cors.add(route)
+    route = app.router.add_post(GWAS_PATH, http_gwas_post_handler)
+    cors.add(route)
+    route = app.router.add_get(GWAS_PATH, http_gwas_get_handler)
+    cors.add(route)
+    route = app.router.add_post(QTL_STUDIES_PATH, http_qtl_studies_post_handler)
+    cors.add(route)
+    route = app.router.add_get(QTL_STUDIES_PATH, http_qtl_studies_get_handler)
     cors.add(route)
     # run the app
     web.run_app(app)
