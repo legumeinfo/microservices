@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "block/v1/block.proto";
+
+package legumeinfo.microservices.pairwisemacrosyntenyblocks_service.v1;
+
+
+service PairwiseMacroSyntenyBlocks {
+  rpc Compute (PairwiseMacroSyntenyBlocksComputeRequest) returns (PairwiseMacroSyntenyBlocksComputeReply) {}
+}
+
+
+message PairwiseMacroSyntenyBlocksComputeRequest {
+  repeated string chromosome = 1;
+  string target = 2;
+  uint32 matched = 3;
+  uint32 intermediate = 4;
+  optional uint32 mask = 5;
+  repeated string optionalMetrics = 6;
+  optional uint32 chromosomeGenes = 7;
+  optional uint32 chromosomeLength = 8;
+}
+
+
+message PairwiseMacroSyntenyBlocksComputeReply {
+  repeated legumeinfo.microservices.block.v1.Block blocks = 1;
+}

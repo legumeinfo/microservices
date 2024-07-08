@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "block/v1/block.proto";
+
+package legumeinfo.microservices.macrosyntenypaf_service.v1;
+
+
+service MacroSyntenyPaf {
+  rpc Compute (MacroSyntenyPafComputeRequest) returns (MacroSyntenyPafComputeReply) {}
+}
+
+
+message MacroSyntenyPafComputeRequest {
+  repeated string chromosome = 1;
+  uint32 matched = 2;
+  uint32 intermediate = 3;
+  optional uint32 mask = 4;
+  repeated string targets = 5;
+  repeated string optionalMetrics = 6;
+  optional uint32 chromosomeGenes = 7;
+  optional uint32 chromosomeLength = 8;
+}
+
+
+message MacroSyntenyPafComputeReply {
+  repeated legumeinfo.microservices.block.v1.Blocks blocks = 1;
+}
