@@ -40,18 +40,20 @@ For more information about the microservice, run
 The microservice can be queried via HTTP GET or [TODO] gRPC.
 
 The default request URL is `localhost:8080/macro-synteny-paf`.
-The following is an example HTTP GET URL
+
+The following is an example HTTP GET URL:
 
     localhost:8080/macro-synteny-paf?genome1=aradu.V14167.gnm1&chrpfx1=Aradu.A&chrdgt1=2&nchr1=10&genome2=arahy.Tifrunner.gnm1&chrpfx2=Arahy.&chrdgt2=2&nchr2=20&matched=10&intermediate=5&mask=20
 
 where
-genome[1|2]: genome name (1 for query genome, 2 for target genome)
-chrpfx[1|2]: prefix of its chromosome names
-chrdgt[1|2]: number of digits for the chromosome number (in order to automatically pad with leading zeros when necessary)
-nchr[1|2]: number of chromosomes
-    (This assumes that the full-yuck chromosome name is <genome>.<chrpfx><chromosome_number>, e.g. aradu.V14167.gnm1.Aradu.A05)
-matched: minimum number of matching annotations in a block
-intermediate: maximum number of intermediate genes between any two matches in a block
-mask: (optional)
+
+    genome[1|2]: genome name (1 for query genome, 2 for target genome)
+    chrpfx[1|2]: prefix of its chromosome names
+    chrdgt[1|2]: number of digits for the chromosome number (in order to automatically pad with leading zeros when necessary)
+    nchr[1|2]: number of chromosomes
+      (This assumes that the full-yuck chromosome name is <genome>.<chrpfx><chromosome_number>, e.g. aradu.V14167.gnm1.Aradu.A05)
+    matched: minimum number of matching annotations in a block
+    intermediate: maximum number of intermediate genes between any two matches in a block
+    mask: (optional)
 
 See the `macrosyntenypaf.proto` file and its auto-generated stubs for gRPC requests.
