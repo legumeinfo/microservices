@@ -203,16 +203,40 @@ def parseArgs():
     )
 
     # Inter-microservice communication args
-    pairwiseaddr_envvar = "PAIRWISE_ADDR"
+    chromosomeaddr_envvar = "CHROMOSOME_ADDR"
     parser.add_argument(
-        "--pairwiseaddr",
+        "--chromosomeaddr",
         action=EnvArg,
-        envvar=pairwiseaddr_envvar,
+        envvar=chromosomeaddr_envvar,
         type=str,
         required=True,
         help=f"""
-        The address of the pairwise macro-synteny microservice (can also be specified
-        using the {pairwiseaddr_envvar} environment variable).
+        The address of the chromosome microservice (can also be specified
+        using the {chromosomeaddr_envvar} environment variable).
+        """,
+    )
+    genesaddr_envvar = "GENES_ADDR"
+    parser.add_argument(
+        "--genesaddr",
+        action=EnvArg,
+        envvar=genesaddr_envvar,
+        type=str,
+        required=True,
+        help=f"""
+        The address of the genes microservice (can also be specified
+        using the {genesaddr_envvar} environment variable).
+        """,
+    )
+    macrosyntenyblocksaddr_envvar = "MACRO_SYNTENY_BLOCKS_ADDR"
+    parser.add_argument(
+        "--macrosyntenyblocksaddr",
+        action=EnvArg,
+        envvar=macrosyntenyblocksaddr_envvar,
+        type=str,
+        required=True,
+        help=f"""
+        The address of the macro-synteny-blocks microservice (can also be specified
+        using the {macrosyntenyblocksaddr_envvar} environment variable).
         """,
     )
 
@@ -276,7 +300,7 @@ def main():
             connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
         )
         # create the request handler
-        handler = RequestHandler(redis_connection, args.pairwiseaddr)
+        handler = RequestHandler(redis_connection, args.chromosomeaddr, args.genesaddr, args.macrosyntenyblocksaddr)
         # start the HTTP server
         if not args.nohttp:
             loop.create_task(run_http_server(args.hhost, args.hport, handler))

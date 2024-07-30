@@ -51,7 +51,7 @@ async def http_get_handler(request):
         return web.HTTPBadRequest(
             text="Required arguments are missing or have invalid values"
         )
-    blocks = await handler.process(
+    paf_rows = await handler.process(
         genome_1_chrs,
         genome_2_chrs,
         matched,
@@ -62,7 +62,7 @@ async def http_get_handler(request):
         chromosome_length,
         grpc_decode=True,
     )
-    paf = web.Response(text = ''.join(['%s\t%d\t%d\t%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n'%(b["query_sequence_name"], b["query_sequence_length"], b["query_start"], b["query_end"], b["strand"], b["target_sequence_name"], b["target_sequence_length"], b["target_start"], b["target_end"], b["num_residue_matches"], b["alignment_block_length"], b["mapping_quality"]) for bi in blocks for b in bi["blocks"]]), content_type = 'text/html')
+    paf = web.Response(text = paf_rows, content_type = 'text/html')
     return paf
 
 

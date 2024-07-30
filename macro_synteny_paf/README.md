@@ -1,7 +1,7 @@
 # Macro-Synteny PAF Microservice
 
 This directory contains the macro-synteny-paf microservice.
-This microservice takes two genomes (1/query and 2/target), plus fields that describe their chromosome names, and returns a set of synteny blocks in PAF format.
+This microservice takes two genomes (1/query and 2/target), plus fields that describe their chromosome names, and returns a set of synteny blocks in [PAF format](https://github.com/lh3/miniasm/blob/master/PAF.md).
 The minimum number of matching annotations in a block and the maximum number of intermediate genes between any two matches in a block must also be provided.
 
 ## Setup

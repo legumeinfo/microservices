@@ -1,28 +1,20 @@
-# Python
-import asyncio
-from collections import defaultdict
-
-# dependencies
-from redis.commands.search.query import Query
-# borrowed from genes microservice
-from redis.commands.search import AsyncSearch
-from redis.commands.search._util import to_string
-from redis.commands.search.document import Document
-
 # module
-from macro_synteny_paf.aioredisearch import CustomAsyncSearch
-from macro_synteny_paf.grpc_client import computePairwiseMacroSyntenyBlocks
+from macro_synteny_paf.grpc_client import getGenes, getChromosome, getChromosomeLength, computeMacroSyntenyBlocks
 
 
 class RequestHandler:
     def __init__(
         self,
         redis_connection,
-        pairwise_address,
+        chromosome_address,
+        genes_address,
+        macrosyntenyblocks_address,
         breakpoint_characters=",.<>{}[]\"':;!@#$%^&*()-+=~",
     ):
         self.redis_connection = redis_connection
-        self.pairwise_address = pairwise_address
+        self.chromosome_address = chromosome_address
+        self.genes_address = genes_address
+        self.macrosyntenyblocks_address = macrosyntenyblocks_address
         self.breakpoint_characters = set(breakpoint_characters)
 
     def parseArguments(
@@ -92,14 +84,6 @@ class RequestHandler:
             chromosome_length,
         )
 
-    def _cleanTag(self, tag):
-        cleaned_tag = ""
-        for c in tag:
-            if c in self.breakpoint_characters:
-                cleaned_tag += "\\"
-            cleaned_tag += c
-        return cleaned_tag
-
     def _grpcBlockToDictBlock(self, grpc_block):
         dict_block = {
             "i": grpc_block.i,
@@ -112,191 +96,103 @@ class RequestHandler:
             dict_block["optionalMetrics"] = list(grpc_block.optionalMetrics)
         return dict_block
 
-    async def _getTargets(self, targets, chromosome, matched, intermediate):
-        # use a pipeline to reduce the number of calls to database
-        pipeline = self.redis_connection.pipeline()
-        gene_index = CustomAsyncSearch(pipeline, index_name="geneIdx")
-
-        # get genes for each family and bin them by chromosome
-        families = set(chromosome)
-        families.discard("")
-        chromosome_match_indices = defaultdict(list)
-
-        # count how many genes are in each family
-        query_strings = []
-        count_queries = []
-        for family in families:
-            cleaned_family = self._cleanTag(family)
-            query_string = "(@family:{" + cleaned_family + "})"
-            # limit the genes to the target chromosomes
-            if targets:
-                cleaned_targets = map(self._cleanTag, targets)
-                query_string += "(@chromosome:{" + "|".join(cleaned_targets) + "})"
-            query_strings.append(query_string)
-            # count how many genes are in the family
-            query = Query(query_string).verbatim().paging(0, 0)
-            count_queries.append(query)
-            await gene_index.search(query)  # returns the pipeline, not a Result!
-        count_results = await pipeline.execute()
-
-        # get the genes for each family
-        gene_queries = []
-        for family, query_string, query, res in zip(
-            families, query_strings, count_queries, count_results
-        ):
-            result = gene_index.search_result(query, res)
-            num_genes = result.total
-            # get the genes
-            query = (
-                Query(query_string)
-                .verbatim()
-                .return_fields("chromosome", "index")
-                .paging(0, num_genes)
-            )
-            gene_queries.append(query)
-            await gene_index.search(query)  # returns the pipeline, not a Result!
-        gene_results = await pipeline.execute()
-
-        # bin the genes by chromosome
-        for query, res in zip(gene_queries, gene_results):
-            result = gene_index.search_result(query, res)
-            for d in result.docs:
-                chromosome_match_indices[d.chromosome].append(int(d.index))
-
-        # sort index lists and filter by match and intermediate parameters
-        filtered_targets = []
-        for name in chromosome_match_indices:
-            num_genes = len(chromosome_match_indices[name])
-            # there's not enough matches on the entire chromosome
-            if num_genes < matched:
-                continue
-            # check blocks of genes that are closes
-            indices = sorted(chromosome_match_indices[name])
-            block = [indices[0]]
-            for j, i in enumerate(indices[1:]):
-                # match is close enough to previous match to add to block
-                if (
-                    intermediate < 1
-                    and (i - block[-1]) / len(chromosome) <= intermediate
-                ) or (intermediate >= 1 and i - block[-1] <= intermediate - 1):
-                    block.append(i)
-                # match is too far away from previous match
-                else:
-                    # save block if it's big enough
-                    if (matched < 1 and len(block) / len(chromosome) >= matched) or (
-                        matched >= 1 and len(block) >= matched
-                    ):
-                        filtered_targets.append(name)
-                        break
-                    # start a new block with the current match
-                    block = [i]
-                    # no need to compute more blocks if none will be large enough
-                    if num_genes - j < matched:
-                        break
-            # save last block if it's big enough
-            if (
-                (matched < 1 and len(block) / len(chromosome) >= matched)
-                or (matched >= 1 and len(block) >= matched)
-                and (not filtered_targets or filtered_targets[-1] != name)
-            ):
-                filtered_targets.append(name)
-
-        return filtered_targets
-
-    # borrowed from genes microservice
-    # decorate RediSearch get to return a Document instance for each id that
-    # exists in the index and None for those that don't, instead of raw contents
-    async def _get(self, index, *ids):
-        flat_fields = await index.get(*ids)
-        docs = []
-        for id, id_flat_fields in zip(ids, flat_fields):
-            if id_flat_fields is None:
-                docs.append(None)
-            else:
-                id_fields = dict(
-                    dict(
-                        zip(
-                            map(to_string, id_flat_fields[::2]),
-                            map(to_string, id_flat_fields[1::2]),
-                        )
-                    )
-                )
-                doc = Document(id, payload=None, **id_fields)
-                docs.append(doc)
-        return docs
-
-    # borrowed from genes microservice
-    def _geneDocToDict(self, gene_doc):
-        return {
-            "name": gene_doc.name,
-            "chromosome": gene_doc.chromosome,
-            "family": gene_doc.family or "",
-            "fmin": int(gene_doc.fmin),
-            "fmax": int(gene_doc.fmax),
-            "strand": int(gene_doc.strand),
+    def _grpcBlocksToDictBlocks(self, grpc_blocks):
+        dict_blocks = {
+            "chromosome": grpc_blocks.chromosome,
+            "genus": grpc_blocks.genus,
+            "species": grpc_blocks.species,
+            "blocks": list(map(self._grpcBlockToDictBlock, grpc_blocks.blocks)),
         }
+        return dict_blocks
 
-    async def _computePairwiseBlocks(
+    def _grpcGeneToDictGene(self, grpc_gene):
+        dict_gene = {
+            "name": grpc_gene.name,
+            "fmin": grpc_gene.fmin,
+            "fmax": grpc_gene.fmax,
+            "strand": grpc_gene.strand,
+            "family": grpc_gene.family,
+            "chromosome": grpc_gene.chromosome,
+        }
+        return dict_gene
+
+    def _grpcChromosomeToDictChromosome(self, grpc_chromosome):
+        dict_chromosome = {
+            "length": grpc_chromosome.length,
+            "genus": grpc_chromosome.track.genus,
+            "species": grpc_chromosome.track.species,
+            "genes": list(grpc_chromosome.track.genes),
+            "families": list(grpc_chromosome.track.families),
+        }
+        return dict_chromosome
+
+    def _grpcChromosomeToLength(self, grpc_chromosome):
+        return grpc_chromosome.length
+
+    async def _computePafRows(
         self,
-        chromosome,
-        target,
+        chr1,
         matched,
         intermediate,
         mask,
+        targets,
         metrics,
         chromosome_genes,
         chromosome_length,
-        chromosome_index,
-        chr1,
-        chr1_genes,
         grpc_decode,
     ):
-        # compute the blocks for the target chromosome
-        blocks = await computePairwiseMacroSyntenyBlocks(
-            chromosome,
-            target,
+        # PAF format is defined here: https://github.com/lh3/miniasm/blob/master/PAF.md
+
+        # use these default values for PAF columns that are not available from the microservices
+        num_residue_matches = 1
+        alignment_block_length = 1
+        mapping_quality = 255 # denotes 'missing'
+
+        # compute blocks for target chromosomes from the macro-synteny-blocks microservice
+        target_blocks_doc = await computeMacroSyntenyBlocks(
+            chr1["families"],
             matched,
             intermediate,
             mask,
+            targets,
             metrics,
             chromosome_genes,
             chromosome_length,
-            self.pairwise_address,
+            self.macrosyntenyblocks_address,
         )
-        if not blocks:  # true for None or []
-            return None
-        # fetch the chromosome object
-        doc = await chromosome_index.load_document(f"chromosome:{target}")
-        blocks_object = {}
-        # decode the blocks if not outputting gRPC
-        if grpc_decode:
-            blocks_object["blocks"] = list(map(self._grpcBlockToDictBlock, blocks))
-        else:
-            blocks_object["blocks"] = blocks
-        #return blocks_object
+        target_blocks = list(map(self._grpcBlocksToDictBlocks, target_blocks_doc))
+        # remove the targets that didn't return any blocks
+        filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
 
-        # connect to the gene index
-        gene_index = AsyncSearch(self.redis_connection, index_name="geneIdx")
+        # count number of blocks
+        num_blocks = 0
+        for b in filtered_target_blocks:
+            num_blocks += len(b["blocks"])
+        paf_rows = ['']*num_blocks
 
-        # clean up
-        for b in blocks_object["blocks"] :
-            b["query_sequence_name"] = chr1.name
-            b["query_sequence_length"] = int(chr1.length)
-            # borrowed from genes microservice
-            gene_ids = map(lambda name: f"gene:{name}", [ chr1_genes[b["i"]] ])
-            docs = await self._get(gene_index, *gene_ids)
-            genes = list(map(self._geneDocToDict, filter(lambda d: d is not None, docs)))
-            b["query_start"] = genes[0]["fmin"]
-            b["query_end"] = genes[0]["fmax"]
-            b["strand"] = b["orientation"]
-            b["target_sequence_name"] = target
-            b["target_sequence_length"] = int(doc.length)
-            b["target_start"] = b["fmin"]
-            b["target_end"] = b["fmax"]
-            b["num_residue_matches"] = 1 #min(b["query_end"] - b["query_start"], b["target_end"] - b["target_start"]) + 1
-            b["alignment_block_length"] = 1 #max(b["query_end"] - b["query_start"], b["target_end"] - b["target_start"]) + 1
-            b["mapping_quality"] = 255
-        return blocks_object
+        # loop over blocks to create PAF rows
+        paf_row_index = 0
+        for b in filtered_target_blocks:
+            target_sequence_name = b["chromosome"]
+            # get target chromosome length from the chromosome microservice
+            target_sequence_length = await getChromosomeLength(target_sequence_name, self.chromosome_address)
+            for bi in b["blocks"] :
+                query_sequence_name = chr1["name"]
+                query_sequence_length = chr1["length"]
+                # get gene information from the genes microservice
+                gene_names = [ chr1["genes"][bi["i"]] ]
+                gene_docs = await getGenes(gene_names, self.genes_address)
+                genes = list(map(self._grpcGeneToDictGene, filter(lambda d: d is not None, gene_docs)))
+                query_start = genes[0]["fmin"]
+                query_end = genes[0]["fmax"]
+                strand = bi["orientation"]
+                target_start = bi["fmin"]
+                target_end = bi["fmax"]
+
+                # create PAF row for the current block
+                paf_rows[paf_row_index] = f'{query_sequence_name}\t{query_sequence_length}\t{query_start}\t{query_end}\t{strand}\t{target_sequence_name}\t{target_sequence_length}\t{target_start}\t{target_end}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}\n'
+                paf_row_index += 1
+        return ''.join(paf_rows)
 
     async def process(
         self,
@@ -310,48 +206,27 @@ class RequestHandler:
         chromosome_length,
         grpc_decode=False,
     ):
-        # connect to the index
-        chromosome_index = CustomAsyncSearch(
-            self.redis_connection, index_name="chromosomeIdx"
-        )
         # other chromosome 1 information
-        all_filtered_target_blocks = []
-        for chr1_name in genome_1_chrs : #self.genome_1 :
-            chr1 = await chromosome_index.load_document(f"chromosome:{chr1_name}")
-            # get the chromosome genes
-            chr1_genes = await self.redis_connection.lrange(
-                f"chromosome:{chr1.name}:genes", 0, -1
-            )
-            # get the chromosome gene families
-            chromosome = await self.redis_connection.lrange(
-                f"chromosome:{chr1.name}:families", 0, -1
-            )
-            # get all chromosome names if no targets are specified
-            filtered_targets = await self._getTargets(
-                genome_2_chrs, chromosome, matched, intermediate
-            )
-            # compute blocks for each chromosome that is large enough
-            target_blocks = await asyncio.gather(
-                *[
-                    self._computePairwiseBlocks(
-                        chromosome,
-                        name,
-                        matched,
-                        intermediate,
-                        mask,
-                        metrics,
-                        chromosome_genes,
-                        chromosome_length,
-                        chromosome_index,
-                        chr1,
-                        chr1_genes,
-                        grpc_decode,
-                    )
-                    for name in filtered_targets
-                ]
-            )
-            # remove the targets that didn't return any blocks
-            filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
-            all_filtered_target_blocks += filtered_target_blocks
+        all_paf_rows = []
+        for chr1_name in genome_1_chrs :
+            # call chromosome microservice
+            chr1_doc = await getChromosome(chr1_name, self.chromosome_address)
+            chr1 = self._grpcChromosomeToDictChromosome(chr1_doc)
+            # include query chromosome name as we will need it in self._computePafRows()
+            chr1["name"] = chr1_name
 
-        return all_filtered_target_blocks
+            # compute PAF rows for each target chromosome
+            paf_rows = await self._computePafRows(
+                chr1,
+                matched,
+                intermediate,
+                mask,
+                genome_2_chrs,
+                metrics,
+                chromosome_genes,
+                chromosome_length,
+                grpc_decode,
+            )
+            all_paf_rows += paf_rows
+
+        return ''.join(all_paf_rows)
