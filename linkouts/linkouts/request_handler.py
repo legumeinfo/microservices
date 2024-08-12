@@ -10,6 +10,7 @@ TEXT = "text"
 
 GENE_LINKOUTS = "gene_linkouts"
 GENE_REGEX = re.compile("{GENE_ID}")
+UNPREFIXED_GENE_REGEX = re.compile("{UNPREFIXED_GENE_ID}")
 
 GENOMIC_REGION_LINKOUTS = "genomic_region_linkouts"
 GENOMIC_REGION_SPECIFIER_REGEX = re.compile(r"^([^:]+):(\d+)(-|\.\.)(\d+)$")
@@ -17,6 +18,18 @@ GENOMIC_REGION_REGEX = re.compile("{GENOMIC_REGION}")
 GENOMIC_REGION_CHR_ID_REGEX = re.compile("{GENOMIC_REGION_CHR_ID}")
 GENOMIC_REGION_START_REGEX = re.compile("{GENOMIC_REGION_START}")
 GENOMIC_REGION_END_REGEX = re.compile("{GENOMIC_REGION_END}")
+
+GENE_FAMILY_LINKOUTS = "gene_family_linkouts"
+GENE_FAMILY_REGEX = re.compile("{GENE_FAMILY_ID}")
+
+PAN_GENE_SET_LINKOUTS = "pan_gene_set_linkouts"
+PAN_GENE_SET_REGEX = re.compile("{PAN_GENE_SET_ID}")
+
+GWAS_LINKOUTS = "gwas_linkouts"
+GWAS_REGEX = re.compile("{GWAS_ID}")
+
+QTL_STUDY_LINKOUTS = "qtl_study_linkouts"
+QTL_STUDY_REGEX = re.compile("{QTL_STUDY_ID}")
 
 
 class RequestHandler:
@@ -36,7 +49,14 @@ class RequestHandler:
         yml = yaml.load(f.read(), Loader=yaml.FullLoader)
         prefix = yml["prefix"]
 
-        for linkable_type in [GENE_LINKOUTS, GENOMIC_REGION_LINKOUTS]:
+        for linkable_type in [
+            GENE_LINKOUTS,
+            GENOMIC_REGION_LINKOUTS,
+            GENE_FAMILY_LINKOUTS,
+            PAN_GENE_SET_LINKOUTS,
+            GWAS_LINKOUTS,
+            QTL_STUDY_LINKOUTS,
+        ]:
             if yml.get(linkable_type) is not None:
                 for linkout in yml[linkable_type]:
                     if self.linkout_lookup.get(linkable_type) is None:
@@ -55,6 +75,7 @@ class RequestHandler:
 
         for id in ids:
             prefix = ".".join(id.split(".")[0:4])
+            unprefixed_id = ".".join(id.split(".")[4:])
             if type_lookup.get(prefix) is not None:
                 templates = type_lookup[prefix]
                 for template in templates:
@@ -63,7 +84,13 @@ class RequestHandler:
                     # TODO: if method is POST, we probably need to do something with the
                     # request body content
                     linkout[HREF] = GENE_REGEX.sub(id, template[HREF])
+                    linkout[HREF] = UNPREFIXED_GENE_REGEX.sub(
+                        unprefixed_id, linkout[HREF]
+                    )
                     linkout[TEXT] = GENE_REGEX.sub(id, template[TEXT])
+                    linkout[TEXT] = UNPREFIXED_GENE_REGEX.sub(
+                        unprefixed_id, linkout[TEXT]
+                    )
                     linkouts.append(linkout)
         return linkouts
 
@@ -96,5 +123,87 @@ class RequestHandler:
                     linkout_href = GENOMIC_REGION_END_REGEX.sub(end, linkout_href)
                     linkout[HREF] = linkout_href
                     linkout[TEXT] = GENOMIC_REGION_REGEX.sub(id, template[TEXT])
+                    linkouts.append(linkout)
+        return linkouts
+
+    def process_gene_families(self, ids):
+        linkouts = []
+        if self.linkout_lookup.get(GENE_FAMILY_LINKOUTS) is None:
+            return linkouts
+
+        type_lookup = self.linkout_lookup.get(GENE_FAMILY_LINKOUTS)
+
+        for id in ids:
+            prefix = ".".join(id.split(".")[0:1])
+            if type_lookup.get(prefix) is not None:
+                templates = type_lookup[prefix]
+                for template in templates:
+                    linkout = {}
+                    linkout[METHOD] = template[METHOD]
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
+                    linkout[HREF] = GENE_FAMILY_REGEX.sub(id, template[HREF])
+                    linkout[TEXT] = GENE_FAMILY_REGEX.sub(id, template[TEXT])
+                    linkouts.append(linkout)
+        return linkouts
+
+    def process_pan_gene_sets(self, ids):
+        linkouts = []
+        if self.linkout_lookup.get(PAN_GENE_SET_LINKOUTS) is None:
+            return linkouts
+
+        type_lookup = self.linkout_lookup.get(PAN_GENE_SET_LINKOUTS)
+
+        for id in ids:
+            prefix = ".".join(id.split(".")[0:2])
+            if type_lookup.get(prefix) is not None:
+                templates = type_lookup[prefix]
+                for template in templates:
+                    linkout = {}
+                    linkout[METHOD] = template[METHOD]
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
+                    linkout[HREF] = PAN_GENE_SET_REGEX.sub(id, template[HREF])
+                    linkout[TEXT] = PAN_GENE_SET_REGEX.sub(id, template[TEXT])
+                    linkouts.append(linkout)
+        return linkouts
+
+    def process_gwas(self, ids):
+        linkouts = []
+        if self.linkout_lookup.get(GWAS_LINKOUTS) is None:
+            return linkouts
+
+        type_lookup = self.linkout_lookup.get(GWAS_LINKOUTS)
+
+        for id in ids:
+            if type_lookup.get(id) is not None:
+                templates = type_lookup[id]
+                for template in templates:
+                    linkout = {}
+                    linkout[METHOD] = template[METHOD]
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
+                    linkout[HREF] = GWAS_REGEX.sub(id, template[HREF])
+                    linkout[TEXT] = GWAS_REGEX.sub(id, template[TEXT])
+                    linkouts.append(linkout)
+        return linkouts
+
+    def process_qtl_studies(self, ids):
+        linkouts = []
+        if self.linkout_lookup.get(QTL_STUDY_LINKOUTS) is None:
+            return linkouts
+
+        type_lookup = self.linkout_lookup.get(QTL_STUDY_LINKOUTS)
+
+        for id in ids:
+            if type_lookup.get(id) is not None:
+                templates = type_lookup[id]
+                for template in templates:
+                    linkout = {}
+                    linkout[METHOD] = template[METHOD]
+                    # TODO: if method is POST, we probably need to do something with the
+                    # request body content
+                    linkout[HREF] = QTL_STUDY_REGEX.sub(id, template[HREF])
+                    linkout[TEXT] = QTL_STUDY_REGEX.sub(id, template[TEXT])
                     linkouts.append(linkout)
         return linkouts

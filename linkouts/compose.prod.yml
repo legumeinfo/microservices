@@ -1,6 +1,6 @@
 services:
   linkouts:
-    image: ghcr.io/legumeinfo/microservices-linkouts:1.0.0
+    image: ghcr.io/legumeinfo/microservices-linkouts:1.2.0
     ports:
       - "${PORT:-8080}:8080"
     volumes:
