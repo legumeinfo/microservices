@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: "RESTful API for DSCensor Directed Graph"
-  version: 0.0.1
+  version: 1.0.0
 servers:
   - url: /api
 paths:
@@ -29,6 +29,7 @@ paths:
                 $ref: "#/components/schemas/Species"
   /genomes:
     get:
+      summary: Get list of all genome_main objects
       description: |
         Returns all of the genome_main objects from the digraph.
       parameters:
@@ -63,6 +64,7 @@ paths:
                   $ref: "#/components/schemas/Genome"
   /annotations:
     get:
+      summary: Get list of all gene_models_main objects
       description: |
         Returns all of the gene_models_main objects from the digraph.
       parameters:
