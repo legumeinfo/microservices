@@ -176,14 +176,14 @@ async def http_qtl_studies_post_handler(request):
 def run_http_server(host, port, handler):
     """Run the HTTP server with the given handler"""
     api_version = "v1"
-    openapi_spec = f"{Path(__file__).parent.parent}/openapi/{api_version}/linkouts.yaml"
-    spec = {}
+    openapi_spec = Path(__file__).parent.parent / f"openapi/{api_version}/linkouts.yaml"
+
     with open(openapi_spec, "r") as file:
         spec = yaml.safe_load(file)
-    # make the app
+
     app = web.Application()
     app["handler"] = handler
-    # define the route and enable CORS
+
     cors = aiohttp_cors.setup(
         app,
         defaults={
@@ -221,13 +221,9 @@ def run_http_server(host, port, handler):
         }
     }
     for path, methods in spec['paths'].items():
-        for method, details in methods.items():
-            if method == 'get':
-                route = app.router.add_get(path, path_to_handler[path][method])
+        for method in methods:
+            if method in path_to_handler[path]:
+                route = app.router.add_route(method.upper(), path, path_to_handler[path][method])
                 cors.add(route)
-            elif method == 'post':
-                route = app.router.add_post(path, path_to_handler[path][method])
-                cors.add(route)
-    # run the app
-    web.run_app(app)
-    # TODO: what about teardown? runner.cleanup()
+    #web.run_app(app)
+    web.run_app(app, host=host, port=port)
