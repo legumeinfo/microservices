@@ -1,7 +1,7 @@
 import logging
 
 from aiohttp import web
-from rororo import openapi_context, OperationTableDef
+from rororo import OperationTableDef, openapi_context
 
 # from rororo import OperationTableDef, openapi_context
 # from rororo.openapi import get_validated_data, get_validated_parameters
@@ -51,7 +51,9 @@ async def list_genomes(request: web.Request) -> web.Response:
                 if species:  # if genus and species make sure species within genus
                     if node_species != species:
                         continue
-            if species:  # lets you specify species without genus which is probably stupid
+            if (
+                species
+            ):  # lets you specify species without genus which is probably stupid
                 if node_species != species:
                     continue
             genomes_main[node[0]] = node[1]
@@ -76,8 +78,12 @@ async def list_gene_models(request: web.Request) -> web.Response:
                 if species:  # if genus and species make sure species within genus
                     if node_species != species:
                         continue
-            if species:  # lets you specify species without genus which is probably stupid
+            if (
+                species
+            ):  # lets you specify species without genus which is probably stupid
                 if node_species != species:
                     continue
             gene_models_main[node[0]] = node[1]
-        return web.json_response([gene_models_main[genome] for genome in gene_models_main])
+        return web.json_response(
+            [gene_models_main[genome] for genome in gene_models_main]
+        )

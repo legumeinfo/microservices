@@ -3,11 +3,11 @@ from pathlib import Path
 from typing import List, Union
 
 from aiohttp import web
+from dscensor.directed_graph import DirectedGraphController
+from dscensor.settings import Settings
 from rororo import setup_openapi, setup_settings
 
 from dscensor import views
-from dscensor.directed_graph import DirectedGraphController
-from dscensor.settings import Settings
 
 
 def create_app(
@@ -51,7 +51,9 @@ def create_app(
     #    app[settings.pets_app_key] = []
 
     # Setup OpenAPI schema support for aiohttp application
-    api_path = f"{Path(__file__).parent.parent}/openapi/{settings.api_version}/dscensor.yaml"
+    api_path = (
+        f"{Path(__file__).parent.parent}/openapi/{settings.api_version}/dscensor.yaml"
+    )
     return setup_openapi(
         # Where first param is an application instance
         app,
