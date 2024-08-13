@@ -9,6 +9,7 @@ COPY README.md ./
 COPY setup.cfg ./
 COPY setup.py ./
 COPY linkouts/ ./linkouts/
+COPY openapi/ ./openapi/
 
 RUN pip3 install --no-cache-dir .
 

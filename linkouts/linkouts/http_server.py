@@ -1,4 +1,6 @@
 # dependencies
+import yaml
+from pathlib import Path
 import aiohttp_cors
 from aiohttp import web
 
@@ -173,6 +175,12 @@ async def http_qtl_studies_post_handler(request):
 
 
 def run_http_server(host, port, handler):
+    """Run the HTTP server with the given handler"""
+    api_version = "v1"
+    openapi_spec = f"{Path(__file__).parent.parent}/openapi/{api_version}/linkouts.yaml"
+    spec = {}
+    with open(openapi_spec, "r") as file:
+        spec = yaml.safe_load(file)
     # make the app
     app = web.Application()
     app["handler"] = handler
@@ -187,30 +195,40 @@ def run_http_server(host, port, handler):
             )
         },
     )
-    route = app.router.add_post(GENES_PATH, http_genes_post_handler)
-    cors.add(route)
-    route = app.router.add_get(GENES_PATH, http_genes_get_handler)
-    cors.add(route)
-    route = app.router.add_post(GENOMIC_REGIONS_PATH, http_genomic_regions_post_handler)
-    cors.add(route)
-    route = app.router.add_get(GENOMIC_REGIONS_PATH, http_genomic_regions_get_handler)
-    cors.add(route)
-    route = app.router.add_post(GENE_FAMILIES_PATH, http_gene_families_post_handler)
-    cors.add(route)
-    route = app.router.add_get(GENE_FAMILIES_PATH, http_gene_families_get_handler)
-    cors.add(route)
-    route = app.router.add_post(PAN_GENE_SETS_PATH, http_pan_gene_sets_post_handler)
-    cors.add(route)
-    route = app.router.add_get(PAN_GENE_SETS_PATH, http_pan_gene_sets_get_handler)
-    cors.add(route)
-    route = app.router.add_post(GWAS_PATH, http_gwas_post_handler)
-    cors.add(route)
-    route = app.router.add_get(GWAS_PATH, http_gwas_get_handler)
-    cors.add(route)
-    route = app.router.add_post(QTL_STUDIES_PATH, http_qtl_studies_post_handler)
-    cors.add(route)
-    route = app.router.add_get(QTL_STUDIES_PATH, http_qtl_studies_get_handler)
-    cors.add(route)
+    path_to_handler = {
+        GENES_PATH: {
+            'get': http_genes_get_handler,
+            'post': http_genes_post_handler
+        },
+        GENOMIC_REGIONS_PATH: {
+            'get': http_genomic_regions_get_handler,
+            'post': http_genomic_regions_post_handler
+        },
+        GENE_FAMILIES_PATH: {
+            'get': http_gene_families_get_handler,
+            'post': http_gene_families_post_handler
+        },
+        PAN_GENE_SETS_PATH: {
+            'get': http_pan_gene_sets_get_handler,
+            'post': http_pan_gene_sets_post_handler
+        },
+        GWAS_PATH: {
+            'get': http_gwas_get_handler,
+            'post': http_gwas_post_handler
+        },
+        QTL_STUDIES_PATH: {
+            'get': http_qtl_studies_get_handler,
+            'post': http_qtl_studies_post_handler
+        }
+    }
+    for path, methods in spec['paths'].items():
+        for method, details in methods.items():
+            if method == 'get':
+                route = app.router.add_get(path, path_to_handler[path][method])
+                cors.add(route)
+            elif method == 'post':
+                route = app.router.add_post(path, path_to_handler[path][method])
+                cors.add(route)
     # run the app
     web.run_app(app)
     # TODO: what about teardown? runner.cleanup()
