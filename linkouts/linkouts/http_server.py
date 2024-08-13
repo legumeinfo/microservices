@@ -1,4 +1,3 @@
-# dependencies
 import yaml
 from pathlib import Path
 import aiohttp_cors
@@ -19,7 +18,7 @@ QTL_STUDIES_QUERY = "qtl_studies"
 
 
 async def http_genes_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[GENES_QUERY]
     except KeyError:
@@ -31,7 +30,7 @@ async def http_genes_get_handler(request):
 
 
 async def http_genes_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(GENES_QUERY, [])
     if type(ids) != list:
@@ -45,7 +44,7 @@ async def http_genes_post_handler(request):
 
 
 async def http_genomic_regions_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[GENOMIC_REGIONS_QUERY]
     except KeyError:
@@ -57,7 +56,7 @@ async def http_genomic_regions_get_handler(request):
 
 
 async def http_genomic_regions_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(GENOMIC_REGIONS_QUERY, [])
     if type(ids) != list:
@@ -71,7 +70,7 @@ async def http_genomic_regions_post_handler(request):
 
 
 async def http_gene_families_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[GENE_FAMILIES_QUERY]
     except KeyError:
@@ -83,7 +82,7 @@ async def http_gene_families_get_handler(request):
 
 
 async def http_gene_families_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(GENE_FAMILIES_QUERY, [])
     if type(ids) != list:
@@ -97,7 +96,7 @@ async def http_gene_families_post_handler(request):
 
 
 async def http_pan_gene_sets_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[PAN_GENE_SETS_QUERY]
     except KeyError:
@@ -109,7 +108,7 @@ async def http_pan_gene_sets_get_handler(request):
 
 
 async def http_pan_gene_sets_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(PAN_GENE_SETS_QUERY, [])
     if type(ids) != list:
@@ -123,7 +122,7 @@ async def http_pan_gene_sets_post_handler(request):
 
 
 async def http_gwas_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[GWAS_QUERY]
     except KeyError:
@@ -135,7 +134,7 @@ async def http_gwas_get_handler(request):
 
 
 async def http_gwas_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(GWAS_QUERY, [])
     if type(ids) != list:
@@ -149,7 +148,7 @@ async def http_gwas_post_handler(request):
 
 
 async def http_qtl_studies_get_handler(request):
-    # parse the query from the request query string
+    """parse the query from the request query string"""
     try:
         ids = request.rel_url.query[QTL_STUDIES_QUERY]
     except KeyError:
@@ -161,7 +160,7 @@ async def http_qtl_studies_get_handler(request):
 
 
 async def http_qtl_studies_post_handler(request):
-    # parse the query from the request POST data
+    """parse the query from the request POST data"""
     data = await request.json()
     ids = data.get(QTL_STUDIES_QUERY, [])
     if type(ids) != list:
