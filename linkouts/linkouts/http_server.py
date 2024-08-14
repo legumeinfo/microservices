@@ -176,7 +176,7 @@ async def http_qtl_studies_post_handler(request):
 def run_http_server(host, port, handler):
     """Run the HTTP server with the given handler"""
     api_version = "v1"
-    openapi_spec = Path(__file__).parent.parent / f"openapi/{api_version}/linkouts.yaml"
+    openapi_spec = f"/app/openapi/linkouts/{api_version}/linkouts.yaml"
 
     with open(openapi_spec, "r") as file:
         spec = yaml.safe_load(file)
@@ -225,5 +225,5 @@ def run_http_server(host, port, handler):
             if method in path_to_handler[path]:
                 route = app.router.add_route(method.upper(), path, path_to_handler[path][method])
                 cors.add(route)
-    #web.run_app(app)
-    web.run_app(app, host=host, port=port)
+    web.run_app(app)
+    #web.run_app(app, host=host, port=port)
