@@ -1,0 +1,797 @@
+openapi: 3.0.0
+info:
+  title: Fasta API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      summary: Index
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+  /fasta/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch fasta range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sequence:
+                    type: string
+  /fasta/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch fasta sequence
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sequence:
+                    type: string
+  /fasta/references/{url}:
+    get:
+      summary: Get fasta references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  references:
+                    type: array
+                    items:
+                      type: string
+  /fasta/lengths/{url}:
+    get:
+      summary: Get fasta lengths
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lengths:
+                    type: array
+                    items:
+                      type: integer
+  /fasta/nreferences/{url}:
+    get:
+      summary: Get number of fasta references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nreferences:
+                    type: integer
+  /gff/contigs/{url}:
+    get:
+      summary: Get GFF contigs
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contigs:
+                    type: array
+                    items:
+                      type: string
+  /gff/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch GFF features in range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contig:
+                      type: string
+                    feature:
+                      type: string
+                    source:
+                      type: string
+                    start:
+                      type: integer
+                    end:
+                      type: integer
+                    score:
+                      type: number
+                    strand:
+                      type: string
+                    frame:
+                      type: string
+                    attributes:
+                      type: object
+  /gff/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch GFF features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contig:
+                      type: string
+                    feature:
+                      type: string
+                    source:
+                      type: string
+                    start:
+                      type: integer
+                    end:
+                      type: integer
+                    score:
+                      type: number
+                    strand:
+                      type: string
+                    frame:
+                      type: string
+                    attributes:
+                      type: object
+  /bed/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch BED features in range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contig:
+                      type: string
+                    start:
+                      type: integer
+                    end:
+                      type: integer
+                    name:
+                      type: string
+                    score:
+                      type: number
+                    strand:
+                      type: string
+                    thickStart:
+                      type: integer
+                    thickEnd:
+                      type: integer
+                    itemRGB:
+                      type: string
+                    blockCount:
+                      type: integer
+                    blockSizes:
+                      type: string
+                    blockStarts:
+                      type: string
+  /bed/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch BED features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contig:
+                      type: string
+                    start:
+                      type: integer
+                    end:
+                      type: integer
+                    name:
+                      type: string
+                    score:
+                      type: number
+                    strand:
+                      type: string
+                    thickStart:
+                      type: integer
+                    thickEnd:
+                      type: integer
+                    itemRGB:
+                      type: string
+                    blockCount:
+                      type: integer
+                    blockSizes:
+                      type: string
+                    blockStarts:
+                      type: string
+  /vcf/contigs/{url}:
+    get:
+      summary: Get VCF contigs
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contigs:
+                    type: array
+                    items:
+                      type: string
+  /vcf/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch VCF features in range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    chrom:
+                      type: string
+                    pos:
+                      type: integer
+                    id:
+                      type: string
+                    ref:
+                      type: string
+                    alts:
+                      type: array
+                      items:
+                        type: string
+                    qual:
+                      type: number
+                    filter:
+                      type: array
+                      items:
+                        type: string
+                    info:
+                      type: array
+                      items:
+                        type: string
+                    format:
+                      type: array
+                      items:
+                        type: string
+                    samples:
+                      type: array
+                      items:
+                        type: string
+                    alleles:
+                      type: array
+                      items:
+                        type: string
+  /vcf/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch VCF features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    chrom:
+                      type: string
+                    pos:
+                      type: integer
+                    id:
+                      type: string
+                    ref:
+                      type: string
+                    alts:
+                      type: array
+                      items:
+                        type: string
+                    qual:
+                      type: number
+                    filter:
+                      type: array
+                      items:
+                        type: string
+                    info:
+                      type: array
+                      items:
+                        type: string
+                    format:
+                      type: array
+                      items:
+                        type: string
+                    samples:
+                      type: array
+                      items:
+                        type: string
+                    alleles:
+                      type: array
+                      items:
+                        type: string
+  /alignment/references/{url}:
+    get:
+      summary: Get alignment references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  references:
+                    type: array
+                    items:
+                      type: string
+  /alignment/unmapped/{url}:
+    get:
+      summary: Get number of unmapped reads
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unmapped:
+                    type: integer
+  /alignment/nreferences/{url}:
+    get:
+      summary: Get number of alignment references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nreferences:
+                    type: integer
+  /alignment/nocoordinate/{url}:
+    get:
+      summary: Get number of reads with no coordinate
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nocoordinate:
+                    type: integer
+  /alignment/mapped/{url}:
+    get:
+      summary: Get number of mapped reads
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mapped:
+                    type: integer
+  /alignment/lengths/{url}:
+    get:
+      summary: Get alignment lengths
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lengths:
+                    type: array
+                    items:
+                      type: integer
+  /alignment/index_statistics/{url}:
+    get:
+      summary: Get alignment index statistics
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  index_statistics:
+                    type: array
+                    items:
+                      type: object
+  /alignment/count/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Get alignment count
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+  /alignment/count_coverage/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Get alignment count coverage
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    A:
+                      type: string
+                    B:
+                      type: string
+                    C:
+                      type: string
+                    D:
+                      type: string
+  /alignment/fetch/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Fetch alignment features in range
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /alignment/fetch/{contig}/{url}:
+    get:
+      summary: Fetch alignment features
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /alignment/length/{reference}/{url}:
+    get:
+      summary: Get alignment length for reference
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  length:
+                    type: integer
