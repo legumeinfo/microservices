@@ -7,7 +7,7 @@ from dscensor.directed_graph import DirectedGraphController
 from dscensor.settings import Settings
 from rororo import setup_openapi, setup_settings
 
-from dscensor import views
+from dscensor import http_server
 
 
 def create_app(
@@ -23,7 +23,7 @@ def create_app(
 
     .. code-block:: bash
 
-        python -m aiohttp.web dscensor.app:create_app
+        python -m aiohttp.web dscensor.http_server:create_app
 
     After application is running, feel free to use Swagger UI to check the
     results. The OpenAPI schema will be available at:
@@ -47,9 +47,6 @@ def create_app(
         logging.getLogger("dscensor"), settings.input_nodes
     )
 
-    # Create the "storage" for the pets
-    #    app[settings.pets_app_key] = []
-
     # Setup OpenAPI schema support for aiohttp application
     api_path = (
         f"{Path(__file__).parent.parent}/openapi/{settings.api_version}/dscensor.yaml"
@@ -60,7 +57,7 @@ def create_app(
         # Second is path to OpenAPI 3 Schema
         api_path,
         # And after list of operations
-        views.operations,
+        http_server.operations,
         is_validate_response=False,  # disable as spec has no error definitions atm
         # Enable CORS middleware as it ensures that every aiohttp response
         # will use proper CORS headers
