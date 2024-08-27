@@ -3,11 +3,11 @@ from pathlib import Path
 from typing import List, Union
 
 from aiohttp import web
-from dscensor.directed_graph import DirectedGraphController
-from dscensor.settings import Settings
 from rororo import setup_openapi, setup_settings
 
 from dscensor import http_server
+from dscensor.directed_graph import DirectedGraphController
+from dscensor.settings import Settings
 
 
 def create_app(
