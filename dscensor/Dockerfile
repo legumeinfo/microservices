@@ -6,13 +6,23 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends locales && \
     rm -rf /var/lib/apt/lists/*
 
-ADD . /app
+COPY dscensor /app
+COPY INSTALL /app
+COPY LICENSE /app
+COPY MANIFEST.in /app
+COPY openapi /app
+COPY README.md /app
+COPY requirements.txt /app
+COPY setup.cfg /app
+COPY setup.py /app
+COPY autocontent /app
 
 WORKDIR /app
 
 # install the package dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 RUN pip3 install lis-autocontent
+RUN python setup.py install
 
 # Set the locale
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
