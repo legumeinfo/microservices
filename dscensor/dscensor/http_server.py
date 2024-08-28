@@ -17,9 +17,9 @@ operations = OperationTableDef()
 async def list_genus(request: web.Request) -> web.Response:
     genus_list = {}
     for node in list(request.app["digraph"].digraph.nodes(data=True)):
-        genus_list[
-            node[1]["metadata"]["genus"]
-        ] = 1  # data part of node tuple with genus key
+        genus_list[node[1]["metadata"]["genus"]] = (
+            1  # data part of node tuple with genus key
+        )
     return web.json_response([genus for genus in genus_list])
 
 
@@ -27,9 +27,9 @@ async def list_genus(request: web.Request) -> web.Response:
 async def list_species(request: web.Request) -> web.Response:
     species_list = {}
     for node in list(request.app["digraph"].digraph.nodes(data=True)):
-        species_list[
-            node[1]["metadata"]["species"]
-        ] = 1  # data part of node tuple with species key
+        species_list[node[1]["metadata"]["species"]] = (
+            1  # data part of node tuple with species key
+        )
     return web.json_response([species for species in species_list])
 
 
