@@ -19,16 +19,6 @@ def create_app(
 
     OpenAPI specification from: ``api/dscensor.yaml``.
 
-    This aiohttp application is ready to be run as:
-
-    .. code-block:: bash
-
-        dscensor
-
-    After application is running, feel free to use Swagger UI to check the
-    results. The OpenAPI schema will be available at:
-
-
     This app was modeled after https://github.com/playpauseandstop/rororo
     """
     # Instantiate settings
