@@ -1,5 +1,6 @@
 # setup.py
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
 from dscensor import __version__
 
 setup(
