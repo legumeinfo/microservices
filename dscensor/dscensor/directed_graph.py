@@ -45,9 +45,9 @@ class DirectedGraphController:
                     continue
                 metadata["metadata"][k] = v
             name = dsjson["filename"]
-            self.all_objects[name] = (
-                metadata  # add object to self.all_objects for edge lookup later
-            )
+            self.all_objects[
+                name
+            ] = metadata  # add object to self.all_objects for edge lookup later
             logger.debug(self.all_objects[name])
 
     def generate_digraph(self):
