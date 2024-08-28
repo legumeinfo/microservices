@@ -23,7 +23,7 @@ def create_app(
 
     .. code-block:: bash
 
-        python -m aiohttp.web dscensor.http_server:create_app
+        dscensor
 
     After application is running, feel free to use Swagger UI to check the
     results. The OpenAPI schema will be available at:
@@ -63,3 +63,8 @@ def create_app(
         # will use proper CORS headers
         cors_middleware_kwargs={"allow_all": True},
     )
+
+
+def run_app(host="0.0.0.0", port=8080):
+    """Runs app so you dont have to."""
+    web.run_app(create_app())

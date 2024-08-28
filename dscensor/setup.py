@@ -15,7 +15,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "dscensor = dscensor.__main__:create_app",
+            "dscensor = dscensor.__main__:run_app",
         ],
     },
 )

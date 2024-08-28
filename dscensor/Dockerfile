@@ -33,5 +33,5 @@ ENV LC_ALL en_US.UTF-8
 
 # install (and implicitly build) the package
 
-CMD ["python", "-m", "aiohttp.web", "-H", "0.0.0.0", "dscensor.__main__:create_app"]
+CMD ["python", "-m", "aiohttp.web", "-H", "0.0.0.0", "dscensor.__main__:run_app"]
 EXPOSE 8080
