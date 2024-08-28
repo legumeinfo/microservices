@@ -48,7 +48,8 @@ def create_app(
     )
 
     # Setup OpenAPI schema support for aiohttp application
-    api_path = f"{Path(__file__).parent.parent}/openapi/dscensor/{settings.api_version}/dscensor.yaml"
+    parent = Path(__file__).parent.parent
+    api_path = f"{parent}/openapi/dscensor/{settings.api_version}/dscensor.yaml"
     return setup_openapi(
         # Where first param is an application instance
         app,
