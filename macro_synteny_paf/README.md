@@ -1,7 +1,7 @@
 # Macro-Synteny PAF Microservice
 
 This directory contains the macro-synteny-paf microservice.
-This microservice takes two genomes (1/query and 2/target), plus fields that describe their chromosome names, and returns a set of synteny blocks in [PAF format](https://github.com/lh3/miniasm/blob/master/PAF.md).
+This microservice takes two genome prefixes, and returns a set of synteny blocks in [PAF format](https://github.com/lh3/miniasm/blob/master/PAF.md).
 The minimum number of matching annotations in a block and the maximum number of intermediate genes between any two matches in a block must also be provided.
 
 ## Setup
@@ -43,15 +43,12 @@ The default request URL is `localhost:8080/macro-synteny-paf`.
 
 The following is an example HTTP GET URL:
 
-    localhost:8080/macro-synteny-paf?genome1=aradu.V14167.gnm1&chrpfx1=Aradu.A&chrdgt1=2&nchr1=10&genome2=arahy.Tifrunner.gnm1&chrpfx2=Arahy.&chrdgt2=2&nchr2=20&matched=10&intermediate=5&mask=20
+    localhost:8080/macro-synteny-paf?genome1=aradu.V14167.gnm1&genome2=arahy.Tifrunner.gnm1&matched=10&intermediate=5&mask=20
 
 where
 
-    genome[1|2]: genome name (1 for query genome, 2 for target genome)
-    chrpfx[1|2]: prefix of its chromosome names
-    chrdgt[1|2]: number of digits for the chromosome number (in order to automatically pad with leading zeros when necessary)
-    nchr[1|2]: number of chromosomes
-      (This assumes that the full-yuck chromosome name is <genome>.<chrpfx><chromosome_number>, e.g. aradu.V14167.gnm1.Aradu.A05)
+    genome1: query genome prefix
+    genome2: target genome prefix
     matched: minimum number of matching annotations in a block
     intermediate: maximum number of intermediate genes between any two matches in a block
     mask: (optional)

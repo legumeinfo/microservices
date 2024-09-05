@@ -6,13 +6,7 @@ from aiohttp import web
 async def http_get_handler(request):
     # parse the query from the URL query string parameters
     genome_1 = request.rel_url.query.get("genome1", "")
-    chr_prefix_1 = request.rel_url.query.get("chrpfx1", "")
-    chr_digits_1 = request.rel_url.query.get("chrdgt1", "")
-    n_chr_1 = request.rel_url.query.get("nchr1", "")
     genome_2 = request.rel_url.query.get("genome2", "")
-    chr_prefix_2 = request.rel_url.query.get("chrpfx2", "")
-    chr_digits_2 = request.rel_url.query.get("chrdgt2", "")
-    n_chr_2 = request.rel_url.query.get("nchr2", "")
     matched = request.rel_url.query.get("matched", "")
     intermediate = request.rel_url.query.get("intermediate", "")
     # optional parameters
@@ -23,8 +17,8 @@ async def http_get_handler(request):
     handler = request.app["handler"]
     try:
         (
-            genome_1_chrs,
-            genome_2_chrs,
+            genome_1,
+            genome_2,
             matched,
             intermediate,
             mask,
@@ -33,13 +27,7 @@ async def http_get_handler(request):
             chromosome_length,
         ) = handler.parseArguments(
             genome_1,
-            chr_prefix_1,
-            chr_digits_1,
-            n_chr_1,
             genome_2,
-            chr_prefix_2,
-            chr_digits_2,
-            n_chr_2,
             matched,
             intermediate,
             mask,
@@ -52,8 +40,8 @@ async def http_get_handler(request):
             text="Required arguments are missing or have invalid values"
         )
     paf_rows = await handler.process(
-        genome_1_chrs,
-        genome_2_chrs,
+        genome_1,
+        genome_2,
         matched,
         intermediate,
         mask,
