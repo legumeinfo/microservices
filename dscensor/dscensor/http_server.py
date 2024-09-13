@@ -1,8 +1,8 @@
 from pathlib import Path
+
 # dependencies
 from aiohttp import web
 from rororo import OperationTableDef, openapi_context, setup_openapi
-
 
 operations = OperationTableDef()
 
