@@ -1,6 +1,22 @@
-#!/usr/bin/env python
+# setup.py
+from setuptools import find_packages, setup
 
-# Python
-import setuptools
+from dscensor import __version__
 
-setuptools.setup()
+setup(
+    name="dscensor",
+    version=__version__,
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "aiohttp",
+        "rororo",
+        "pyyaml",
+        "networkx",
+    ],
+    entry_points={
+        "console_scripts": [
+            "dscensor = dscensor.__main__:run_app",
+        ],
+    },
+)

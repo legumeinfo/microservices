@@ -2,6 +2,7 @@ services:
   dscensor:
     build:
       context: .
+    container_name: dscensor_openapi_dev
     ports:
       - "${PORT:-8080}:8080"
     volumes:
