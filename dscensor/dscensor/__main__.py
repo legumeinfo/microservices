@@ -2,11 +2,12 @@
 
 # Python
 import argparse
-import aiohttp
 import asyncio
 import logging
 import os
 import signal
+
+import aiohttp
 
 # dependencies
 import uvloop
