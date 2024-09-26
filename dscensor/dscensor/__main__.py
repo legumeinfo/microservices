@@ -2,6 +2,7 @@
 
 # Python
 import argparse
+import aiohttp
 import asyncio
 import logging
 import os
@@ -156,7 +157,7 @@ def handleException(loop, context):
 # the main coroutine that starts the various program tasks
 def main_coroutine(args):
     handler = RequestHandler(args.nodes)
-    run_http_server(args.hhost, args.hport, handler)
+    return run_http_server(args.hhost, args.hport, handler)
 
 
 def main():
@@ -187,7 +188,7 @@ def main():
 
     # run the program
     try:
-        main_coroutine(args)
+        aiohttp.web.run_app(main_coroutine(args))
     # catch exceptions not handled by asyncio
     except Exception as e:
         context = {"exception": e, "message": str(e)}

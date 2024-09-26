@@ -41,14 +41,14 @@ async def list_gene_models(request):
     return web.json_response(gene_model_list)
 
 
-async def run_http_server(host, port, handler):
+def run_http_server(host, port, handler):
     # make the app
     app = web.Application()
     app["handler"] = handler
     # finish setting up the app using OpenAPI
     parent = Path(__file__).parent.parent
     api_path = f"{parent}/openapi/dscensor/v1/dscensor.yaml"
-    setup_openapi(
+    return setup_openapi(
         app,
         api_path,
         operations,
@@ -56,8 +56,9 @@ async def run_http_server(host, port, handler):
         cors_middleware_kwargs={"allow_all": True},
     )
     # run the app
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, host, port)
-    await site.start()
+#    runner = web.AppRunner()
+#    await runner.setup()
+#    site = web.TCPSite(runner, host, port)
+#    await site.start()
+#    web.run_app(setup_openapi, port=port, host=host)
     # TODO: what about teardown? runner.cleanup()
