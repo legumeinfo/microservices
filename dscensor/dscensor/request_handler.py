@@ -6,7 +6,7 @@ class RequestHandler:
     def __init__(self, nodes):
         self.controller = DirectedGraphController(nodes)
 
-    async def list_genus(self):
+    def list_genus(self):
         genus_list = {}
         for node in list(self.controller.digraph.nodes(data=True)):
             # data part of node tuple with genus key
@@ -14,7 +14,7 @@ class RequestHandler:
             genus_list[node_genus] = 1
         return [genus for genus in genus_list]
 
-    async def list_species(self):
+    def list_species(self):
         species_list = {}
         for node in list(self.controller.digraph.nodes(data=True)):
             # data part of node tuple with species key
@@ -22,7 +22,7 @@ class RequestHandler:
             species_list[node_species] = 1
         return [species for species in species_list]
 
-    async def list_genomes(self, genus="", species=""):
+    def list_genomes(self, genus="", species=""):
         genus = genus.lower()
         species = species.lower()
         genomes_main = {}
@@ -47,7 +47,7 @@ class RequestHandler:
             genomes_main[node[0]] = node[1]
         return [genomes_main[genome] for genome in genomes_main]
 
-    async def list_gene_models(self, genus, species):
+    def list_gene_models(self, genus, species):
         gene_models_main = {}
         for node in list(self.controller.digraph.nodes(data=True)):
             node_genus = node[1]["metadata"]["genus"].lower()
