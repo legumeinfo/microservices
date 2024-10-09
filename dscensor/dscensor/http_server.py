@@ -1,5 +1,4 @@
 import os
-import logging
 import environ
 from pathlib import Path
 from typing import Union
