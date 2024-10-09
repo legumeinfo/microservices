@@ -14,7 +14,7 @@ import networkx as nx
 class DirectedGraphController:
     """Imported by application to build and query directed graph"""
 
-    def __init__(self, dscensor_nodes="./autocontent"):
+    def __init__(self, logger, dscensor_nodes="./autocontent"):
         self.all_objects = {}  # collection of all objects for lookup in edge building
         self.dscensor_nodes = os.path.abspath(
             dscensor_nodes
