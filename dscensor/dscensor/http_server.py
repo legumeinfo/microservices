@@ -76,9 +76,11 @@ def run_http_server(host, port, handler, settings: Union[Settings, None] = None)
         cors_middleware_kwargs={"allow_all": True},
     )
     # run the app
+
+
 #    runner = web.AppRunner()
 #    await runner.setup()
 #    site = web.TCPSite(runner, host, port)
 #    await site.start()
 #    web.run_app(setup_openapi, port=port, host=host)
-    # TODO: what about teardown? runner.cleanup()
+# TODO: what about teardown? runner.cleanup()
