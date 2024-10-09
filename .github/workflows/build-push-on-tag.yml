@@ -6,14 +6,15 @@ on:
       - 'chromosome@v[0-9]+.[0-9]+.[0-9]+'
       - 'chromosome_region@v[0-9]+.[0-9]+.[0-9]+'
       - 'chromosome_search@v[0-9]+.[0-9]+.[0-9]+'
+      - 'dscensor@v[0-9]+.[0-9]+.[0-9]+'
       - 'gene_search@v[0-9]+.[0-9]+.[0-9]+'
       - 'genes@v[0-9]+.[0-9]+.[0-9]+'
+      - 'linkouts@v[0-9]+.[0-9]+.[0-9]+'
       - 'macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
       - 'micro_synteny_search@v[0-9]+.[0-9]+.[0-9]+'
       - 'pairwise_macro_synteny_blocks@v[0-9]+.[0-9]+.[0-9]+'
       - 'redis_loader@v[0-9]+.[0-9]+.[0-9]+'
       - 'search@v[0-9]+.[0-9]+.[0-9]+'
-      - 'linkouts@v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io
