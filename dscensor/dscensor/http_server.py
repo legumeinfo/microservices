@@ -1,11 +1,20 @@
-import os
 import logging
-import environ
+import os
 from pathlib import Path
 from typing import Union
+
+import environ
+
 # dependencies
 from aiohttp import web
-from rororo import OperationTableDef, openapi_context, setup_openapi, setup_settings, BaseSettings
+from rororo import (
+    BaseSettings,
+    OperationTableDef,
+    openapi_context,
+    setup_openapi,
+    setup_settings,
+)
+
 from dscensor.directed_graph import DirectedGraphController
 
 operations = OperationTableDef()
