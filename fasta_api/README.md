@@ -1,53 +1,45 @@
-# Linkouts Microservice
 
-This directory contains linkout microservices, ie services primarily intended for generating links to other user-facing endpoints given some information like a gene id. For example, an application displaying genes from many species may wish to allow the user to obtain possible destinations that are species specific, and the gene linkout service would mediate this so that all applications within a site can rely on the same logic and provide consistent user experience. 
+Minimal example of a partial [FastAPI](https://fastapi.tiangolo.com/)-generated API for querying a BGZF-compressed & faidx-indexed FASTA file using [pysam](https://pysam.readthedocs.io/).
 
-## Setup
-
-The easiest way to install the linkouts microservice is with Docker. 
-
-## Running
-
-The easiest way to run the linkouts microservice is with docker compose. You will need to set the DATA environment variable used in the compose file to the root of a directory hierarchy containing LINKOUTS.\*.yml files with linkout specifications (e.g. by cloning the legumeinfo/datastore-metadata repo if you are working for the legume).
-
-The syntax of a linkout file allows an identifier prefix to be associated with one or more URLs; when the service is queried with a set of identifiers, each will have its prefix checked for possible links, and then the identifier (or component parts parsed from it) will be substituted into placeholders in the link template. 
+## Example
 
 ```
-prefix: vigun.CB5-2.gnm1.ann1
-
-gene_linkouts:
-  -
-    method: GET
-    href: https://vigna.legumeinfo.org/tools/gcv/gene;vigna={GENE_ID}
-    text: "View {GENE_ID} in Genome Context Viewer"
-  -
-    method: GET
-    href: https://mines.legumeinfo.org/cowpeamine/gene:{GENE_ID}
-    text: "View {GENE_ID} in VignaMine"
-
-```
-```
-prefix: vigun.CB5-2.gnm1
-
-genomic_region_linkouts:
-  -
-    method: GET
-    href: https://vigna.legumeinfo.org/tools/gcv/search?q={GENOMIC_REGION}&sources=vigna
-    text: "View {GENOMIC_REGION} in Genome Context Viewer"
-  -
-    method: GET
-    href: https://vigna.legumeinfo.org/tools/jbrowse2?config=vigna.json&session=spec-%7B%22views%22%3A%5B%7B%22assembly%22%3A%22vigun.CB5-2.gnm1%22%2C%22loc%22%3A%22{GENOMIC_REGION_CHR_ID}%3A{GENOMIC_REGION_START}-{GENOMIC_REGION_END}%22%2C%22type%22%3A%20%22LGV%22%2C%22tracks%22%3A%5B%22gene_models_main%22%5D%7D%5D%7D
-    text: "View {GENOMIC_REGION} in JBrowse2"
+% make install # one-time environment setup
+...
+% make
 ```
 
-## Use
+In another terminal, execute `make test`, or manually enter the following commands:
+```
+$ curl http://localhost:8000/fasta/references/https://data.legumeinfo.org/Glycine/max/genomes/Wm82.gnm2.DTC4/glyma.Wm82.gnm2.DTC4.genome_main.fna.gz
+{"references":["glyma.Wm82.gnm2.Gm01","glyma.Wm82.gnm2.Gm02",...
+$ curl http://localhost:8000/fasta/fetch/glyma.Wm82.gnm2.scaffold_2709/https://data.legumeinfo.org/Glycine/max/genomes/Wm82.gnm2.DTC4/glyma.Wm82.gnm2.DTC4.genome_main.fna.gz 
+$ curl http://localhost:8000/fasta/fetch/glyma.Wm82.gnm2.Gm01:1-100/https://data.legumeinfo.org/Glycine/max/genomes/Wm82.gnm2.DTC4/glyma.Wm82.gnm2.DTC4.genome_main.fna.gz 
+{"sequence":"GTTTGGTGTTTGGGTTTTAGGTTTTAGGTTTTAGGTTTTACGGTTTAGGGTTTATGGTTTATGGTTTAGGGTTTAGGGTTAGGAAATAATTTGGGTCTT"}
+$ curl http://localhost:8000/gff/contigs/https://data.legumeinfo.org/Glycine/max/annotations/Wm82.gnm2.ann1.RVB6/glyma.Wm82.gnm2.ann1.RVB6.gene_models_main.gff3.gz 
+{"contigs":["glyma.Wm82.gnm2.Gm01","glyma.Wm82.gnm2.Gm02",...
+$ curl http://localhost:8000/gff/fetch/glyma.Wm82.gnm2.Gm01:1-100000/https://data.legumeinfo.org/Glycine/max/annotations/Wm82.gnm2.ann1.RVB6/glyma.Wm82.gnm2.ann1.RVB6.gene_models_main.gff3.gz
+[{"contig":"glyma.Wm82.gnm2.Gm01","feature":"gene","source":"phytozomev10","start":27354,"end":28320,"score":null,"strand":"-","frame":null,"attributes":"ID=glyma.Wm82.gnm2.ann1.Glyma.01G000100;...
+$ curl http://localhost:8000/vcf/contigs/https://data.legumeinfo.org/Glycine/max/diversity/Wm82.gnm1.div.ContrerasSoto_Mora_2017/glyma.Wm82.gnm1.div.ContrerasSoto_Mora_2017.SNPs.vcf.gz
+{"contigs":["scaffold_148","scaffold_2079","scaffold_639","scaffold_648","scaffold_1961","scaffold_1902","scaffold_1416","scaffold_1649","scaffold_2267",...
+$ curl http://localhost:8000/vcf/fetch/glyma.Wm82.gnm1.Gm16:1-100000/https://data.legumeinfo.org/Glycine/max/diversity/Wm82.gnm1.div.ContrerasSoto_Mora_2017/glyma.Wm82.gnm1.div.ContrerasSoto_Mora_2017.SNPs.vcf.gz
+[{"chrom":"glyma.Wm82.gnm1.Gm16","pos":35846,"id":"M4191","ref":"A","alts":["G"],"qual":null,"filter":[],"info":[],"format":["GT"],"samples":["ANTA","A6001-RR"...
+$ curl http://localhost:8000/alignment/fetch/aradu.V14167.gnm2.chr01:1-100000/https://data.legumeinfo.org/Arachis/duranensis/genome_alignments/V14167.gnm2.wga.96TT/aradu.V14167.gnm2.x.araca.K10017.gnm1.96TT.bam
+[{"name":"araca.K10017.gnm1.chr01","flag":"2048","ref_name":"aradu.V14167.gnm2.chr01","ref_pos":"45008","map_quality":"60","cigar":"191657H159M11I364M10D109M2D685M10I111...
+```
 
-The microservice can be queried via HTTP GET.
+## ALLOWED_URLS
 
-The default request URLs are :
-- `localhost:8080/gene_linkouts?genes=<comma-delimited geneid list>`
-- `localhost:8080/genomic_region_linkouts?genomic_regions=<comma-delimited list of seqid:start-end>`
+In production, the `ALLOWED_URLS` environment variable can be set to a comma-separated list of target URL prefixes to allow.
+If the requested URL begins with any of the URLs in the list, the request will be allowed; otherwise, an HTTP 403 status code will result.
 
-The **production** URLs are:
-- `https://services.lis.ncgr.org/gene_linkouts?genes=<comma-delimited geneid list>`
-- `https://services.lis.ncgr.org/genomic_region_linkouts?genomic_regions=<comma-delimited list of seqid:start-end>`
+```
+$ ALLOWED_URLS='https://data.legumeinfo.org/,https://www.soybase.org/data/v2/' make
+... `make test` works ...
+$ ALLOWED_URLS='https://www.example.com/' make
+... `make test` fails ...
+```
+
+## API documentation
+
+See also http://localhost:8000/docs for the FastAPI [Interactive API docs](https://fastapi.tiangolo.com/#interactive-api-docs)

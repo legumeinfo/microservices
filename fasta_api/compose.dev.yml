@@ -1,5 +1,5 @@
 services:
-  linkouts:
+  fasta_api:
     build:
       context: .
     ports:

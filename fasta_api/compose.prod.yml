@@ -1,6 +1,6 @@
 services:
-  linkouts:
-    image: ghcr.io/legumeinfo/microservices-linkouts:1.2.0
+  fasta_api:
+    image: ghcr.io/legumeinfo/microservices-fasta_api:1.0.0
     ports:
       - "${PORT:-8080}:8080"
     volumes:
