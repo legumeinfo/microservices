@@ -83,27 +83,27 @@ def parseArgs():
     )
 
     # Async HTTP args
-    hhost_envvar = "HTTP_HOST"
+    host_envvar = "HTTP_HOST"
     parser.add_argument(
-        "--hhost",
+        "--host",
         action=EnvArg,
-        envvar=hhost_envvar,
+        envvar=host_envvar,
         type=str,
         default="127.0.0.1",
         help=f"""
-        The HTTP server host (can also be specified using the {hhost_envvar} environment
+        The HTTP server host (can also be specified using the {host_envvar} environment
         variable).
         """,
     )
-    hport_envvar = "HTTP_PORT"
+    port_envvar = "HTTP_PORT"
     parser.add_argument(
-        "--hport",
+        "--port",
         action=EnvArg,
-        envvar=hport_envvar,
+        envvar=port_envvar,
         type=str,
         default="8880",
         help=f"""
-        The HTTP server port (can also be specified using the {hport_envvar} environment
+        The HTTP server port (can also be specified using the {port_envvar} environment
         variable).
         """,
     )
@@ -173,7 +173,7 @@ def main():
     # run the program
     try:
         handler = RequestHandler(args.nodes)
-        loop.create_task(run_http_server(args.hhost, args.hport, handler))
+        loop.create_task(run_http_server(args.host, args.port, handler))
         loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:
