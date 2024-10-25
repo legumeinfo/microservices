@@ -101,7 +101,7 @@ def parseArgs():
         action=EnvArg,
         envvar=port_envvar,
         type=str,
-        default="8880",
+        default="8080",
         help=f"""
         The HTTP server port (can also be specified using the {port_envvar} environment
         variable).
