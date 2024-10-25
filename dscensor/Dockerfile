@@ -25,8 +25,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 RUN pip3 install --no-cache-dir .
 
 WORKDIR /
-COPY ../data/dscensor/autocontent ./autocontent
-
-# set the locale
 
 ENTRYPOINT ["python3", "-u", "-m", "dscensor"]
