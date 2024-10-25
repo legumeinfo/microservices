@@ -3,7 +3,7 @@ info:
   title: "RESTful API for DSCensor Directed Graph"
   version: 1.0.0
 servers:
-  - url: /api
+  - url: /
 paths:
   /genera:
     get:
