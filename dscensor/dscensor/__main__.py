@@ -144,12 +144,6 @@ def handleException(loop, context):
     asyncio.create_task(shutdown(loop))
 
 
-# the main coroutine that starts the various program tasks
-def main_coroutine(args):
-    handler = RequestHandler(args.nodes)
-    return run_http_server(args.hhost, args.hport, handler)
-
-
 def main():
     # parse the command line arguments / environment variables
     args = parseArgs()
@@ -178,7 +172,9 @@ def main():
 
     # run the program
     try:
-        aiohttp.web.run_app(main_coroutine(args))
+        handler = RequestHandler(args.nodes)
+        loop.create_task(run_http_server(args.hhost, args.hport, handler))
+        loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:
         context = {"exception": e, "message": str(e)}
