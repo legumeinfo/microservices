@@ -113,7 +113,7 @@ def parseArgs():
         action=EnvArg,
         envvar=nodes_envvar,
         type=str,
-        default="/autocontent",
+        default="./autocontent",
         help=f"""
         TODO (can also be specified using the {nodes_envvar} environment variable).
         """,
