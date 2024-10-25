@@ -107,24 +107,13 @@ def parseArgs():
         variable).
         """,
     )
-    app_key_envvar = "APP_KEY"
-    parser.add_argument(
-        "--appkey",
-        action=EnvArg,
-        envvar=app_key_envvar,
-        type=str,
-        default="digraph",
-        help=f"""
-        TODO (can also be specified using the {app_key_envvar} environment variable).
-        """,
-    )
     nodes_envvar = "NODES"
     parser.add_argument(
         "--nodes",
         action=EnvArg,
         envvar=nodes_envvar,
         type=str,
-        default="/app/autocontent",
+        default="/autocontent",
         help=f"""
         TODO (can also be specified using the {nodes_envvar} environment variable).
         """,
