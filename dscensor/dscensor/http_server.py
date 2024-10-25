@@ -3,11 +3,9 @@ from pathlib import Path
 # dependencies
 from aiohttp import web
 from rororo import (
-    BaseSettings,
     OperationTableDef,
     openapi_context,
     setup_openapi,
-    setup_settings,
 )
 
 
