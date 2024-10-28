@@ -7,8 +7,6 @@ import logging
 import os
 import signal
 
-import aiohttp
-
 # dependencies
 import uvloop
 
