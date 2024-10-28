@@ -2,7 +2,7 @@ services:
   dscensor:
     image: ghcr.io/legumeinfo/microservices-dscensor:1.0.0
     environment:
-      nodes: "/autocontent"
+      NODES: "/autocontent"
     ports:
       - "${PORT:-8080}:8080"
     volumes:
