@@ -13,13 +13,13 @@ The "./autocontent" directory will be read by the app when docker compose is run
 
 Run local development build from cwd.
 
-`sudo docker compose -f ./compose.dev.yaml up`
+`docker compose -f compose.yaml -f compose.dev.yaml up`
 
 Run production build from tagged image.
 
-`sudo docker compose -f ./compose.prod.yaml up`
+`docker compose -f compose.yaml -f compose.prod.yaml up`
 
-# Develop
+# Development
 
 Install pre-commit hooks before developing. The github will force you to subscribe on PR if you don't so please do!
 

@@ -14,12 +14,13 @@ import networkx as nx
 class DirectedGraphController:
     """Imported by application to build and query directed graph"""
 
-    def __init__(self, logger, dscensor_nodes="./autocontent"):
-        self.all_objects = {}  # collection of all objects for lookup in edge building
-        self.dscensor_nodes = os.path.abspath(
-            dscensor_nodes
-        )  # directory to load object.json files from lis-autocontent populate-dscensor
-        self.digraph = nx.DiGraph()  # initialize digraph
+    def __init__(self, dscensor_nodes="./autocontent"):
+        # collection of all objects for lookup in edge building
+        self.all_objects = {}
+        # directory to load object.json files from lis-autocontent populate-dscensor
+        self.dscensor_nodes = os.path.abspath(dscensor_nodes)
+        # initialize digraph
+        self.digraph = nx.DiGraph()
         self.parse_dscensor_nodes()
         self.generate_digraph()
 

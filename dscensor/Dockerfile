@@ -1,4 +1,4 @@
-FROM python:3.11.1-slim-buster
+FROM python:3.11-slim-buster
 
 # install gcc and other build requirements
 RUN apt-get update && \
@@ -25,8 +25,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 RUN pip3 install --no-cache-dir .
 
 WORKDIR /
-COPY ../data/dscensor/autocontent ./autocontent
-
-# set the locale
 
 ENTRYPOINT ["python3", "-u", "-m", "dscensor"]

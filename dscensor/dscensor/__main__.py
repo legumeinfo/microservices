@@ -7,8 +7,6 @@ import logging
 import os
 import signal
 
-import aiohttp
-
 # dependencies
 import uvloop
 
@@ -83,39 +81,28 @@ def parseArgs():
     )
 
     # Async HTTP args
-    hhost_envvar = "HTTP_HOST"
+    host_envvar = "HTTP_HOST"
     parser.add_argument(
-        "--hhost",
+        "--host",
         action=EnvArg,
-        envvar=hhost_envvar,
+        envvar=host_envvar,
         type=str,
         default="127.0.0.1",
         help=f"""
-        The HTTP server host (can also be specified using the {hhost_envvar} environment
+        The HTTP server host (can also be specified using the {host_envvar} environment
         variable).
         """,
     )
-    hport_envvar = "HTTP_PORT"
+    port_envvar = "HTTP_PORT"
     parser.add_argument(
-        "--hport",
+        "--port",
         action=EnvArg,
-        envvar=hport_envvar,
-        type=str,
-        default="8880",
+        envvar=port_envvar,
+        type=int,
+        default="8080",
         help=f"""
-        The HTTP server port (can also be specified using the {hport_envvar} environment
+        The HTTP server port (can also be specified using the {port_envvar} environment
         variable).
-        """,
-    )
-    app_key_envvar = "APP_KEY"
-    parser.add_argument(
-        "--appkey",
-        action=EnvArg,
-        envvar=app_key_envvar,
-        type=str,
-        default="digraph",
-        help=f"""
-        TODO (can also be specified using the {app_key_envvar} environment variable).
         """,
     )
     nodes_envvar = "NODES"
@@ -124,7 +111,7 @@ def parseArgs():
         action=EnvArg,
         envvar=nodes_envvar,
         type=str,
-        default="/app/autocontent",
+        default="./autocontent",
         help=f"""
         TODO (can also be specified using the {nodes_envvar} environment variable).
         """,
@@ -155,12 +142,6 @@ def handleException(loop, context):
     asyncio.create_task(shutdown(loop))
 
 
-# the main coroutine that starts the various program tasks
-def main_coroutine(args):
-    handler = RequestHandler(args.nodes)
-    return run_http_server(args.hhost, args.hport, handler)
-
-
 def main():
     # parse the command line arguments / environment variables
     args = parseArgs()
@@ -189,7 +170,9 @@ def main():
 
     # run the program
     try:
-        aiohttp.web.run_app(main_coroutine(args))
+        handler = RequestHandler(args.nodes)
+        loop.create_task(run_http_server(args.host, args.port, handler))
+        loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:
         context = {"exception": e, "message": str(e)}

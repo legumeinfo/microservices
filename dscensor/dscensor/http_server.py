@@ -1,27 +1,10 @@
-import os
 from pathlib import Path
-from typing import Union
-
-import environ
 
 # dependencies
 from aiohttp import web
-from rororo import (
-    BaseSettings,
-    OperationTableDef,
-    openapi_context,
-    setup_openapi,
-    setup_settings,
-)
-
-from dscensor.directed_graph import DirectedGraphController
+from rororo import OperationTableDef, openapi_context, setup_openapi
 
 operations = OperationTableDef()
-
-
-@environ.config(prefix=None, frozen=True)
-class Settings(BaseSettings):
-    input_nodes: str = environ.var(name="DSCENSOR_INPUT_NODES", default="./autocontent")
 
 
 @operations.register("getGenus")
@@ -58,37 +41,21 @@ async def list_gene_models(request):
     return web.json_response(gene_model_list)
 
 
-def run_http_server(host, port, handler, settings: Union[Settings, None] = None):
+async def run_http_server(host, port, handler):
     # make the app
-    if settings is None:
-        settings = Settings.from_environ()
-    app = setup_settings(
-        web.Application(),
-        settings,
-        loggers=("aiohttp", "aiohttp_middlewares", "dscensor", "rororo"),
-        remove_root_handlers=True,
-    )
-    nodes = os.getenv("DSCENSOR_NODES")
-    if not nodes:
-        nodes = "./autocontent"
-    app["handler"] = handler
-    app["digraph"] = DirectedGraphController(nodes)
-    # finish setting up the app using OpenAPI
     parent = Path(__file__).parent.parent
     api_path = f"{parent}/openapi/dscensor/v1/dscensor.yaml"
-    return setup_openapi(
-        app,
+    app = setup_openapi(
+        web.Application(),
         api_path,
         operations,
         is_validate_response=False,
         cors_middleware_kwargs={"allow_all": True},
     )
+    app["handler"] = handler
     # run the app
-
-
-#    runner = web.AppRunner()
-#    await runner.setup()
-#    site = web.TCPSite(runner, host, port)
-#    await site.start()
-#    web.run_app(setup_openapi, port=port, host=host)
-# TODO: what about teardown? runner.cleanup()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()
+    # TODO: what about teardown? runner.cleanup()
