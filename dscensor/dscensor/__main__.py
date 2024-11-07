@@ -50,7 +50,6 @@ def parseArgs():
         action="version",
         version=f"%(prog)s {dscensor.__version__}",
     )
-
     # logging args
     loglevel_envvar = "LOG_LEVEL"
     parser.add_argument(
@@ -79,7 +78,6 @@ def parseArgs():
         {logfile_envvar} environment variable).
         """,
     )
-
     # Async HTTP args
     host_envvar = "HTTP_HOST"
     parser.add_argument(
@@ -113,9 +111,15 @@ def parseArgs():
         type=str,
         default="./autocontent",
         help=f"""
-        The path to a directory containing JSON objects created using lis-autocontent. (can also be specified using the {nodes_envvar} environment variable).
+        The path to a directory containing JSON objects created using
+        lis-autocontent. (can also be specified using the {nodes_envvar}
+        environment variable).
 
-        An example directory is provided in microservices/data/dscensor/autocontent that contains objects for Cicer.         
+        An example directory is provided in:
+
+            microservices/data/dscensor/autocontent
+
+        that contains objects for Cicer.
         """,
     )
     return parser.parse_args()
