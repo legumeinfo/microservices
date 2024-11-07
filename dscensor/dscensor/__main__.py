@@ -115,9 +115,9 @@ def parseArgs():
         lis-autocontent. (can also be specified using the {nodes_envvar}
         environment variable).
 
-        An example directory is provided in:
+        An example is provided in the repository at:
 
-            microservices/data/dscensor/autocontent
+            https://github.com/legumeinfo/microservices/data/dscensor/autocontent
 
         that contains objects for Cicer.
         """,
