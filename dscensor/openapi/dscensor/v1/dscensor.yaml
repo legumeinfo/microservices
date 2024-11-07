@@ -1,0 +1,197 @@
+openapi: 3.0.0
+info:
+  title: "RESTful API for DSCensor Directed Graph"
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /genera:
+    get:
+      summary: Get list of all Genera
+      operationId: getGenus
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Genus"
+  /species:
+    get:
+      summary: Get list of all species
+      operationId: getSpecies
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Species"
+  /genomes:
+    get:
+      summary: Get list of all genome_main objects
+      description: |
+        Returns all of the genome_main objects from the digraph.
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+          description: Return only genomes matching optional genus
+          required: false
+        - in: query
+          name: species
+          schema:
+            type: string
+          description: Return only genomes matching optional species
+          required: false
+        - in: query
+          name: results
+          schema:
+            type: integer
+            minimum: 1
+          description: Return only int genome results at most
+          required: false
+      operationId: getGenomes
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genome"
+  /annotations:
+    get:
+      summary: Get list of all gene_models_main objects
+      description: |
+        Returns all of the gene_models_main objects from the digraph.
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+          description: Return only genomes matching optional genus
+          required: false
+        - in: query
+          name: species
+          schema:
+            type: string
+          description: Return only genomes matching optional species
+          required: false
+        - in: query
+          name: results
+          schema:
+            type: integer
+            minimum: 1
+          description: Return only int annotation results at most
+          required: false
+      operationId: getGeneModelsMain
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeneModelsMain"
+
+components:
+  schemas:
+    Genus:
+      type: array
+      items:
+        type: string
+
+    Species:
+      type: array
+      items:
+        type: string
+
+    Genome:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          type: object
+          properties:
+            contigs:
+              type: integer
+            records:
+              type: integer
+            N50:
+              type: integer
+            allbases:
+              type: integer
+            gapbases:
+              type: integer
+            gaps:
+              type: integer
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    GeneModelsMain:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          type: object
+          properties:
+            contigs:
+              type: integer
+            records:
+              type: integer
+            N50:
+              type: integer
+            allbases:
+              type: integer
+            gapbases:
+              type: integer
+            gaps:
+              type: integer
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    CoreObject:
+      type: object
+      properties:
+        filename:
+          type: string
+        filetype:
+          type: string
+        canonical_type:
+          type: string
+        url:
+          type: string
+        genus:
+          type: string
+        species:
+          type: string
+        origin:
+          type: string
+        infraspecies:
+          type: string
+        derived_from:
+          type: array
+          items:
+            type: string
+
+    Busco:
+      type: object
+      properties:
+        complete_buscos:
+          type: integer
+        single_copy_buscos:
+          type: integer
+        duplicate_buscos:
+          type: integer
+        fragmented_buscos:
+          type: integer
+        missing_buscos:
+          type: integer
+        total_buscos:
+          type: integer
