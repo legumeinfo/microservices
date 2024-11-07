@@ -24,3 +24,5 @@ Run production build from tagged image.
 Install pre-commit hooks before developing. The github will force you to subscribe on PR if you don't so please do!
 
 `pre-commit install`
+`python ./setup.py install`
+`dscensor --help`

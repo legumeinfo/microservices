@@ -113,10 +113,11 @@ def parseArgs():
         type=str,
         default="./autocontent",
         help=f"""
-        TODO (can also be specified using the {nodes_envvar} environment variable).
+        The path to a directory containing JSON objects created using lis-autocontent. (can also be specified using the {nodes_envvar} environment variable).
+
+        An example directory is provided in microservices/data/dscensor/autocontent that contains objects for Cicer.         
         """,
     )
-
     return parser.parse_args()
 
 
