@@ -108,7 +108,18 @@ def parseArgs():
         variable).
         """,
     )
-
+    allowed_urls_envvar = "ALLOWED_URLS"
+    parser.add_argument(
+        "--allowed-urls",
+        action=EnvArg,
+        envvar=allowed_urls_envvar,
+        type=str,
+        default="https://data.legumeinfo.org/,https://www.soybase.org/data/v2/",
+        help=f"""
+        Comma seperated list of allowed URLs to retrieve data (can also be 
+        specified using the {allowed_urls_envvar} environment variable).
+        """,
+    )
     return parser.parse_args()
 
 
@@ -143,7 +154,7 @@ def main_coroutine(args):
 def main():
     # parse the command line arguments / environment variables
     args = parseArgs()
-
+    os.environ["ALLOWED_URLS"] = args.allowed_urls
     # setup logging
     log_config = {
         "format": "%(asctime)s,%(msecs)d %(levelname)s: %(message)s",
@@ -177,3 +188,4 @@ def main():
     finally:
         loop.close()
         logging.info("Successfully shutdown.")
+        
