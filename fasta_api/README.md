@@ -29,4 +29,4 @@ $ export ALLOWED_URLS='https://data.legumeinfo.org/,https://www.soybase.org/data
 
 ## API documentation
 
-See localhost:8080/help for routes.
+See `localhost:8080/help` for routes.
