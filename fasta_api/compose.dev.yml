@@ -2,7 +2,7 @@ services:
   fasta_api:
     build:
       context: .
+    environment:
+      ALLOWED_URLS: "https://data.legumeinfo.org/,https://www.soybase.org/data/v2/"
     ports:
       - "${PORT:-8080}:8080"
-    volumes:
-      - ${DATA}:/data

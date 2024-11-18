@@ -1,0 +1,4 @@
+services:
+  fasta_api:
+    environment:
+      HTTP_HOST: "0.0.0.0"
