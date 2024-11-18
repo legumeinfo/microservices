@@ -1,8 +1,25 @@
 
 Minimal example of a partial [FastAPI](https://fastapi.tiangolo.com/)-generated API for querying a BGZF-compressed & faidx-indexed FASTA file using [pysam](https://pysam.readthedocs.io/).
 
-## Example
+# Docker
 
+Run local development build from cwd.
+
+`docker compose -f compose.yaml -f compose.dev.yaml up`
+
+Run production build from tagged image.
+
+`docker compose -f compose.yaml -f compose.prod.yaml up`
+
+# Development
+
+## Install Pre-commit Hooks
+
+Install pre-commit hooks before developing. The github will force you to subscribe on PR if you don't so please do!
+
+`pre-commit install`
+
+## install fasta_api
 ```
 $ python3 -m venv fasta_api_env
 $ source ./fasta_api_env/bin/activate
@@ -12,6 +29,8 @@ $ source ./fasta_api_env/bin/activate
 ======== Running on http://0.0.0.0:8080 ========
 (Press CTRL+C to quit)
 ```
+
+## Testing
 
 In another terminal, manually enter the following command:
 ```
