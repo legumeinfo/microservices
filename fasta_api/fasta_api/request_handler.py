@@ -6,9 +6,6 @@ import urllib
 
 import pysam
 from fastapi import status
-import urllib
-import os
-import itertools
 
 ALLOWED_URLS = os.environ.get("ALLOWED_URLS", "").split(",")
 
