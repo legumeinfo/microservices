@@ -189,5 +189,6 @@ def main():
         loop.close()
         logging.info("Successfully shutdown.")
 
+
 if __name__ == "__main__":
-        main()
+    main()

@@ -1,10 +1,11 @@
 # request_handler.py
+import itertools
 import json
+import os
+import urllib
+
 import pysam
 from fastapi import HTTPException, status
-import urllib
-import os
-import itertools
 
 ALLOWED_URLS = os.environ.get("ALLOWED_URLS", "").split(",")
 
@@ -80,17 +81,24 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return [{"contig": feature.contig,
-                     "feature": feature.feature,
-                     "source": feature.source,
-                     "start": feature.start,
-                     "end": feature.end,
-                     "score": feature.score,
-                     "strand": feature.strand,
-                     "frame": feature.frame,
-                     "attributes": dict(a.split("=") for a in feature.attributes.split(";") if a != "")}
-                    for feature
-                    in pysam.TabixFile(url).fetch(seqid, start, end, parser=pysam.asGFF3())]
+            return [
+                {
+                    "contig": feature.contig,
+                    "feature": feature.feature,
+                    "source": feature.source,
+                    "start": feature.start,
+                    "end": feature.end,
+                    "score": feature.score,
+                    "strand": feature.strand,
+                    "frame": feature.frame,
+                    "attributes": dict(
+                        a.split("=") for a in feature.attributes.split(";") if a != ""
+                    ),
+                }
+                for feature in pysam.TabixFile(url).fetch(
+                    seqid, start, end, parser=pysam.asGFF3()
+                )
+            ]
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
@@ -104,13 +112,37 @@ class RequestHandler:
             return url
         try:
             bedcols = (
-                'contig', 'start', 'end', 'name', 'score', 'strand', 'thickStart', 'thickEnd', 'itemRGB', 'blockCount',
-                'blockSizes', 'blockStarts')
-            return [dict(itertools.starmap(lambda k, v: (
-                k, int(v) if k in ['start', 'end', 'thickStart', 'thickEnd'] else float(v) if k == 'score' else v),
-                                           zip(bedcols, feature)))
-                    for feature
-                    in pysam.TabixFile(url).fetch(seqid, start, end, parser=pysam.asBed())]
+                "contig",
+                "start",
+                "end",
+                "name",
+                "score",
+                "strand",
+                "thickStart",
+                "thickEnd",
+                "itemRGB",
+                "blockCount",
+                "blockSizes",
+                "blockStarts",
+            )
+            return [
+                dict(
+                    itertools.starmap(
+                        lambda k, v: (
+                            k,
+                            int(v)
+                            if k in ["start", "end", "thickStart", "thickEnd"]
+                            else float(v)
+                            if k == "score"
+                            else v,
+                        ),
+                        zip(bedcols, feature),
+                    )
+                )
+                for feature in pysam.TabixFile(url).fetch(
+                    seqid, start, end, parser=pysam.asBed()
+                )
+            ]
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
@@ -132,19 +164,22 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return [{"chrom": feature.chrom,
-                     "pos": feature.pos,
-                     "id": feature.id,
-                     "ref": feature.ref,
-                     "alts": feature.alts,
-                     "qual": feature.qual,
-                     "filter": list(feature.filter),
-                     "info": list(feature.info),
-                     "format": list(feature.format),
-                     "samples": list(feature.samples),
-                     "alleles": feature.alleles}
-                    for feature
-                    in pysam.VariantFile(url).fetch(seqid, start, end)]
+            return [
+                {
+                    "chrom": feature.chrom,
+                    "pos": feature.pos,
+                    "id": feature.id,
+                    "ref": feature.ref,
+                    "alts": feature.alts,
+                    "qual": feature.qual,
+                    "filter": list(feature.filter),
+                    "info": list(feature.info),
+                    "format": list(feature.format),
+                    "samples": list(feature.samples),
+                    "alleles": feature.alleles,
+                }
+                for feature in pysam.VariantFile(url).fetch(seqid, start, end)
+            ]
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
@@ -228,25 +263,35 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            count_coverage = pysam.AlignmentFile(url).count_coverage(contig, start, stop)
-            return [{"A": json.dumps([x for x in count_coverage[0]]),
-                     "B": json.dumps([x for x in count_coverage[1]]),
-                     "C": json.dumps([x for x in count_coverage[2]]),
-                     "D": json.dumps([x for x in count_coverage[3]])
-                     }]
+            count_coverage = pysam.AlignmentFile(url).count_coverage(
+                contig, start, stop
+            )
+            return [
+                {
+                    "A": json.dumps([x for x in count_coverage[0]]),
+                    "B": json.dumps([x for x in count_coverage[1]]),
+                    "C": json.dumps([x for x in count_coverage[2]]),
+                    "D": json.dumps([x for x in count_coverage[3]]),
+                }
+            ]
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
             return self.send_400_resp(f"Unable to find feature: {e}")
 
-    def alignment_fetch(self, url: str, contig: str, start: int = None, stop: int = None):
+    def alignment_fetch(
+        self, url: str, contig: str, start: int = None, stop: int = None
+    ):
         url = self.check_url(url)
         if isinstance(url, dict):
             return url
         try:
-            return [feature.to_dict()
-                    for feature
-                    in pysam.AlignmentFile(url).fetch(contig=contig, start=start, stop=stop)]
+            return [
+                feature.to_dict()
+                for feature in pysam.AlignmentFile(url).fetch(
+                    contig=contig, start=start, stop=stop
+                )
+            ]
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
@@ -259,8 +304,7 @@ class RequestHandler:
         try:
             return {"length": pysam.AlignmentFile(url).get_reference_length(reference)}
         except OSError as e:
-            return self.send_400_resp(f"Unable to open file: {e}") 
-
+            return self.send_400_resp(f"Unable to open file: {e}")
 
             return {"unmapped": pysam.AlignmentFile(url).unmapped}
         except OSError as e:
