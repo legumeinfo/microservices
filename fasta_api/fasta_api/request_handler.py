@@ -1,7 +1,7 @@
 # request_handler.py
 import json
 import pysam
-from fastapi import HTTPException, status
+from fastapi import status
 import urllib
 import os
 import itertools

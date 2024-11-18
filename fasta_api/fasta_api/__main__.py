@@ -116,7 +116,7 @@ def parseArgs():
         type=str,
         default="https://data.legumeinfo.org/,https://www.soybase.org/data/v2/",
         help=f"""
-        Comma seperated list of allowed URLs to retrieve data (can also be 
+        Comma seperated list of allowed URLs to retrieve data (can also be
         specified using the {allowed_urls_envvar} environment variable).
         """,
     )

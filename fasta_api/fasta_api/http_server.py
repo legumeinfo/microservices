@@ -2,8 +2,6 @@
 import aiohttp_cors
 from aiohttp import web
 
-from fastapi import HTTPException, status
-
 
 async def http_index(request):
     return web.Response(text="Index")
