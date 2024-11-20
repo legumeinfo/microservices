@@ -1,0 +1,832 @@
+openapi: 3.0.0
+info:
+  title: Fasta API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      summary: Index
+      operationId: http_index
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+  /help:
+    get:
+      summary: Help
+      operationId: http_help
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /fasta/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch Fasta Range
+      operationId: http_fasta_range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fasta range data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FastaFeature'
+  /fasta/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch Fasta Range
+      operationId: http_fasta_range
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fasta range data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FastaFeature'
+  /fasta/references/{url}:
+    get:
+      summary: Get Fasta References
+      operationId: http_fasta_references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fasta references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/References'
+  /fasta/lengths/{url}:
+    get:
+      summary: Get Fasta Lengths
+      operationId: http_fasta_lengths
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fasta lengths
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lengths'
+  /fasta/nreferences/{url}:
+    get:
+      summary: Get Number of Fasta References
+      operationId: http_fasta_nreferences
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Number of fasta references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NReferences'
+  /gff/contigs/{url}:
+    get:
+      summary: Get GFF References
+      operationId: http_gff_references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: GFF references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contigs'
+  /gff/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch GFF Features
+      operationId: http_gff_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: GFF features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GffFeature'
+  /gff/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch GFF Features
+      operationId: http_gff_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: GFF features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GffFeature'
+  /bed/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch BED Features
+      operationId: http_bed_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: BED features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedFeature'
+  /bed/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch BED Features
+      operationId: http_bed_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: BED features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedFeature'
+  /vcf/contigs/{url}:
+    get:
+      summary: Get VCF Contigs
+      operationId: http_vcf_contigs
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VCF contigs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contigs'
+  /vcf/fetch/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Fetch VCF Features
+      operationId: http_vcf_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VCF features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VcfFeature'
+  /vcf/fetch/{seqid}/{url}:
+    get:
+      summary: Fetch VCF Features
+      operationId: http_vcf_features
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VCF features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VcfFeature'
+  /alignment/references/{url}:
+    get:
+      summary: Get Alignment References
+      operationId: http_alignment_references
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/References'
+  /alignment/unmapped/{url}:
+    get:
+      summary: Get Unmapped Alignments
+      operationId: http_alignment_unmapped
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unmapped alignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unmapped'
+  /alignment/nreferences/{url}:
+    get:
+      summary: Get Number of Alignment References
+      operationId: http_alignment_nreferences
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Number of alignment references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NReferences'
+  /alignment/nocoordinate/{url}:
+    get:
+      summary: Get No-coordinate Alignments
+      operationId: http_alignment_nocoordinate
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: No-coordinate alignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoCoordinate'
+  /alignment/mapped/{url}:
+    get:
+      summary: Get Mapped Alignments
+      operationId: http_alignment_mapped
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mapped alignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapped'
+  /alignment/lengths/{url}:
+    get:
+      summary: Get Alignment Lengths
+      operationId: http_alignment_lengths
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment lengths
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lengths'
+  /alignment/index_statistics/{url}:
+    get:
+      summary: Get Alignment Index Statistics
+      operationId: http_alignment_index_statistics
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment index statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexStatistics'
+  /alignment/count/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Get Alignment Count
+      operationId: http_alignment_count
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count'
+  /alignment/count_coverage/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Get Alignment Count Coverage
+      operationId: http_alignment_count_coverage
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment count coverage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountCoverage'
+  /alignment/fetch/{contig}:{start}-{stop}/{url}:
+    get:
+      summary: Fetch Alignment
+      operationId: http_alignment_fetch
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: stop
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlignmentData'
+  /alignment/fetch/{contig}/{url}:
+    get:
+      summary: Fetch Alignment
+      operationId: http_alignment_fetch
+      parameters:
+        - name: contig
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlignmentData'
+  /alignment/length/{reference}/{url}:
+    get:
+      summary: Get Alignment Reference Lengths
+      operationId: http_alignment_reference_lengths
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alignment reference lengths
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Length'
+components:
+  schemas:
+    FastaFeature:
+      type: array
+      items:
+        type: object
+        properties:
+          contig:
+            type: string
+          start:
+            type: integer
+          end:
+            type: integer
+          name:
+            type: string
+          score:
+            type: number
+          strand:
+            type: string
+          thickStart:
+            type: integer
+          thickEnd:
+            type: integer
+          itemRGB:
+            type: string
+          blockCount:
+            type: integer
+          blockSizes:
+            type: string
+          blockStarts:
+            type: string
+    References:
+      type: object
+      properties:
+        references:
+          type: array
+          items:
+            type: string
+    Lengths:
+      type: object
+      properties:
+        lengths:
+          type: array
+          items:
+            type: integer
+    NReferences:
+      type: object
+      properties:
+        nreferences:
+          type: integer
+    Contigs:
+      type: object
+      properties:
+        contigs:
+          type: array
+          items:
+            type: string
+    GffFeature:
+      type: array
+      items:
+        type: object
+        properties:
+          chrom:
+            type: string
+          pos:
+            type: integer
+          id:
+            type: string
+          ref:
+            type: string
+          alts:
+            type: array
+            items:
+              type: string
+          qual:
+            type: number
+          filter:
+            type: array
+            items:
+              type: string
+          info:
+            type: array
+            items:
+              type: string
+          format:
+            type: array
+            items:
+              type: string
+          samples:
+            type: array
+            items:
+              type: string
+          alleles:
+            type: array
+            items:
+              type: string
+    BedFeature:
+      type: array
+      items:
+        type: object
+        properties:
+          contig:
+            type: string
+          start:
+            type: integer
+          end:
+            type: integer
+          name:
+            type: string
+          score:
+            type: number
+          strand:
+            type: string
+          thickStart:
+            type: integer
+          thickEnd:
+            type: integer
+          itemRGB:
+            type: string
+          blockCount:
+            type: integer
+          blockSizes:
+            type: string
+          blockStarts:
+            type: string
+    VcfFeature:
+      type: array
+      items:
+        type: object
+        properties:
+          chrom:
+            type: string
+          pos:
+            type: integer
+          id:
+            type: string
+          ref:
+            type: string
+          alts:
+            type: array
+            items:
+              type: string
+          qual:
+            type: number
+          filter:
+            type: array
+            items:
+              type: string
+          info:
+            type: array
+            items:
+              type: string
+          format:
+            type: array
+            items:
+              type: string
+          samples:
+            type: array
+            items:
+              type: string
+          alleles:
+            type: array
+            items:
+              type: string
+    Unmapped:
+      type: object
+      properties:
+        unmapped:
+          type: integer
+    NoCoordinate:
+      type: object
+      properties:
+        nocoordinate:
+          type: integer
+    Mapped:
+      type: object
+      properties:
+        mapped:
+          type: integer
+    IndexStatistics:
+      type: object
+      properties:
+        index_statistics:
+          type: array
+          items:
+            type: object
+            properties:
+              contig:
+                type: string
+              mapped:
+                type: integer
+              unmapped:
+                type: integer
+    Count:
+      type: object
+      properties:
+        count:
+          type: integer
+    CountCoverage:
+      type: array
+      items:
+        type: object
+        properties:
+          A:
+            type: string
+          B:
+            type: string
+          C:
+            type: string
+          D:
+            type: string
+    AlignmentData:
+      type: array
+      items:
+        type: object
+        properties:
+          qname:
+            type: string
+          flag:
+            type: integer
+          rname:
+            type: string
+          pos:
+            type: integer
+          mapq:
+            type: integer
+          cigar:
+            type: string
+          rnext:
+            type: string
+          pnext:
+            type: integer
+          tlen:
+            type: integer
+          seq:
+            type: string
+          qual:
+            type: string
+    Length:
+      type: object
+      properties:
+        length:
+          type: integer
