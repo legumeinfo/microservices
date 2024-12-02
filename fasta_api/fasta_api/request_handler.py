@@ -16,8 +16,10 @@ class RequestHandler:
     def check_url(self, url):
         url = urllib.parse.unquote(url)
         if not any(url.startswith(allowed_url) for allowed_url in ALLOWED_URLS):
-            return {"error": "url not allowed or missing query parameters",
-                    "status": 403}
+            return {
+                "error": "url not allowed or missing query parameters",
+                "status": 403,
+            }
         return url
 
     def send_400_resp(self, msg):
