@@ -5,10 +5,6 @@ import os
 import urllib
 
 import pysam
-import urllib
-import os
-import itertools
-
 
 ALLOWED_URLS = os.environ.get("ALLOWED_URLS", "").split(",")
 
