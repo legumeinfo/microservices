@@ -7,7 +7,6 @@ async-timeout==4.0.3
 attrs==23.2.0
 cfgv==3.4.0
 distlib==0.3.9
-fastapi==0.115.4
 filelock==3.16.1
 frozenlist==1.4.1
 identify==2.6.2

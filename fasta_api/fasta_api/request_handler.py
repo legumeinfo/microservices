@@ -5,7 +5,6 @@ import os
 import urllib
 
 import pysam
-from fastapi import status
 import urllib
 import os
 import itertools
@@ -20,14 +19,14 @@ class RequestHandler:
     def check_url(self, url):
         url = urllib.parse.unquote(url)
         if not any(url.startswith(allowed_url) for allowed_url in ALLOWED_URLS):
-            return {"error": "url not allowed", "status": status.HTTP_403_FORBIDDEN}
+            return {"error": "url not allowed or missing query parameters... Check the specification file", "status": 403}
         return url
 
     def send_400_resp(self, msg):
-        return {"error": msg, "status": status.HTTP_400_BAD_REQUEST}
+        return {"error": msg, "status": 400}
 
     def index(self):
-        return "fasta-api"
+        return "fasta_api"
 
     def fasta_range(self, url: str, seqid: str, start: int = None, end: int = None):
         url = self.check_url(url)

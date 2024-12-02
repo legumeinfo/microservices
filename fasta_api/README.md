@@ -1,6 +1,3 @@
-
-Minimal example of a partial [FastAPI](https://fastapi.tiangolo.com/)-generated API for querying a BGZF-compressed & faidx-indexed FASTA file using [pysam](https://pysam.readthedocs.io/).
-
 # Docker
 
 Run local development build from cwd.
@@ -43,7 +40,7 @@ In production, the `ALLOWED_URLS` environment variable can be set to a comma-sep
 If the requested URL begins with any of the URLs in the list, the request will be allowed; otherwise, an HTTP 403 status code will result.
 
 ```
-$ export ALLOWED_URLS='https://data.legumeinfo.org/,https://www.soybase.org/data/v2/';fasta_api
+$ export ALLOWED_URLS='https://data.legumeinfo.org/,https://data.soybase.org/';fasta_api
 ```
 
 ## API documentation

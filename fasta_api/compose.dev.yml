@@ -3,6 +3,6 @@ services:
     build:
       context: .
     environment:
-      ALLOWED_URLS: "https://data.legumeinfo.org/,https://www.soybase.org/data/v2/"
+      ALLOWED_URLS: "https://data.legumeinfo.org/,https://data.soybase.org/"
     ports:
       - "${PORT:-8080}:8080"
