@@ -18,7 +18,7 @@ async def http_fasta_range(request):
     end = request.match_info.get("end")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    range = handler.fasta_range(url, seqid, start, end)
+    range = handler.fasta_range(url, seqid, int(start), int(end))
     if "error" in range:
         return web.json_response(range, status=range["status"])
     return web.json_response(range)
@@ -66,7 +66,7 @@ async def http_gff_features(request):
     end = request.match_info.get("end")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    features = handler.gff_features(url, seqid, start, end)
+    features = handler.gff_features(url, seqid, int(start), int(end))
     if "error" in features:
         return web.json_response(features, status=features["status"])
     return web.json_response(features)
@@ -78,7 +78,7 @@ async def http_bed_features(request):
     end = request.match_info.get("end")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    features = handler.bed_features(url, seqid, start, end)
+    features = handler.bed_features(url, seqid, int(start), int(end))
     if "error" in features:
         return web.json_response(features, status=features["status"])
     return web.json_response(features)
@@ -99,7 +99,7 @@ async def http_vcf_features(request):
     end = request.match_info.get("end")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    features = handler.vcf_features(url, seqid, start, end)
+    features = handler.vcf_features(url, seqid, int(start), int(end))
     if "error" in features:
         return web.json_response(features, status=features["status"])
     return web.json_response(features)
@@ -174,7 +174,7 @@ async def http_alignment_count(request):
     stop = request.match_info.get("stop")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    count = handler.alignment_count(url, contig, start, stop)
+    count = handler.alignment_count(url, contig, int(start), int(stop))
     if "error" in count:
         return web.json_response(count, status=count["status"])
     return web.json_response(count)
@@ -186,7 +186,7 @@ async def http_alignment_count_coverage(request):
     stop = request.match_info.get("stop")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    coverage = handler.alignment_count_coverage(url, contig, start, stop)
+    coverage = handler.alignment_count_coverage(url, contig, int(start), int(stop))
     if "error" in coverage:
         return web.json_response(coverage, status=coverage["status"])
     return web.json_response(coverage)
@@ -198,7 +198,7 @@ async def http_alignment_fetch(request):
     stop = request.match_info.get("stop")
     url = request.rel_url.query.get("url", "")
     handler = request.app["handler"]
-    fetch = handler.alignment_fetch(url, contig, start, stop)
+    fetch = handler.alignment_fetch(url, contig, int(start), int(stop))
     if "error" in fetch:
         return web.json_response(fetch, status=fetch["status"])
     return web.json_response(fetch)
