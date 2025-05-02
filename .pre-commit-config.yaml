@@ -3,7 +3,7 @@ default_language_version:
   # supported by your project here, or alternatively use
   # pre-commit's default_language_version, see
   # https://pre-commit.com/#top_level-default_language_version
-  python: python3.10
+  python: python3.13
 repos:
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
