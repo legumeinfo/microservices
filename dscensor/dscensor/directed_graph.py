@@ -1,6 +1,6 @@
 """Controls the creation of a directed graph using networkx.
 
-   populates self.digraph.nodes and self.digraph.edges from dscensor JSON nodes
+populates self.digraph.nodes and self.digraph.edges from dscensor JSON nodes
 """
 
 import glob
@@ -44,9 +44,9 @@ class DirectedGraphController:
                     continue
                 metadata["metadata"][k] = v
             name = dsjson["filename"]
-            self.all_objects[
-                name
-            ] = metadata  # add object to self.all_objects for edge lookup later
+            self.all_objects[name] = (
+                metadata  # add object to self.all_objects for edge lookup later
+            )
             logging.debug(self.all_objects[name])
 
     def generate_digraph(self):
