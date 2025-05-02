@@ -23,8 +23,8 @@ Generally, we recommend still using a solution like Docker Compose to orchestrat
 ### Pre-Commit Hooks
 
 This project uses [pre-commit](https://pre-commit.com/) to manage pre-commit hooks, such as code formatting.
-This hooks are also applied to all PRs on GitHub.
-To run the hooks locally before opening a PR (which we recommend), first install pre-commit and packages required by our hooks:
+These hooks are also applied to all PRs on GitHub.
+To run the hooks locally before opening a PR (which we recommend), first install pre-commit:
 ```console
 $ pip install pre-commit
 $ pre-commit install
