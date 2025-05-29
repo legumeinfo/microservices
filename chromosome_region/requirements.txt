@@ -36,7 +36,7 @@ propcache==0.3.1
     # via
     #   aiohttp
     #   yarl
-protobuf==5.29.4
+protobuf==6.31.1
     # via grpcio-tools
 redis==6.0.0
     # via chromosome_region (setup.py)
