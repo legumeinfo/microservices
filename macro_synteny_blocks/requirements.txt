@@ -6,7 +6,7 @@
 #
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.11.18
+aiohttp==3.12.12
     # via
     #   aiohttp-cors
     #   macro_synteny_blocks (setup.py)
