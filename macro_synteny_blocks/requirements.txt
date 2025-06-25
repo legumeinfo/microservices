@@ -28,7 +28,7 @@ grpcio-tools==1.71.0
     # via macro_synteny_blocks (setup.py)
 idna==3.10
     # via yarl
-multidict==6.4.3
+multidict==6.5.1
     # via
     #   aiohttp
     #   yarl
