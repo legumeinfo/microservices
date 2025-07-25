@@ -24,7 +24,7 @@ grpcio==1.71.0
     # via
     #   grpcio-tools
     #   pairwise_macro_synteny_blocks (setup.py)
-grpcio-tools==1.71.0
+grpcio-tools==1.74.0
     # via pairwise_macro_synteny_blocks (setup.py)
 idna==3.10
     # via yarl
