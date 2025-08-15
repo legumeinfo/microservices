@@ -16,7 +16,7 @@ packaging==25.0
     # via pyfaidx
 psycopg2==2.9.10
     # via redis_loader (setup.py)
-pyfaidx==0.8.1.3
+pyfaidx==0.8.2
     # via gffutils
 redis==6.0.0
     # via redis_loader (setup.py)
