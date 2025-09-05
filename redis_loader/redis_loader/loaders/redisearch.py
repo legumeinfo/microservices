@@ -2,7 +2,7 @@
 import redis
 from redis.commands.search import Search
 from redis.commands.search.field import NumericField, TagField, TextField
-from redis.commands.search.indexDefinition import IndexDefinition
+from redis.commands.search.index_definition import IndexDefinition
 
 # module
 import redis_loader
@@ -129,7 +129,7 @@ class RediSearchLoader(object):
           name (str): The name of the RediSearch index to be loaded.
           fields (list[redis.commands.search.field.Field]): The fields the index should
             contain.
-          definition (redis.commands.search.indexDefinition.IndexDefinition): A
+          definition (redis.commands.search.index_definition.IndexDefinition): A
             definition of the index.
           chunk_size (int): The chunk size to be used for Redis batch processing.
 
