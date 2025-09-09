@@ -1,6 +1,6 @@
 services:
   dscensor:
-    image: ghcr.io/legumeinfo/microservices-dscensor:1.0.0
+    image: ghcr.io/legumeinfo/microservices-dscensor:1.1.0
     environment:
       NODES: "/autocontent"
     ports:
