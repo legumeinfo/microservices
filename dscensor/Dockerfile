@@ -1,4 +1,4 @@
-FROM python:3.11-slim-buster
+FROM python:3.13.7-slim-trixie
 
 # install gcc and other build requirements
 RUN apt-get update && \
