@@ -36,7 +36,7 @@ propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
-protobuf==6.32.0
+protobuf==6.32.1
     # via grpcio-tools
 pyparsing==3.2.3
     # via search (setup.py)
