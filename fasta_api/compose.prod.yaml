@@ -1,0 +1,8 @@
+services:
+  fasta_api:
+    image: ghcr.io/legumeinfo/microservices-fasta_api:1.0.0
+    environment:
+      ALLOWED_URLS: "https://data.legumeinfo.org/,https://data.soybase.org/"
+    ports:
+      - "${PORT:-8080}:8080"
+    restart: always
