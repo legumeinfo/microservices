@@ -222,77 +222,26 @@ def run_http_server(host, port, handler):
     cors = aiohttp_cors.setup(
         app,
         defaults={
-            "*": aiohttp_cors.ResourceOptions(
+                "*": aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
             )
         },
     )
-    route = app.router.add_get("/", http_index)
-    cors.add(route)
-    route = app.router.add_get("/help", http_help)
-    cors.add(route)
-    route = app.router.add_get("/fasta/fetch/{seqid}:{start}-{end}", http_fasta_range)
-    cors.add(route)
-    route = app.router.add_get("/fasta/fetch/{seqid}", http_fasta_range)
-    cors.add(route)
-    route = app.router.add_get("/fasta/references", http_fasta_references)
-    cors.add(route)
-    route = app.router.add_get("/fasta/lengths", http_fasta_lengths)
-    cors.add(route)
-    route = app.router.add_get("/fasta/nreferences", http_fasta_nreferences)
-    cors.add(route)
-    route = app.router.add_get("/gff/contigs", http_gff_references)
-    cors.add(route)
-    route = app.router.add_get("/gff/fetch/{seqid}:{start}-{end}", http_gff_features)
-    cors.add(route)
-    route = app.router.add_get("/gff/fetch/{seqid}", http_gff_features)
-    cors.add(route)
-    route = app.router.add_get("/bed/fetch/{seqid}:{start}-{end}", http_bed_features)
-    cors.add(route)
-    route = app.router.add_get("/bed/fetch/{seqid}", http_bed_features)
-    cors.add(route)
-    route = app.router.add_get("/vcf/contigs", http_vcf_contigs)
-    cors.add(route)
-    route = app.router.add_get("/vcf/fetch/{seqid}:{start}-{end}", http_vcf_features)
-    cors.add(route)
-    route = app.router.add_get("/vcf/fetch/{seqid}", http_vcf_features)
-    cors.add(route)
-    route = app.router.add_get("/alignment/references", http_alignment_references)
-    cors.add(route)
-    route = app.router.add_get("/alignment/unmapped", http_alignment_unmapped)
-    cors.add(route)
-    route = app.router.add_get("/alignment/nreferences", http_alignment_nreferences)
-    cors.add(route)
-    route = app.router.add_get("/alignment/nocoordinate", http_alignment_nocoordinate)
-    cors.add(route)
-    route = app.router.add_get("/alignment/mapped", http_alignment_mapped)
-    cors.add(route)
-    route = app.router.add_get("/alignment/lengths", http_alignment_lengths)
-    cors.add(route)
-    route = app.router.add_get(
-        "/alignment/index_statistics", http_alignment_index_statistics
-    )
-    cors.add(route)
-    route = app.router.add_get(
-        "/alignment/count/{contig}:{start}-{stop}", http_alignment_count
-    )
-    cors.add(route)
-    route = app.router.add_get(
-        "/alignment/count_coverage/{contig}:{start}-{stop}",
-        http_alignment_count_coverage,
-    )
-    cors.add(route)
-    route = app.router.add_get(
-        "/alignment/fetch/{contig}:{start}-{stop}", http_alignment_fetch
-    )
-    cors.add(route)
-    route = app.router.add_get("/alignment/fetch/{contig}", http_alignment_fetch)
-    cors.add(route)
-    route = app.router.add_get(
-        "/alignment/length/{reference}", http_alignment_reference_lengths
-    )
-    cors.add(route)
+    # Load the YAML file
+    parent = Path(__file__).parent.parent
+    api_path = f"{parent}/openapi/fasta_api/v1/fasta_api.yaml"
+    with open(api_path, "r") as file:
+        spec = yaml.safe_load(file)
+
+    # Iterate through the paths and add routes
+    for path, methods in spec["paths"].items():
+        for method, details in methods.items():
+            if method == "get":
+                operation_id = details.get("operationId")
+                if operation_id:
+                    route = app.router.add_get(path, globals()[operation_id])
+                    cors.add(route)
     # run the app
     web.run_app(app)
