@@ -20,6 +20,7 @@ COPY setup.py ./
 COPY requirements.txt ./
 COPY fasta_api ./fasta_api/
 COPY openapi ./openapi/
+COPY test.py ./
 
 # set for most recent pysam, pysam issue #1257
 ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt

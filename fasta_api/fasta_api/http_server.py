@@ -77,7 +77,7 @@ async def http_alignment_index_statistics(request):
     return await http_request(request, "alignment_index_statistics")
 
 async def http_alignment_count(request):
-    return await http_request(request, "alignment_contig", ["contig", "start", "stop"])
+    return await http_request(request, "alignment_count", ["contig", "start", "stop"])
 
 async def http_alignment_count_coverage(request):
     return await http_request(request, "alignment_count_coverage", ["contig", "start", "stop"])
