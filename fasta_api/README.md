@@ -29,9 +29,10 @@ $ source ./fasta_api_env/bin/activate
 
 ## Testing
 
-In another terminal, manually enter the following command:
+In another terminal, manually enter the following command (ensure `/` is encoded as `%2F`):
 ```
-$ curl http://localhost:8080/fasta/references?url=https://data.legumeinfo.org/Glycine/max/genomes/Wm82.gnm2.DTC4/glyma.Wm82.gnm2.DTC4.genome_main.fna.gz
+curl "http://localhost:8080/fasta/references/https:%2F%2Fdata.legumeinfo.org%2FGlycine%2Fmax%2Fgenomes%2FWm82.gnm2.DTC4%2Fglyma.Wm82.gnm2.DTC4.genome_main.fna.gz"
+curl "http://localhost:8080/fasta/fetch/glyma.Wm82.gnm2.Gm01:0-25/https:%2F%2Fdata.legumeinfo.org%2FGlycine%2Fmax%2Fgenomes%2FWm82.gnm2.DTC4%2Fglyma.Wm82.gnm2.DTC4.genome_main.fna.gz"
 ```
 
 ## ALLOWED_URLS

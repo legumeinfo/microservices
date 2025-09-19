@@ -30,9 +30,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # install (and implicitly build) the package
 RUN pip3 install --no-cache-dir .
 
-# Copy openapi files to the installed package location
-RUN cp -r /app/openapi /usr/local/lib/python3.13/site-packages/
-
 WORKDIR /
 
 ENTRYPOINT ["python3", "-u", "-m", "fasta_api"]
