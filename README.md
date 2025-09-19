@@ -19,3 +19,25 @@ Please so our [contribution guidelines](.github/CONTRIBUTING.md) before contribu
 
 See the directories of microservices you wish to compile manually for instructions on doing so.
 Generally, we recommend still using a solution like Docker Compose to orchestrate container building and cross-talk, even during development.
+
+### Pre-Commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to manage pre-commit hooks, such as code formatting.
+These hooks are also applied to all PRs on GitHub.
+To run the hooks locally before opening a PR (which we recommend), first install pre-commit:
+```console
+$ pip install pre-commit
+$ pre-commit install
+```
+The hooks will then be applied every time you make a commit.
+
+If you want to run the hooks manually (i.e. without having to commit), use the following command:
+```console
+$ pre-commit run --all-files
+```
+See the [pre-commit documentation](https://pre-commit.com/) for more details and use cases.
+
+### Managing Dependencies
+
+Generally, we use the `pip-compile` command from the [pip-tools package](https://github.com/jazzband/pip-tools/) to manage microservice dependencies.
+See the [Managing Microservice Dependencies](https://github.com/legumeinfo/microservices/wiki/Managing-Microservice-Dependencies) page in this repo's Wiki for details.
