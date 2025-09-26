@@ -55,6 +55,9 @@ async def http_vcf_contigs(request):
 async def http_vcf_features(request):
     return await http_request(request, "vcf_features", ["seqid", "start", "end"])
 
+async def http_vcf_strains(request):
+    return await http_request(request, "vcf_strains")
+
 async def http_alignment_references(request):
     return await http_request(request, "alignment_references")
 

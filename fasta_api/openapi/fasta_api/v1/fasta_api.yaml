@@ -328,6 +328,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VcfFeature'
+  /vcf/strains/{url}:
+    get:
+      summary: Return all strains present in VCF file
+      operationId: http_vcf_strains
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VCF strains
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Strains'
   /alignment/references/{url}:
     get:
       summary: Get Alignment References
@@ -830,3 +847,10 @@ components:
       properties:
         length:
           type: integer
+    Strains:
+      type: object
+      properties:
+        strains:
+          type: array
+          items:
+            type: string

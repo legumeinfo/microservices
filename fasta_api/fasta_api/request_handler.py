@@ -187,6 +187,17 @@ class RequestHandler:
         except KeyError as e:
             return self.send_400_resp(f"Unable to find feature: {e}")
 
+    def vcf_strains(self, url: str):
+        url = self.check_url(url)
+        if isinstance(url, dict):
+            return url
+        try:
+            return { "strains": list(pysam.VariantFile(url).header.samples) }
+        except OSError as e:
+            return self.send_400_resp(f"Unable to open file: {e}")
+        except KeyError as e:
+            return self.send_400_resp(f"Unable to find feature: {e}")
+
     def alignment_references(self, url: str):
         url = self.check_url(url)
         if isinstance(url, dict):
