@@ -328,10 +328,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VcfFeature'
-  /vcf/strains/{url}:
+  /vcf/samples/{url}:
     get:
-      summary: Return all strains present in VCF file
-      operationId: http_vcf_strains
+      summary: Return all samples present in VCF file
+      operationId: http_vcf_samples
       parameters:
         - name: url
           in: path
@@ -340,11 +340,11 @@ paths:
             type: string
       responses:
         '200':
-          description: VCF strains
+          description: VCF samples
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Strains'
+                $ref: '#/components/schemas/Samples'
   /alignment/references/{url}:
     get:
       summary: Get Alignment References
@@ -847,10 +847,10 @@ components:
       properties:
         length:
           type: integer
-    Strains:
+    Samples:
       type: object
       properties:
-        strains:
+        samples:
           type: array
           items:
             type: string
