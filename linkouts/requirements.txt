@@ -14,7 +14,7 @@ aiohttp-cors==0.8.1
     # via linkouts (setup.py)
 aiosignal==1.4.0
     # via aiohttp
-attrs==25.3.0
+attrs==25.4.0
     # via aiohttp
 frozenlist==1.7.0
     # via
