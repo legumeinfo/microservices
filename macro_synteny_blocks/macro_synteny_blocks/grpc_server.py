@@ -99,6 +99,81 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
             # return a gRPC INTERNAL error
             await context.abort(grpc.StatusCode.INTERNAL, "Internal server error")
 
+    # the method that handles ComputeByChromosome requests
+    async def _computeByChromosome(self, request, context):
+        # required parameters
+        chromosome_name = request.chromosomeName
+        matched = request.matched
+        intermediate = request.intermediate
+        # optional parameters
+        mask = request.mask or None
+        targets = request.targets or None
+        metrics = request.optionalMetrics or None
+        chromosome_genes = request.chromosomeGenes or None
+        chromosome_length = request.chromosomeLength or None
+        try:
+            (
+                chromosome_name,
+                matched,
+                intermediate,
+                mask,
+                targets,
+                metrics,
+                chromosome_genes,
+                chromosome_length,
+            ) = self.handler.parseArguments(
+                [chromosome_name],  # Wrap in list to reuse parseArguments validation
+                matched,
+                intermediate,
+                mask,
+                targets,
+                metrics,
+                chromosome_genes,
+                chromosome_length,
+            )
+            # Extract the chromosome name back from the list
+            chromosome_name = chromosome_name[0]
+        except Exception:
+            # raise a gRPC INVALID ARGUMENT error
+            await context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT,
+                "Required arguments are missing or given arguments have invalid values",
+            )
+        try:
+            blocks = await self.handler.processWithChromosomeName(
+                chromosome_name,
+                matched,
+                intermediate,
+                mask,
+                targets,
+                metrics,
+                chromosome_genes,
+                chromosome_length,
+            )
+        except ValueError as e:
+            # Chromosome not found or address not configured
+            await context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION,
+                str(e),
+            )
+        return macrosyntenyblocks_pb2.MacroSyntenyBlocksComputeReply(blocks=blocks)
+
+    # implements the ComputeByChromosome API
+    async def ComputeByChromosome(self, request, context):
+        # subvert the gRPC exception handler via a try/except block
+        try:
+            return await self._computeByChromosome(request, context)
+        # let errors we raised go by
+        except aio.AbortError as e:
+            raise e
+        # raise an internal error to prevent non-gRPC info from being sent to users
+        except Exception as e:
+            # raise the exception after aborting so it gets logged
+            # NOTE: gRPC docs says abort should raise an error but it doesn't...
+            context.add_done_callback(self._exceptionCallbackFactory(e))
+            # return a gRPC INTERNAL error
+            await context.abort(grpc.StatusCode.INTERNAL, "Internal server error")
+
 
 async def run_grpc_server(host, port, handler):
     server = aio.server()

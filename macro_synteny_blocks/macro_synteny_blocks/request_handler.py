@@ -7,7 +7,7 @@ from redis.commands.search.query import Query
 
 # module
 from macro_synteny_blocks.aioredisearch import CustomAsyncSearch
-from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks
+from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks, getChromosome, getGenes
 
 
 class RequestHandler:
@@ -15,10 +15,14 @@ class RequestHandler:
         self,
         redis_connection,
         pairwise_address,
+        chromosome_address=None,
+        genes_address=None,
         breakpoint_characters=",.<>{}[]\"':;!@#$%^&*()-+=~",
     ):
         self.redis_connection = redis_connection
         self.pairwise_address = pairwise_address
+        self.chromosome_address = chromosome_address
+        self.genes_address = genes_address
         self.breakpoint_characters = set(breakpoint_characters)
 
     def parseArguments(
@@ -270,3 +274,134 @@ class RequestHandler:
         filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
 
         return filtered_target_blocks
+
+    async def _enrichBlocksWithGeneInfo(self, blocks, query_gene_names):
+        """
+        Enrich blocks with query gene position information.
+
+        Parameters:
+            blocks: List of Blocks objects from process()
+            query_gene_names: List of query chromosome gene names
+
+        Returns:
+            Enriched blocks with gene names and positions filled in
+        """
+        if self.genes_address is None:
+            return blocks  # Return blocks unchanged if genes address not configured
+
+        # Collect all unique gene names needed
+        gene_names_to_fetch = set()
+        for blocks_obj in blocks:
+            for block in blocks_obj["blocks"]:
+                gene_idx = block.i
+                if gene_idx < len(query_gene_names):
+                    gene_names_to_fetch.add(query_gene_names[gene_idx])
+
+        if not gene_names_to_fetch:
+            return blocks
+
+        # Fetch all gene info in one call
+        genes = await getGenes(list(gene_names_to_fetch), self.genes_address)
+        if genes is None:
+            return blocks
+
+        # Create lookup map
+        gene_map = {}
+        for gene in genes:
+            gene_map[gene.name] = gene
+
+        # Enrich each block
+        for blocks_obj in blocks:
+            for block in blocks_obj["blocks"]:
+                gene_idx = block.i
+                if gene_idx < len(query_gene_names):
+                    gene_name = query_gene_names[gene_idx]
+                    if gene_name in gene_map:
+                        gene = gene_map[gene_name]
+                        block.queryGeneName = gene_name
+                        block.queryGeneFmin = gene.fmin
+                        block.queryGeneFmax = gene.fmax
+
+        return blocks
+
+    async def _addChromosomeLengths(self, blocks):
+        """
+        Add target chromosome lengths to Blocks objects.
+
+        Parameters:
+            blocks: List of Blocks objects from process()
+
+        Returns:
+            Blocks with chromosomeLength field filled in
+        """
+        # Connect to the chromosome index
+        chromosome_index = CustomAsyncSearch(
+            self.redis_connection, index_name="chromosomeIdx"
+        )
+
+        for blocks_obj in blocks:
+            # Fetch the chromosome doc to get length
+            doc = await chromosome_index.load_document(f"chromosome:{blocks_obj['chromosome']}")
+            blocks_obj["chromosomeLength"] = int(doc.length)
+
+        return blocks
+
+    async def processWithChromosomeName(
+        self,
+        chromosome_name,
+        matched,
+        intermediate,
+        mask,
+        targets,
+        metrics,
+        chromosome_genes,
+        chromosome_length,
+        grpc_decode=False,
+    ):
+        """
+        Process macro synteny blocks using a chromosome name instead of gene families.
+        This method fetches the chromosome data from the chromosome microservice first,
+        and enriches the returned blocks with gene position information.
+
+        Parameters:
+            chromosome_name (str): Name of the query chromosome.
+            Other parameters: Same as process() method.
+
+        Returns:
+            Same as process() method, but with enriched blocks containing:
+            - queryGeneName, queryGeneFmin, queryGeneFmax (if genes_address configured)
+            - chromosomeLength in Blocks objects (target chromosome lengths)
+        """
+        if self.chromosome_address is None:
+            raise ValueError(
+                "Chromosome address is not configured. Cannot use ComputeByChromosome endpoint."
+            )
+
+        # Fetch chromosome data from the chromosome microservice
+        chromosome_data = await getChromosome(chromosome_name, self.chromosome_address)
+
+        if chromosome_data is None:
+            raise ValueError(f"Chromosome '{chromosome_name}' not found")
+
+        chromosome_families, query_gene_names, query_chromosome_length = chromosome_data
+
+        # Use the existing process method with the fetched gene families
+        blocks = await self.process(
+            chromosome_families,
+            matched,
+            intermediate,
+            mask,
+            targets,
+            metrics,
+            chromosome_genes,
+            chromosome_length,
+            grpc_decode,
+        )
+
+        # Enrich blocks with query gene information
+        blocks = await self._enrichBlocksWithGeneInfo(blocks, query_gene_names)
+
+        # Add target chromosome lengths
+        blocks = await self._addChromosomeLengths(blocks)
+
+        return blocks
