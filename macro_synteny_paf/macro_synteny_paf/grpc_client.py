@@ -122,3 +122,40 @@ async def computeMacroSyntenyBlocks(
     except Exception as e:
         logging.error(e)
         return None
+
+async def computeMacroSyntenyBlocksByChromosome(
+    chromosome_name,
+    matched,
+    intermediate,
+    mask,
+    targets,
+    metrics,
+    chromosome_genes,
+    chromosome_length,
+    address,
+):
+    """
+    Compute macro synteny blocks using chromosome name instead of gene families.
+    Uses the new ComputeByChromosome endpoint in macro-synteny-blocks service.
+    """
+    # fetch channel every time to support dynamic services
+    channel = aio.insecure_channel(address)
+    await channel.channel_ready()
+    stub = macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksStub(channel)
+    try:
+        result = await stub.ComputeByChromosome(
+            macrosyntenyblocks_pb2.MacroSyntenyBlocksComputeByChromosomeRequest(
+                chromosomeName=chromosome_name,
+                matched=matched,
+                intermediate=intermediate,
+                mask=mask,
+                targets=targets,
+                optionalMetrics=metrics,
+                chromosomeGenes=chromosome_genes,
+                chromosomeLength=chromosome_length,
+            )
+        )
+        return result.blocks
+    except Exception as e:
+        logging.error(e)
+        return None

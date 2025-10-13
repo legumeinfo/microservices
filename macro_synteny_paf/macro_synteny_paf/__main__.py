@@ -240,6 +240,48 @@ def parseArgs():
         """,
     )
 
+    # Caching args
+    cache_enabled_envvar = "PAF_CACHE_ENABLED"
+    parser.add_argument(
+        "--cache-enabled",
+        dest="cache_enabled",
+        action=EnvArg,
+        envvar=cache_enabled_envvar,
+        type=lambda x: x.lower() in ('true', '1', 'yes'),
+        default=True,
+        help=f"""
+        Enable result caching in Redis (can also be specified using the
+        {cache_enabled_envvar} environment variable). Default: true
+        """,
+    )
+    cache_ttl_envvar = "PAF_CACHE_TTL"
+    parser.add_argument(
+        "--cache-ttl",
+        dest="cache_ttl",
+        action=EnvArg,
+        envvar=cache_ttl_envvar,
+        type=int,
+        default=86400,
+        help=f"""
+        Cache TTL in seconds (can also be specified using the {cache_ttl_envvar}
+        environment variable). Default: 86400 (24 hours)
+        """,
+    )
+    compression_threshold_envvar = "PAF_COMPRESSION_THRESHOLD"
+    parser.add_argument(
+        "--compression-threshold",
+        dest="compression_threshold",
+        action=EnvArg,
+        envvar=compression_threshold_envvar,
+        type=int,
+        default=102400,
+        help=f"""
+        Size threshold in bytes for compressing cached results (can also be specified
+        using the {compression_threshold_envvar} environment variable).
+        Default: 102400 (100KB)
+        """,
+    )
+
     return parser.parse_args()
 
 
@@ -300,7 +342,15 @@ def main():
             connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
         )
         # create the request handler
-        handler = RequestHandler(redis_connection, args.chromosomeaddr, args.genesaddr, args.macrosyntenyblocksaddr)
+        handler = RequestHandler(
+            redis_connection,
+            args.chromosomeaddr,
+            args.genesaddr,
+            args.macrosyntenyblocksaddr,
+            cache_enabled=args.cache_enabled,
+            cache_ttl=args.cache_ttl,
+            compression_threshold=args.compression_threshold,
+        )
         # start the HTTP server
         if not args.nohttp:
             loop.create_task(run_http_server(args.hhost, args.hport, handler))
