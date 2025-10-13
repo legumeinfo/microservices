@@ -32,7 +32,7 @@ async def http_genes_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GENES_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=GENES_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + GENES_QUERY + " supplied")
@@ -58,7 +58,7 @@ async def http_genomic_regions_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GENOMIC_REGIONS_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=GENOMIC_REGIONS_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + GENOMIC_REGIONS_QUERY + " supplied")
@@ -84,7 +84,7 @@ async def http_gene_families_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GENE_FAMILIES_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=GENE_FAMILIES_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + GENE_FAMILIES_QUERY + " supplied")
@@ -110,7 +110,7 @@ async def http_pan_gene_sets_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(PAN_GENE_SETS_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=PAN_GENE_SETS_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + PAN_GENE_SETS_QUERY + " supplied")
@@ -136,7 +136,7 @@ async def http_gwas_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(GWAS_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=GWAS_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + GWAS_QUERY + " supplied")
@@ -162,7 +162,7 @@ async def http_qtl_studies_post_handler(request):
     # parse the query from the request POST data
     data = await request.json()
     ids = data.get(QTL_STUDIES_QUERY, [])
-    if type(ids) != list:
+    if not isinstance(ids, list):
         raise web.HTTPBadRequest(text=QTL_STUDIES_QUERY + " must be given as list")
     if len(ids) == 0:
         raise web.HTTPBadRequest(text="No " + QTL_STUDIES_QUERY + " supplied")

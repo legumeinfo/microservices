@@ -6,7 +6,7 @@
 #
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.13.0
+aiohttp==3.12.15
     # via
     #   aiohttp-cors
     #   macro_synteny_blocks (setup.py)
@@ -14,37 +14,35 @@ aiohttp-cors==0.8.1
     # via macro_synteny_blocks (setup.py)
 aiosignal==1.4.0
     # via aiohttp
-attrs==25.4.0
+attrs==25.3.0
     # via aiohttp
-frozenlist==1.8.0
+frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.75.1
+grpcio==1.74.0
     # via
     #   grpcio-tools
     #   macro_synteny_blocks (setup.py)
-grpcio-tools==1.75.1
+grpcio-tools==1.74.0
     # via macro_synteny_blocks (setup.py)
-idna==3.11
+idna==3.10
     # via yarl
-multidict==6.7.0
+multidict==6.6.4
     # via
     #   aiohttp
     #   yarl
-propcache==0.4.1
+propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
-protobuf==6.32.1
+protobuf==6.32.0
     # via grpcio-tools
 redis==6.4.0
     # via macro_synteny_blocks (setup.py)
-typing-extensions==4.15.0
-    # via grpcio
 uvloop==0.21.0
     # via macro_synteny_blocks (setup.py)
-yarl==1.22.0
+yarl==1.20.1
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:

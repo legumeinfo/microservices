@@ -1,0 +1,4 @@
+services:
+  dscensor:
+    environment:
+      HTTP_HOST: "0.0.0.0"
