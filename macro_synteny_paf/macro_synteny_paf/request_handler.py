@@ -1,6 +1,7 @@
 # Python
 import asyncio
 import hashlib
+import logging
 
 # dependencies
 from redis.commands.search import AsyncSearch
@@ -258,6 +259,7 @@ class RequestHandler:
         chromosome_length,
         grpc_decode=False,
     ):
+        cache_key = None
         # Check cache first if caching is enabled
         if self.cache_enabled:
             cache_key = self._generate_cache_key(
@@ -278,7 +280,7 @@ class RequestHandler:
             except Exception as e:
                 # Log cache retrieval errors but continue with computation
                 # This ensures cache failures don't break the service
-                pass
+                logging.warning(f"Cache retrieval failed for key {cache_key}: {e}")
 
         # Cache miss or caching disabled - compute the result
         genome_1_chrs = await self._getChromosomeNames(genome_1)
@@ -306,7 +308,7 @@ class RequestHandler:
         result = ''.join(paf_rows)
 
         # Store result in cache if caching is enabled
-        if self.cache_enabled:
+        if self.cache_enabled and cache_key is not None:
             try:
                 # Store with TTL
                 await self.redis_connection.setex(
@@ -317,6 +319,6 @@ class RequestHandler:
             except Exception as e:
                 # Log cache storage errors but don't fail the request
                 # The computation succeeded, cache failure is non-critical
-                pass
+                logging.warning(f"Cache storage failed for key {cache_key}: {e}")
 
         return result
