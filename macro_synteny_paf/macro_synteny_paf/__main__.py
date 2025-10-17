@@ -267,20 +267,6 @@ def parseArgs():
         environment variable). Default: 86400 (24 hours)
         """,
     )
-    compression_threshold_envvar = "PAF_COMPRESSION_THRESHOLD"
-    parser.add_argument(
-        "--compression-threshold",
-        dest="compression_threshold",
-        action=EnvArg,
-        envvar=compression_threshold_envvar,
-        type=int,
-        default=102400,
-        help=f"""
-        Size threshold in bytes for compressing cached results (can also be specified
-        using the {compression_threshold_envvar} environment variable).
-        Default: 102400 (100KB)
-        """,
-    )
 
     return parser.parse_args()
 
@@ -349,7 +335,6 @@ def main():
             args.macrosyntenyblocksaddr,
             cache_enabled=args.cache_enabled,
             cache_ttl=args.cache_ttl,
-            compression_threshold=args.compression_threshold,
         )
         # start the HTTP server
         if not args.nohttp:

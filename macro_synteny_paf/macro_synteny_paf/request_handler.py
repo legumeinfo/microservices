@@ -1,6 +1,5 @@
 # Python
 import asyncio
-import gzip
 import hashlib
 
 # dependencies
@@ -21,7 +20,6 @@ class RequestHandler:
         breakpoint_characters=",.<>{}[]\"':;!@#$%^&*()-+=~",
         cache_enabled=True,
         cache_ttl=86400,
-        compression_threshold=102400,
     ):
         self.redis_connection = redis_connection
         self.chromosome_address = chromosome_address
@@ -30,7 +28,6 @@ class RequestHandler:
         self.breakpoint_characters = set(breakpoint_characters)
         self.cache_enabled = cache_enabled
         self.cache_ttl = cache_ttl
-        self.compression_threshold = compression_threshold
 
     def parseArguments(
         self,
@@ -277,11 +274,6 @@ class RequestHandler:
             try:
                 cached_result = await self.redis_connection.get(cache_key)
                 if cached_result:
-                    # Check if the result is gzip-compressed
-                    if isinstance(cached_result, bytes) and cached_result[:2] == b'\x1f\x8b':
-                        # Decompress gzip data
-                        return gzip.decompress(cached_result).decode('utf-8')
-                    # Return cached result as-is
                     return cached_result
             except Exception as e:
                 # Log cache retrieval errors but continue with computation
@@ -316,17 +308,11 @@ class RequestHandler:
         # Store result in cache if caching is enabled
         if self.cache_enabled:
             try:
-                # Compress if result exceeds threshold
-                if len(result) > self.compression_threshold:
-                    cached_value = gzip.compress(result.encode('utf-8'), compresslevel=6)
-                else:
-                    cached_value = result
-
                 # Store with TTL
                 await self.redis_connection.setex(
                     cache_key,
                     self.cache_ttl,
-                    cached_value
+                    result
                 )
             except Exception as e:
                 # Log cache storage errors but don't fail the request
