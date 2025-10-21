@@ -1,7 +1,6 @@
 # Python
 import asyncio
 from collections import defaultdict
-from functools import lru_cache
 
 # dependencies
 from redis.commands.search.query import Query
@@ -81,9 +80,7 @@ class RequestHandler:
             chromosome_length,
         )
 
-    @lru_cache(maxsize=10000)
     def _cleanTag(self, tag):
-        # cached with LRU to avoid recomputing for the same tags
         parts = []
         for c in tag:
             if c in self.breakpoint_characters:
@@ -117,14 +114,14 @@ class RequestHandler:
         targets_query_part = ""
         if targets:
             cleaned_targets = [self._cleanTag(target) for target in targets]
-            targets_query_part = "(@chromosome:{" + "|".join(cleaned_targets) + "})"
+            targets_query_part = f"(@chromosome:{{{'|'.join(cleaned_targets)}}})"
 
         # count how many genes are in each family
         query_strings = []
         count_queries = []
         for family in families:
             cleaned_family = self._cleanTag(family)
-            query_string = "(@family:{" + cleaned_family + "})"
+            query_string = f"(@family:{{{cleaned_family}}})"
             # limit the genes to the target chromosomes
             query_string += targets_query_part
             query_strings.append(query_string)
