@@ -1,6 +1,7 @@
 # Python
 import asyncio
 from collections import defaultdict
+from functools import lru_cache
 
 # dependencies
 from redis.commands.search.query import Query
@@ -80,13 +81,15 @@ class RequestHandler:
             chromosome_length,
         )
 
+    @lru_cache(maxsize=10000)
     def _cleanTag(self, tag):
-        cleaned_tag = ""
+        # cached with LRU to avoid recomputing for the same tags
+        parts = []
         for c in tag:
             if c in self.breakpoint_characters:
-                cleaned_tag += "\\"
-            cleaned_tag += c
-        return cleaned_tag
+                parts.append("\\")
+            parts.append(c)
+        return ''.join(parts)
 
     def _grpcBlockToDictBlock(self, grpc_block):
         dict_block = {
@@ -110,6 +113,12 @@ class RequestHandler:
         families.discard("")
         chromosome_match_indices = defaultdict(list)
 
+        # pre-compute cleaned targets string once
+        targets_query_part = ""
+        if targets:
+            cleaned_targets = [self._cleanTag(target) for target in targets]
+            targets_query_part = "(@chromosome:{" + "|".join(cleaned_targets) + "})"
+
         # count how many genes are in each family
         query_strings = []
         count_queries = []
@@ -117,9 +126,7 @@ class RequestHandler:
             cleaned_family = self._cleanTag(family)
             query_string = "(@family:{" + cleaned_family + "})"
             # limit the genes to the target chromosomes
-            if targets:
-                cleaned_targets = map(self._cleanTag, targets)
-                query_string += "(@chromosome:{" + "|".join(cleaned_targets) + "})"
+            query_string += targets_query_part
             query_strings.append(query_string)
             # count how many genes are in the family
             query = Query(query_string).verbatim().paging(0, 0)
