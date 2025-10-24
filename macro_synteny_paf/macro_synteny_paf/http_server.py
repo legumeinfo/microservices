@@ -1,6 +1,7 @@
 # dependencies
 import aiohttp_cors
 from aiohttp import web
+import json
 
 
 async def http_get_handler(request):
@@ -11,10 +12,17 @@ async def http_get_handler(request):
     intermediate = request.rel_url.query.get("intermediate", "")
     # optional parameters
     mask = request.rel_url.query.get("mask", None)
+    format_type = request.rel_url.query.get("format", "json")  # default to json
     metrics = None #data.get("optionalMetrics", None)
     chromosome_genes = None #data.get("chromosome_genes", None)
     chromosome_length = None #data.get("chromosome_length", None)
     handler = request.app["handler"]
+
+    if format_type not in ["json", "paf"]:
+        return web.HTTPBadRequest(
+            text="Invalid format parameter. Must be 'json' or 'paf'."
+        )
+
     try:
         (
             genome_1,
@@ -39,7 +47,8 @@ async def http_get_handler(request):
         return web.HTTPBadRequest(
             text="Required arguments are missing or have invalid values"
         )
-    paf_rows = await handler.process(
+
+    result = await handler.process(
         genome_1,
         genome_2,
         matched,
@@ -49,9 +58,19 @@ async def http_get_handler(request):
         chromosome_genes,
         chromosome_length,
         grpc_decode=True,
+        output_format=format_type,
     )
-    paf = web.Response(text = paf_rows, content_type = 'text/html')
-    return paf
+
+    if format_type == "json":
+        return web.Response(
+            text=json.dumps(result, indent=2),
+            content_type='application/json'
+        )
+    else:
+        return web.Response(
+            text=result,
+            content_type='text/plain'
+        )
 
 
 async def run_http_server(host, port, handler):

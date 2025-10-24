@@ -1,6 +1,7 @@
 # Python
 import asyncio
 import hashlib
+import json
 import logging
 
 # dependencies
@@ -136,6 +137,50 @@ class RequestHandler:
         # PAF format is defined here: https://github.com/lh3/miniasm/blob/master/PAF.md
         return f'{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}\n'
 
+    # returns JSON object for a single macro-synteny block
+    async def _blockToJson(
+        self,
+        query_chromosome_name,
+        query_chromosome_length,
+        target_chromosome_name,
+        target_chromosome_length,
+        target_block,
+        # default values for PAF columns that are not available from the microservices
+        num_residue_matches = 1,
+        alignment_block_length = 1,
+        mapping_quality = 255, # denotes 'missing'
+    ):
+        # Check if block has enriched gene information from macro-synteny-blocks
+        if hasattr(target_block, 'queryGeneFmin') and target_block.queryGeneFmin:
+            query_start = target_block.queryGeneFmin
+            query_end = target_block.queryGeneFmax
+        else:
+            gene_names = [ list(query_chromosome.track.genes)[target_block.i] ]
+            genes = await getGenes(gene_names, self.genes_address)
+            filtered_genes = list(filter(lambda d: d is not None, genes))
+            # there should be only one match (index 0)
+            query_start = filtered_genes[0].fmin
+            query_end = filtered_genes[0].fmax
+
+        return {
+            "query": {
+                "name": query_chromosome_name,
+                "length": query_chromosome_length,
+                "start": query_start,
+                "end": query_end
+            },
+            "target": {
+                "name": target_chromosome_name,
+                "length": target_chromosome_length,
+                "start": target_block.fmin,
+                "end": target_block.fmax
+            },
+            "strand": target_block.orientation,
+            "numResidueMatches": num_residue_matches,
+            "alignmentBlockLength": alignment_block_length,
+            "mappingQuality": mapping_quality
+        }
+
     # returns PAF rows for a target block object (containing multiple macro-synteny blocks)
     async def _blocksToPafRows(
         self,
@@ -170,6 +215,36 @@ class RequestHandler:
         )
         return ''.join(paf_rows)
 
+    # returns JSON array for a target block object (containing multiple macro-synteny blocks)
+    async def _blocksToJson(
+        self,
+        query_chromosome_name,
+        query_chromosome_length,
+        target_block,
+    ):
+        # Check if target block has enriched chromosomeLength from macro-synteny-blocks
+        if hasattr(target_block, 'chromosomeLength') and target_block.chromosomeLength:
+            target_chromosome_length = target_block.chromosomeLength
+        else:
+            target_chromosome_length = await getChromosomeLength(
+                target_block.chromosome,
+                self.chromosome_address,
+            )
+
+        json_objects = await asyncio.gather(
+            *[
+                self._blockToJson(
+                    query_chromosome_name,
+                    query_chromosome_length,
+                    target_block.chromosome,
+                    target_chromosome_length,
+                    tgt_block,
+                )
+                for tgt_block in target_block.blocks
+            ]
+        )
+        return json_objects
+
     def _generate_cache_key(
         self,
         genome_1,
@@ -180,26 +255,27 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        output_format,
     ):
         """
         Generate a deterministic cache key from request parameters.
 
         Returns:
-            str: A Redis key for caching this specific PAF computation.
+            str: A Redis key for caching this specific computation.
         """
         # Convert metrics list to a stable string representation
         metrics_str = ",".join(sorted(metrics)) if metrics else ""
-        # Create a composite key from all parameters
+        # Create a composite key from all parameters including format
         key_components = (
             f"{genome_1}:{genome_2}:{matched}:{intermediate}:"
-            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}"
+            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}"
         )
         # Hash to create a fixed-length key
         hash_digest = hashlib.sha256(key_components.encode()).hexdigest()
         # Use a versioned prefix to allow cache invalidation if format changes
-        return f"paf_cache:v1:{hash_digest}"
+        return f"synteny_cache:v2:{hash_digest}"
 
-    async def _computePafRows(
+    async def _computeResults(
         self,
         query_chromosome_name,
         matched,
@@ -210,6 +286,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         grpc_decode,
+        output_format,
     ):
         # Use the new ComputeByChromosome endpoint in macro-synteny-blocks
         # This now returns enriched blocks with gene positions and chromosome lengths
@@ -227,25 +304,42 @@ class RequestHandler:
         # remove the targets that didn't return any blocks
         filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
 
-        # Get query chromosome length (still needed for PAF format)
+        # Get query chromosome length (still needed for both formats)
         # NOTE: If blocks are enriched, we could optimize this by getting it from
         # the chromosome service call inside macro-synteny-blocks, but that would
         # require passing it back in the response
         query_chromosome = await getChromosome(query_chromosome_name, self.chromosome_address)
         query_chromosome_length = query_chromosome.length
 
-        paf_rows = await asyncio.gather(
-            *[
-                # compute PAF rows for each target block
-                self._blocksToPafRows(
-                    query_chromosome_name,
-                    query_chromosome_length,
-                    target_block,
-                )
-                for target_block in filtered_target_blocks
-            ]
-        )
-        return ''.join(paf_rows)
+        if output_format == "paf":
+            # Return PAF format (tab-delimited text)
+            paf_rows = await asyncio.gather(
+                *[
+                    # compute PAF rows for each target block
+                    self._blocksToPafRows(
+                        query_chromosome_name,
+                        query_chromosome_length,
+                        target_block,
+                    )
+                    for target_block in filtered_target_blocks
+                ]
+            )
+            return ''.join(paf_rows)
+        else:
+            # Return JSON format (list of alignment objects)
+            json_arrays = await asyncio.gather(
+                *[
+                    # compute JSON objects for each target block
+                    self._blocksToJson(
+                        query_chromosome_name,
+                        query_chromosome_length,
+                        target_block,
+                    )
+                    for target_block in filtered_target_blocks
+                ]
+            )
+            # Flatten the list of lists into a single list
+            return [item for sublist in json_arrays for item in sublist]
 
     async def process(
         self,
@@ -258,6 +352,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         grpc_decode=False,
+        output_format="json",
     ):
         cache_key = None
         # Check cache first if caching is enabled
@@ -271,12 +366,17 @@ class RequestHandler:
                 metrics,
                 chromosome_genes,
                 chromosome_length,
+                output_format,
             )
 
             try:
                 cached_result = await self.redis_connection.get(cache_key)
                 if cached_result:
-                    return cached_result
+                    try:
+                        cached_json = json.loads(cached_result)
+                        return cached_json
+                    except json.JSONDecodeError:
+                        return cached_result
             except Exception as e:
                 # Log cache retrieval errors but continue with computation
                 # This ensures cache failures don't break the service
@@ -288,10 +388,10 @@ class RequestHandler:
         iter(genome_1_chrs) # TypeError if not iterable
         iter(genome_2_chrs) # TypeError if not iterable
 
-        paf_rows = await asyncio.gather(
+        results = await asyncio.gather(
             *[
-                # compute PAF rows for each target chromosome
-                self._computePafRows(
+                # compute results for each target chromosome
+                self._computeResults(
                     chr1_name,
                     matched,
                     intermediate,
@@ -301,20 +401,32 @@ class RequestHandler:
                     chromosome_genes,
                     chromosome_length,
                     grpc_decode,
+                    output_format,
                 )
                 for chr1_name in genome_1_chrs
             ]
         )
-        result = ''.join(paf_rows)
+
+        # Combine results based on format
+        if output_format == "paf":
+            result = ''.join(results)
+        else:
+            all_alignments = [item for sublist in results for item in sublist]
+            result = {"alignments": all_alignments}
 
         # Store result in cache if caching is enabled
         if self.cache_enabled and cache_key is not None:
             try:
+                # For JSON, serialize before caching
+                cache_value = result
+                if output_format == "json":
+                    cache_value = json.dumps(result)
+
                 # Store with TTL
                 await self.redis_connection.setex(
                     cache_key,
                     self.cache_ttl,
-                    result
+                    cache_value
                 )
             except Exception as e:
                 # Log cache storage errors but don't fail the request
