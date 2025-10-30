@@ -1,5 +1,6 @@
 # Python
 import asyncio
+import logging
 from collections import defaultdict
 
 # dependencies
@@ -101,6 +102,9 @@ class RequestHandler:
         return dict_block
 
     async def _getTargets(self, targets, chromosome, matched, intermediate):
+        BATCH_SIZE = 100
+        MAX_GENES_PER_BATCH = 10000
+
         # use a pipeline to reduce the number of calls to database
         pipeline = self.redis_connection.pipeline()
         gene_index = CustomAsyncSearch(pipeline, index_name="geneIdx")
@@ -116,41 +120,43 @@ class RequestHandler:
             cleaned_targets = [self._cleanTag(target) for target in targets]
             targets_query_part = f"(@chromosome:{{{'|'.join(cleaned_targets)}}})"
 
-        # count how many genes are in each family
-        query_strings = []
-        count_queries = []
-        for family in families:
-            cleaned_family = self._cleanTag(family)
-            query_string = f"(@family:{{{cleaned_family}}})"
-            # limit the genes to the target chromosomes
-            query_string += targets_query_part
-            query_strings.append(query_string)
-            # count how many genes are in the family
-            query = Query(query_string).verbatim().paging(0, 0)
-            count_queries.append(query)
-            await gene_index.search(query)  # returns the pipeline, not a Result!
-        count_results = await pipeline.execute()
+        # clean all families once
+        cleaned_families = [self._cleanTag(family) for family in families]
 
-        # get the genes for each family
-        gene_queries = []
-        for family, query_string, query, res in zip(
-            families, query_strings, count_queries, count_results
-        ):
-            result = gene_index.search_result(query, res)
-            num_genes = result.total
-            # get the genes
+        # split families into batches
+        family_batches = []
+        for i in range(0, len(cleaned_families), BATCH_SIZE):
+            family_batches.append(cleaned_families[i:i + BATCH_SIZE])
+
+        # create combined queries for each batch
+        batch_queries = []
+        for batch in family_batches:
+            # combine all families in this batch with pipe (OR) operator
+            families_query_part = f"(@family:{{{'|'.join(batch)}}})"
+            query_string = families_query_part + targets_query_part
+
             query = (
                 Query(query_string)
                 .verbatim()
                 .return_fields("chromosome", "index")
-                .paging(0, num_genes)
+                .paging(0, MAX_GENES_PER_BATCH)
             )
-            gene_queries.append(query)
-            await gene_index.search(query)  # returns the pipeline, not a Result!
-        gene_results = await pipeline.execute()
+            batch_queries.append(query)
+            await gene_index.search(query)  # adds to pipeline
 
-        # bin the genes by chromosome
-        for query, res in zip(gene_queries, gene_results):
+        try:
+            gene_results = await pipeline.execute()
+        except Exception as e:
+            logging.error(f"Pipeline execution failed. Num families: {len(families)}, Num batches: {len(family_batches)}")
+            logging.error(f"Error: {e}")
+            raise
+
+        # bin the genes by chromosome from all batch results
+        if not gene_results or len(gene_results) == 0:
+            logging.warning("No results returned from gene query pipeline")
+            return []
+
+        for query, res in zip(batch_queries, gene_results):
             result = gene_index.search_result(query, res)
             for d in result.docs:
                 chromosome_match_indices[d.chromosome].append(int(d.index))
