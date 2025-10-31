@@ -103,7 +103,6 @@ class RequestHandler:
 
     async def _getTargets(self, targets, chromosome, matched, intermediate):
         BATCH_SIZE = 100
-        MAX_GENES_PER_BATCH = 10000
 
         # use a pipeline to reduce the number of calls to database
         pipeline = self.redis_connection.pipeline()
@@ -128,28 +127,30 @@ class RequestHandler:
         for i in range(0, len(cleaned_families), BATCH_SIZE):
             family_batches.append(cleaned_families[i:i + BATCH_SIZE])
 
-        # create combined queries for each batch
+        # count the number of genes per family batch
         batch_queries = []
+        query_strings = []
         for batch in family_batches:
             # combine all families in this batch with pipe (OR) operator
-            families_query_part = f"(@family:{{{'|'.join(batch)}}})"
-            query_string = families_query_part + targets_query_part
+            query_string = f"(@family:{{{'|'.join(batch)}}}){targets_query_part}"
+            query_strings.append(query_string)
+            query = Query(query_string).verbatim().paging(0, 0)
+            batch_queries.append(query)
+            await gene_index.search(query) # returns the pipeline, not a Result!
+        count_results = await pipeline.execute()
 
+        # get the genes in each family batch
+        for query_string, query, count_result in zip(query_strings, batch_queries, count_results):
+            r = gene_index.search_result(query, count_result)
+            num_genes = r.total
             query = (
                 Query(query_string)
                 .verbatim()
                 .return_fields("chromosome", "index")
-                .paging(0, MAX_GENES_PER_BATCH)
+                .paging(0, num_genes)
             )
-            batch_queries.append(query)
-            await gene_index.search(query)  # adds to pipeline
-
-        try:
-            gene_results = await pipeline.execute()
-        except Exception as e:
-            logging.error(f"Pipeline execution failed. Num families: {len(families)}, Num batches: {len(family_batches)}")
-            logging.error(f"Error: {e}")
-            raise
+            await gene_index.search(query)
+        gene_results = await pipeline.execute()
 
         # bin the genes by chromosome from all batch results
         if not gene_results or len(gene_results) == 0:
