@@ -307,6 +307,9 @@ class RequestHandler:
                 gene_idx = block.i
                 if gene_idx < len(query_gene_names):
                     gene_names_to_fetch.add(query_gene_names[gene_idx])
+                gene_idx = block.j
+                if gene_idx < len(query_gene_names):
+                    gene_names_to_fetch.add(query_gene_names[gene_idx])
 
         if not gene_names_to_fetch:
             return blocks
@@ -332,6 +335,13 @@ class RequestHandler:
                         block.queryGeneName = gene_name
                         block.queryGeneFmin = gene.fmin
                         block.queryGeneFmax = gene.fmax
+                gene_idx = block.j
+                if gene_idx < len(query_gene_names):
+                    gene_name = query_gene_names[gene_idx]
+                    if gene_name in gene_map:
+                        gene = gene_map[gene_name]
+                        block.queryGeneFmin = gene.fmin if gene.fmin < block.queryGeneFmin else block.queryGeneFmin
+                        block.queryGeneFmax = gene.fmax if gene.fmax > block.queryGeneFmax else block.queryGeneFmax
 
         return blocks
 
