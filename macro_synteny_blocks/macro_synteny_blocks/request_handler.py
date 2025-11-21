@@ -4,7 +4,9 @@ import logging
 from collections import defaultdict
 
 # dependencies
+from redis.commands.search.aggregation import AggregateRequest
 from redis.commands.search.query import Query
+from redis.commands.search import reducers
 
 # module
 from macro_synteny_blocks.aioredisearch import CustomAsyncSearch
@@ -106,12 +108,10 @@ class RequestHandler:
 
         # use a pipeline to reduce the number of calls to database
         pipeline = self.redis_connection.pipeline()
-        gene_index = CustomAsyncSearch(pipeline, index_name="geneIdx")
 
         # get genes for each family and bin them by chromosome
         families = set(chromosome)
         families.discard("")
-        chromosome_match_indices = defaultdict(list)
 
         # pre-compute cleaned targets string once
         targets_query_part = ""
@@ -127,40 +127,55 @@ class RequestHandler:
         for i in range(0, len(cleaned_families), BATCH_SIZE):
             family_batches.append(cleaned_families[i:i + BATCH_SIZE])
 
-        # count the number of genes per family batch
-        batch_queries = []
-        query_strings = []
+        # use FT.AGGREGATE to group genes by chromosome and collect indices
         for batch in family_batches:
             # combine all families in this batch with pipe (OR) operator
             query_string = f"(@family:{{{'|'.join(batch)}}}){targets_query_part}"
-            query_strings.append(query_string)
-            query = Query(query_string).verbatim().paging(0, 0)
-            batch_queries.append(query)
-            await gene_index.search(query) # returns the pipeline, not a Result!
-        count_results = await pipeline.execute()
 
-        # get the genes in each family batch
-        for query_string, query, count_result in zip(query_strings, batch_queries, count_results):
-            r = gene_index.search_result(query, count_result)
-            num_genes = r.total
-            query = (
-                Query(query_string)
-                .verbatim()
-                .return_fields("chromosome", "index")
-                .paging(0, num_genes)
-            )
-            await gene_index.search(query)
-        gene_results = await pipeline.execute()
+            request = AggregateRequest(query_string) \
+                .group_by('@chromosome',
+                          reducers.tolist('@index').alias('indices'),
+                          reducers.count().alias('gene_count'))
 
-        # bin the genes by chromosome from all batch results
-        if not gene_results or len(gene_results) == 0:
-            logging.warning("No results returned from gene query pipeline")
+            pipeline.execute_command('FT.AGGREGATE', 'geneIdx', *request.build_args())
+
+        aggregate_results = await pipeline.execute()
+
+        if not aggregate_results or len(aggregate_results) == 0:
+            logging.warning("No results returned from gene aggregation pipeline")
             return []
 
-        for query, res in zip(batch_queries, gene_results):
-            result = gene_index.search_result(query, res)
-            for d in result.docs:
-                chromosome_match_indices[d.chromosome].append(int(d.index))
+        # bin the genes by chromosome from aggregated results
+        chromosome_match_indices = defaultdict(list)
+
+        for result in aggregate_results:
+            if not result or len(result) < 2:
+                continue
+
+            # skip the first element (total count of rows) then process each row
+            for row_idx in range(1, len(result)):
+                row = result[row_idx]
+
+                # rows look like this, indices and gene_count are actually numbers
+                # ['chromosome', <string>, 'indices', <list of strings>, 'gene_count', <string>]
+                chrom_name = None
+                indices_value = None
+
+                # iterate through field-value pairs
+                for field_idx in range(0, len(row), 2):
+                    if field_idx + 1 >= len(row):
+                        break
+                    field_name = row[field_idx]
+                    field_value = row[field_idx + 1]
+
+                    if field_name == 'chromosome':
+                        chrom_name = field_value
+                    elif field_name == 'indices':
+                        indices_value = field_value
+
+                indices = [int(idx) for idx in indices_value]
+
+                chromosome_match_indices[chrom_name].extend(indices)
 
         # sort index lists and filter by match and intermediate parameters
         filtered_targets = []
