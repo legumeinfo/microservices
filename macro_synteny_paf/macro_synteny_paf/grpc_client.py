@@ -133,6 +133,7 @@ async def computeMacroSyntenyBlocksByChromosome(
     chromosome_genes,
     chromosome_length,
     address,
+    identity=None,
 ):
     """
     Compute macro synteny blocks using chromosome name instead of gene families.
@@ -153,6 +154,7 @@ async def computeMacroSyntenyBlocksByChromosome(
                 optionalMetrics=metrics,
                 chromosomeGenes=chromosome_genes,
                 chromosomeLength=chromosome_length,
+                identity=identity,
             )
         )
         return result.blocks

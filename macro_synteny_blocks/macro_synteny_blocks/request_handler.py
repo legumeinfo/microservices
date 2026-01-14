@@ -38,6 +38,7 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
     ):
         iter(chromosome)  # TypeError if not iterable
         if targets is None:
@@ -72,6 +73,9 @@ class RequestHandler:
             mask = int(mask)
             if mask <= 0:
                 raise ValueError("mask must be positive")
+        # validate identity parameter
+        if identity is not None and identity not in ("levenshtein", "jaccard"):
+            raise ValueError('identity must be "levenshtein" or "jaccard"')
         return (
             chromosome,
             matched,
@@ -81,6 +85,7 @@ class RequestHandler:
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         )
 
     def _cleanTag(self, tag):
@@ -101,6 +106,8 @@ class RequestHandler:
         }
         if grpc_block.optionalMetrics:
             dict_block["optionalMetrics"] = list(grpc_block.optionalMetrics)
+        if grpc_block.HasField("identity"):
+            dict_block["identity"] = grpc_block.identity
         return dict_block
 
     async def _getTargets(self, targets, chromosome, matched, intermediate):
@@ -229,6 +236,7 @@ class RequestHandler:
         chromosome_length,
         chromosome_index,
         grpc_decode,
+        identity=None,
     ):
         # compute the blocks for the target chromosome
         blocks = await computePairwiseMacroSyntenyBlocks(
@@ -241,6 +249,7 @@ class RequestHandler:
             chromosome_genes,
             chromosome_length,
             self.pairwise_address,
+            identity,
         )
         if not blocks:  # true for None or []
             return None
@@ -269,6 +278,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         grpc_decode=False,
+        identity=None,
     ):
         # connect to the index
         chromosome_index = CustomAsyncSearch(
@@ -292,6 +302,7 @@ class RequestHandler:
                     chromosome_length,
                     chromosome_index,
                     grpc_decode,
+                    identity,
                 )
                 for name in filtered_targets
             ]
@@ -405,6 +416,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         grpc_decode=False,
+        identity=None,
     ):
         """
         Process macro synteny blocks using a chromosome name instead of gene families.
@@ -444,6 +456,7 @@ class RequestHandler:
             chromosome_genes,
             chromosome_length,
             grpc_decode,
+            identity,
         )
 
         # Enrich blocks with query gene information

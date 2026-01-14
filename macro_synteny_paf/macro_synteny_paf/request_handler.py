@@ -41,6 +41,7 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
     ):
         if metrics is None:
             metrics = []
@@ -71,6 +72,9 @@ class RequestHandler:
             mask = int(mask)
             if mask <= 0:
                 raise ValueError("mask must be positive")
+        # validate identity parameter
+        if identity is not None and identity not in ("levenshtein", "jaccard"):
+            raise ValueError('identity must be "levenshtein" or "jaccard"')
         return (
             genome_1,
             genome_2,
@@ -80,6 +84,7 @@ class RequestHandler:
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         )
 
     async def _getChromosomeNames(
@@ -135,7 +140,14 @@ class RequestHandler:
             query_end = filtered_genes[0].fmax
 
         # PAF format is defined here: https://github.com/lh3/miniasm/blob/master/PAF.md
-        return f'{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}\n'
+        paf_row = f'{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}'
+
+        # Add optionalMetrics as PAF tag if present (om:B:f,value1,value2,...)
+        if hasattr(target_block, 'optionalMetrics') and target_block.optionalMetrics:
+            metrics_str = ','.join(str(m) for m in target_block.optionalMetrics)
+            paf_row += f'\tom:B:f,{metrics_str}'
+
+        return paf_row + '\n'
 
     # returns JSON object for a single macro-synteny block
     async def _blockToJson(
@@ -162,7 +174,7 @@ class RequestHandler:
             query_start = filtered_genes[0].fmin
             query_end = filtered_genes[0].fmax
 
-        return {
+        result = {
             "query": {
                 "name": query_chromosome_name,
                 "length": query_chromosome_length,
@@ -180,6 +192,18 @@ class RequestHandler:
             "alignmentBlockLength": alignment_block_length,
             "mappingQuality": mapping_quality
         }
+        # Include identity if present
+        if hasattr(target_block, 'identity') and target_block.HasField('identity'):
+            result["identity"] = target_block.identity
+        # Include optionalMetrics if present
+        if hasattr(target_block, 'optionalMetrics'):
+            metrics_list = list(target_block.optionalMetrics)
+            logging.debug(f"Block has optionalMetrics: {metrics_list}, length: {len(metrics_list)}")
+            if metrics_list:
+                result["optionalMetrics"] = metrics_list
+        else:
+            logging.debug(f"Block does not have optionalMetrics attribute. Block attributes: {dir(target_block)}")
+        return result
 
     # returns PAF rows for a target block object (containing multiple macro-synteny blocks)
     async def _blocksToPafRows(
@@ -256,6 +280,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         output_format,
+        identity=None,
     ):
         """
         Generate a deterministic cache key from request parameters.
@@ -265,15 +290,16 @@ class RequestHandler:
         """
         # Convert metrics list to a stable string representation
         metrics_str = ",".join(sorted(metrics)) if metrics else ""
+        identity_str = identity if identity else ""
         # Create a composite key from all parameters including format
         key_components = (
             f"{genome_1}:{genome_2}:{matched}:{intermediate}:"
-            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}"
+            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}:{identity_str}"
         )
         # Hash to create a fixed-length key
         hash_digest = hashlib.sha256(key_components.encode()).hexdigest()
         # Use a versioned prefix to allow cache invalidation if format changes
-        return f"synteny_cache:v2:{hash_digest}"
+        return f"synteny_cache:v3:{hash_digest}"
 
     async def _computeResults(
         self,
@@ -287,6 +313,7 @@ class RequestHandler:
         chromosome_length,
         grpc_decode,
         output_format,
+        identity=None,
     ):
         # Use the new ComputeByChromosome endpoint in macro-synteny-blocks
         # This now returns enriched blocks with gene positions and chromosome lengths
@@ -300,6 +327,7 @@ class RequestHandler:
             chromosome_genes,
             chromosome_length,
             self.macrosyntenyblocks_address,
+            identity,
         )
         # remove the targets that didn't return any blocks
         filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
@@ -351,6 +379,7 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
         grpc_decode=False,
         output_format="json",
     ):
@@ -367,6 +396,7 @@ class RequestHandler:
                 chromosome_genes,
                 chromosome_length,
                 output_format,
+                identity,
             )
 
             try:
@@ -402,6 +432,7 @@ class RequestHandler:
                     chromosome_length,
                     grpc_decode,
                     output_format,
+                    identity,
                 )
                 for chr1_name in genome_1_chrs
             ]

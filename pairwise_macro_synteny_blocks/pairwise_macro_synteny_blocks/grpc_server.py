@@ -47,6 +47,7 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
         metrics = request.optionalMetrics or None
         chromosome_genes = request.chromosomeGenes or None
         chromosome_length = request.chromosomeLength or None
+        identity = request.identity or None
         try:
             (
                 chromosome,
@@ -57,6 +58,7 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
                 metrics,
                 chromosome_genes,
                 chromosome_length,
+                identity,
             ) = self.handler.parseArguments(
                 chromosome,
                 target,
@@ -66,6 +68,7 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
                 metrics,
                 chromosome_genes,
                 chromosome_length,
+                identity,
             )
         except Exception:
             # raise a gRPC INVALID ARGUMENT error
@@ -82,23 +85,26 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         )
         if blocks is None:
             # raise a gRPC NOT FOUND error
             await context.abort(grpc.StatusCode.NOT_FOUND, "Chromosome not found")
-        block_messages = list(
-            map(
-                lambda b: block_pb2.Block(
-                    i=b["i"],
-                    j=b["j"],
-                    fmin=b["fmin"],
-                    fmax=b["fmax"],
-                    orientation=b["orientation"],
-                    optionalMetrics=b.get("optionalMetrics", []),
-                ),
-                blocks,
+
+        def block_to_proto(b):
+            proto_block = block_pb2.Block(
+                i=b["i"],
+                j=b["j"],
+                fmin=b["fmin"],
+                fmax=b["fmax"],
+                orientation=b["orientation"],
+                optionalMetrics=b.get("optionalMetrics", []),
             )
-        )
+            if "identity" in b:
+                proto_block.identity = b["identity"]
+            return proto_block
+
+        block_messages = list(map(block_to_proto, blocks))
         return pairwisemacrosyntenyblocks_pb2.PairwiseMacroSyntenyBlocksComputeReply(
             blocks=block_messages
         )

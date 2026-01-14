@@ -27,6 +27,7 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
     ):
         iter(chromosome)  # TypeError if not iterable
         if target is None:
@@ -66,6 +67,9 @@ class RequestHandler:
             name, args = self._parseMetric(metric)
             if name not in METRICS:
                 raise ValueError(f'"{metric}" is not a valid metric')
+        # validate identity parameter
+        if identity is not None and identity not in ("levenshtein", "jaccard"):
+            raise ValueError('identity must be "levenshtein" or "jaccard"')
         return (
             chromosome,
             target,
@@ -75,6 +79,7 @@ class RequestHandler:
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         )
 
     # given a query chromosome and a target chromosome as ordered lists of
@@ -190,6 +195,7 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
     ):
         # connect to the indexes
         chromosome_index = AsyncSearch(
@@ -261,9 +267,8 @@ class RequestHandler:
                 "j": query_stop_index,
                 "orientation": orientation,
             }
-            # compute optional metrics on the block
-            if metrics:
-                block["optionalMetrics"] = []
+            # prepare gene families if metrics or identity is requested
+            if metrics or identity:
                 query_families = list(
                     filter(
                         maskFilter,
@@ -278,10 +283,17 @@ class RequestHandler:
                 )
                 if orientation == "-":
                     target_families = target_families[::-1]
-                for metric in metrics:
-                    name, args = self._parseMetric(metric)
-                    value = METRICS[name](query_families, target_families, *args)
-                    block["optionalMetrics"].append(value)
+                # compute optional metrics on the block
+                if metrics:
+                    block["optionalMetrics"] = []
+                    for metric in metrics:
+                        name, args = self._parseMetric(metric)
+                        value = METRICS[name](query_families, target_families, *args)
+                        block["optionalMetrics"].append(value)
+                # compute identity if requested
+                if identity:
+                    identity_func = METRICS[f"{identity}_identity"]
+                    block["identity"] = identity_func(query_families, target_families)
             blocks.append(block)
         locations = await pipeline.execute()
         for i, block in enumerate(blocks):

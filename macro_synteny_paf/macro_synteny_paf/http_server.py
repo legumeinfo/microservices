@@ -13,7 +13,9 @@ async def http_get_handler(request):
     # optional parameters
     mask = request.rel_url.query.get("mask", None)
     format_type = request.rel_url.query.get("format", "json")  # default to json
-    metrics = None #data.get("optionalMetrics", None)
+    metrics_param = request.rel_url.query.get("metrics", None)
+    metrics = metrics_param.split(",") if metrics_param else None
+    identity = request.rel_url.query.get("identity", None)
     chromosome_genes = None #data.get("chromosome_genes", None)
     chromosome_length = None #data.get("chromosome_length", None)
     handler = request.app["handler"]
@@ -33,6 +35,7 @@ async def http_get_handler(request):
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         ) = handler.parseArguments(
             genome_1,
             genome_2,
@@ -42,6 +45,7 @@ async def http_get_handler(request):
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
         )
     except Exception:
         return web.HTTPBadRequest(
@@ -57,6 +61,7 @@ async def http_get_handler(request):
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity,
         grpc_decode=True,
         output_format=format_type,
     )

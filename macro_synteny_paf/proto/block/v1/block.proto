@@ -21,4 +21,5 @@ message Block {
   optional string queryGeneName = 7;  // Name of query gene at index i
   optional uint32 queryGeneFmin = 8;  // Query gene start position
   optional uint32 queryGeneFmax = 9;  // Query gene end position
+  optional float identity = 10;  // Identity score (0.0-1.0) if requested
 }

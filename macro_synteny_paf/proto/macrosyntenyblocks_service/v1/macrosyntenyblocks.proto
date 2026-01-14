@@ -20,6 +20,7 @@ message MacroSyntenyBlocksComputeRequest {
   repeated string optionalMetrics = 6;
   optional uint32 chromosomeGenes = 7;
   optional uint32 chromosomeLength = 8;
+  optional string identity = 9;  // "levenshtein" or "jaccard" - computes identity metric
 }
 
 
@@ -32,6 +33,7 @@ message MacroSyntenyBlocksComputeByChromosomeRequest {
   repeated string optionalMetrics = 6;
   optional uint32 chromosomeGenes = 7;
   optional uint32 chromosomeLength = 8;
+  optional string identity = 9;  // "levenshtein" or "jaccard" - computes identity metric
 }
 
 
