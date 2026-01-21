@@ -100,6 +100,8 @@ async def computeMacroSyntenyBlocks(
     chromosome_genes,
     chromosome_length,
     address,
+    identity=None,
+    correspondences=None,
 ):
     # fetch channel every time to support dynamic services
     channel = aio.insecure_channel(address)
@@ -116,6 +118,8 @@ async def computeMacroSyntenyBlocks(
                 optionalMetrics=metrics,
                 chromosomeGenes=chromosome_genes,
                 chromosomeLength=chromosome_length,
+                identity=identity,
+                correspondences=correspondences,
             )
         )
         return result.blocks
@@ -134,6 +138,7 @@ async def computeMacroSyntenyBlocksByChromosome(
     chromosome_length,
     address,
     identity=None,
+    correspondences=None,
 ):
     """
     Compute macro synteny blocks using chromosome name instead of gene families.
@@ -155,6 +160,7 @@ async def computeMacroSyntenyBlocksByChromosome(
                 chromosomeGenes=chromosome_genes,
                 chromosomeLength=chromosome_length,
                 identity=identity,
+                correspondences=correspondences,
             )
         )
         return result.blocks

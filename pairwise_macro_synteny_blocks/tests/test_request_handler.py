@@ -89,7 +89,8 @@ class TestIndexPairsToIndexBlocks:
         ))
 
         assert len(blocks) == 1
-        assert blocks[0] == ((0, 0), (3, 3))  # begin, end
+        begin, end, path = blocks[0]
+        assert (begin, end) == ((0, 0), (3, 3))  # begin, end
 
     def test_reverse_orientation(self):
         """Test detection of reverse-oriented synteny block."""
@@ -101,7 +102,8 @@ class TestIndexPairsToIndexBlocks:
         ))
 
         assert len(blocks) == 1
-        assert blocks[0] == ((0, 3), (3, 0))
+        begin, end, path = blocks[0]
+        assert (begin, end) == ((0, 3), (3, 0))
 
     def test_intermediate_constraint(self):
         """Test that intermediate distance constraint is enforced."""
@@ -114,8 +116,9 @@ class TestIndexPairsToIndexBlocks:
 
         # Should form 2 separate blocks due to gap
         assert len(blocks) == 2
-        assert ((0, 0), (1, 1)) in blocks
-        assert ((10, 10), (11, 11)) in blocks
+        endpoints = [(b[0], b[1]) for b in blocks]
+        assert ((0, 0), (1, 1)) in endpoints
+        assert ((10, 10), (11, 11)) in endpoints
 
     def test_matched_filtering(self):
         """Test that blocks shorter than matched parameter are filtered."""
@@ -142,8 +145,9 @@ class TestIndexPairsToIndexBlocks:
         ))
 
         assert len(blocks) == 2
-        assert ((0, 0), (2, 2)) in blocks
-        assert ((10, 10), (13, 13)) in blocks
+        endpoints = [(b[0], b[1]) for b in blocks]
+        assert ((0, 0), (2, 2)) in endpoints
+        assert ((10, 10), (13, 13)) in endpoints
 
     def test_mixed_orientations(self):
         """Test that forward and reverse blocks are detected independently."""
@@ -158,14 +162,12 @@ class TestIndexPairsToIndexBlocks:
         ))
 
         assert len(blocks) == 2
-        # Check that both orientations are present
-        begin_pairs = [block[0] for block in blocks]
-        end_pairs = [block[1] for block in blocks]
+        endpoints = [(b[0], b[1]) for b in blocks]
 
         # Forward block
-        assert ((0, 0), (2, 2)) in blocks
+        assert ((0, 0), (2, 2)) in endpoints
         # Reverse block
-        assert ((10, 20), (12, 18)) in blocks
+        assert ((10, 20), (12, 18)) in endpoints
 
     def test_greedy_selection(self):
         """Test that highest scoring blocks are selected first (greedy)."""
@@ -182,7 +184,8 @@ class TestIndexPairsToIndexBlocks:
         # The shorter overlapping block (1,1) -> (2,2) can't be selected
         # because nodes are already used
         assert len(blocks) == 1
-        assert blocks[0] == ((0, 0), (3, 3))
+        begin, end, path = blocks[0]
+        assert (begin, end) == ((0, 0), (3, 3))
 
 
 @pytest.mark.unit
@@ -205,7 +208,8 @@ class TestIndexPathTraceback:
         ))
 
         assert len(blocks) == 1
-        assert blocks[0] == (node1, node3)
+        begin, end, path = blocks[0]
+        assert (begin, end) == (node1, node3)
         # Nodes should be consumed (removed from pointers)
         assert len(pointers) == 0
 
@@ -231,8 +235,10 @@ class TestIndexPathTraceback:
         # Both blocks meet matched requirement
         assert len(blocks) == 2
         # Higher score block should be yielded first
-        assert blocks[0] == (node1, node2)
-        assert blocks[1] == (node3, node4)
+        begin1, end1, path1 = blocks[0]
+        begin2, end2, path2 = blocks[1]
+        assert (begin1, end1) == (node1, node2)
+        assert (begin2, end2) == (node3, node4)
 
     def test_overlapping_paths_greedy_consumption(self):
         """Test that once a node is used, it's unavailable for other blocks."""
@@ -257,7 +263,8 @@ class TestIndexPathTraceback:
         # Only the first (higher score) block should be selected
         # The second block can't be formed because shared_node is consumed
         assert len(blocks) == 1
-        assert blocks[0] == (node1, node3)
+        begin, end, path = blocks[0]
+        assert (begin, end) == (node1, node3)
 
 
 @pytest.mark.unit
@@ -340,4 +347,3 @@ class TestProcessIntegration:
         # Blocks should not include masked families
         # (This is implicit in the algorithm, hard to assert directly)
         assert isinstance(blocks, list)
-

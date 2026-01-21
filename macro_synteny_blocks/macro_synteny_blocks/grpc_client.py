@@ -97,6 +97,7 @@ async def computePairwiseMacroSyntenyBlocks(
     chromosome_length,
     address,
     identity=None,
+    correspondences=None,
 ):
     # fetch channel every time to support dynamic services
     channel = aio.insecure_channel(address)
@@ -114,6 +115,7 @@ async def computePairwiseMacroSyntenyBlocks(
                 chromosomeGenes=chromosome_genes,
                 chromosomeLength=chromosome_length,
                 identity=identity,
+                correspondences=correspondences,
             )
         )
         return result.blocks

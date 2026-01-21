@@ -16,6 +16,7 @@ async def http_get_handler(request):
     metrics_param = request.rel_url.query.get("metrics", None)
     metrics = metrics_param.split(",") if metrics_param else None
     identity = request.rel_url.query.get("identity", None)
+    anchors = request.rel_url.query.get("anchors", None)
     chromosome_genes = None #data.get("chromosome_genes", None)
     chromosome_length = None #data.get("chromosome_length", None)
     handler = request.app["handler"]
@@ -36,6 +37,7 @@ async def http_get_handler(request):
             chromosome_genes,
             chromosome_length,
             identity,
+            anchors,
         ) = handler.parseArguments(
             genome_1,
             genome_2,
@@ -46,6 +48,7 @@ async def http_get_handler(request):
             chromosome_genes,
             chromosome_length,
             identity,
+            anchors,
         )
     except Exception:
         return web.HTTPBadRequest(
@@ -62,6 +65,7 @@ async def http_get_handler(request):
         chromosome_genes,
         chromosome_length,
         identity,
+        anchors,
         grpc_decode=True,
         output_format=format_type,
     )

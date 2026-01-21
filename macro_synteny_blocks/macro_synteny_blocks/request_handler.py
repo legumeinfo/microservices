@@ -39,6 +39,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         identity=None,
+        correspondences=None,
     ):
         iter(chromosome)  # TypeError if not iterable
         if targets is None:
@@ -76,6 +77,9 @@ class RequestHandler:
         # validate identity parameter
         if identity is not None and identity not in ("levenshtein", "jaccard"):
             raise ValueError('identity must be "levenshtein" or "jaccard"')
+        # validate correspondences parameter
+        if correspondences is not None and not isinstance(correspondences, bool):
+            raise ValueError("correspondences must be a boolean")
         return (
             chromosome,
             matched,
@@ -86,6 +90,7 @@ class RequestHandler:
             chromosome_genes,
             chromosome_length,
             identity,
+            correspondences,
         )
 
     def _cleanTag(self, tag):
@@ -108,6 +113,16 @@ class RequestHandler:
             dict_block["optionalMetrics"] = list(grpc_block.optionalMetrics)
         if grpc_block.HasField("identity"):
             dict_block["identity"] = grpc_block.identity
+        if grpc_block.correspondences:
+            dict_block["correspondences"] = [
+                {
+                    "query_index": c.query_index,
+                    "target_index": c.target_index,
+                    "target_fmin": c.target_fmin,
+                    "target_fmax": c.target_fmax,
+                }
+                for c in grpc_block.correspondences
+            ]
         return dict_block
 
     async def _getTargets(self, targets, chromosome, matched, intermediate):
@@ -237,6 +252,7 @@ class RequestHandler:
         chromosome_index,
         grpc_decode,
         identity=None,
+        correspondences=None,
     ):
         # compute the blocks for the target chromosome
         blocks = await computePairwiseMacroSyntenyBlocks(
@@ -250,6 +266,7 @@ class RequestHandler:
             chromosome_length,
             self.pairwise_address,
             identity,
+            correspondences,
         )
         if not blocks:  # true for None or []
             return None
@@ -279,6 +296,7 @@ class RequestHandler:
         chromosome_length,
         grpc_decode=False,
         identity=None,
+        correspondences=None,
     ):
         # connect to the index
         chromosome_index = CustomAsyncSearch(
@@ -303,6 +321,7 @@ class RequestHandler:
                     chromosome_index,
                     grpc_decode,
                     identity,
+                    correspondences,
                 )
                 for name in filtered_targets
             ]
@@ -326,17 +345,24 @@ class RequestHandler:
         if self.genes_address is None:
             return blocks  # Return blocks unchanged if genes address not configured
 
-        # Collect all unique gene names needed
+        # Collect all unique gene names needed (from block endpoints and correspondences)
         gene_names_to_fetch = set()
         for blocks_obj in blocks:
             for block in blocks_obj["blocks"]:
                 # Handle both dict and gRPC object formats
-                gene_idx = block["i"] if isinstance(block, dict) else block.i
+                is_dict = isinstance(block, dict)
+                gene_idx = block["i"] if is_dict else block.i
                 if gene_idx < len(query_gene_names):
                     gene_names_to_fetch.add(query_gene_names[gene_idx])
-                gene_idx = block["j"] if isinstance(block, dict) else block.j
+                gene_idx = block["j"] if is_dict else block.j
                 if gene_idx < len(query_gene_names):
                     gene_names_to_fetch.add(query_gene_names[gene_idx])
+                # Also collect gene names from correspondences
+                correspondences = block.get("correspondences", []) if is_dict else getattr(block, "correspondences", [])
+                for corr in correspondences:
+                    corr_query_idx = corr["query_index"] if isinstance(corr, dict) else corr.query_index
+                    if corr_query_idx < len(query_gene_names):
+                        gene_names_to_fetch.add(query_gene_names[corr_query_idx])
 
         if not gene_names_to_fetch:
             return blocks
@@ -381,6 +407,22 @@ class RequestHandler:
                             block.queryGeneFmin = min(gene.fmin, block.queryGeneFmin)
                             block.queryGeneFmax = max(gene.fmax, block.queryGeneFmax)
 
+                # Enrich correspondences with query gene coordinates
+                correspondences = block.get("correspondences", []) if is_dict else getattr(block, "correspondences", [])
+                for corr in correspondences:
+                    corr_is_dict = isinstance(corr, dict)
+                    corr_query_idx = corr["query_index"] if corr_is_dict else corr.query_index
+                    if corr_query_idx < len(query_gene_names):
+                        gene_name = query_gene_names[corr_query_idx]
+                        if gene_name in gene_map:
+                            gene = gene_map[gene_name]
+                            if corr_is_dict:
+                                corr["query_fmin"] = gene.fmin
+                                corr["query_fmax"] = gene.fmax
+                            else:
+                                corr.query_fmin = gene.fmin
+                                corr.query_fmax = gene.fmax
+
         return blocks
 
     async def _addChromosomeLengths(self, blocks):
@@ -417,6 +459,7 @@ class RequestHandler:
         chromosome_length,
         grpc_decode=False,
         identity=None,
+        correspondences=None,
     ):
         """
         Process macro synteny blocks using a chromosome name instead of gene families.
@@ -431,6 +474,7 @@ class RequestHandler:
             Same as process() method, but with enriched blocks containing:
             - queryGeneName, queryGeneFmin, queryGeneFmax (if genes_address configured)
             - chromosomeLength in Blocks objects (target chromosome lengths)
+            - correspondences with query_fmin/query_fmax (if correspondences=True)
         """
         if self.chromosome_address is None:
             raise ValueError(
@@ -457,6 +501,7 @@ class RequestHandler:
             chromosome_length,
             grpc_decode,
             identity,
+            correspondences,
         )
 
         # Enrich blocks with query gene information

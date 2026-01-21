@@ -46,6 +46,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
         chromosome_genes = request.chromosomeGenes or None
         chromosome_length = request.chromosomeLength or None
         identity = request.identity or None
+        correspondences = request.correspondences or None
         try:
             (
                 chromosome,
@@ -57,6 +58,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_genes,
                 chromosome_length,
                 identity,
+                correspondences,
             ) = self.handler.parseArguments(
                 chromosome,
                 matched,
@@ -67,6 +69,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_genes,
                 chromosome_length,
                 identity,
+                correspondences,
             )
         except Exception:
             # raise a gRPC INVALID ARGUMENT error
@@ -85,6 +88,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
             chromosome_length,
             grpc_decode=False,
             identity=identity,
+            correspondences=correspondences,
         )
         return macrosyntenyblocks_pb2.MacroSyntenyBlocksComputeReply(blocks=blocks)
 
@@ -117,6 +121,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
         chromosome_genes = request.chromosomeGenes or None
         chromosome_length = request.chromosomeLength or None
         identity = request.identity or None
+        correspondences = request.correspondences or None
         try:
             (
                 chromosome_name,
@@ -128,6 +133,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_genes,
                 chromosome_length,
                 identity,
+                correspondences,
             ) = self.handler.parseArguments(
                 [chromosome_name],  # Wrap in list to reuse parseArguments validation
                 matched,
@@ -138,6 +144,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_genes,
                 chromosome_length,
                 identity,
+                correspondences,
             )
             # Extract the chromosome name back from the list
             chromosome_name = chromosome_name[0]
@@ -159,6 +166,7 @@ class MacroSyntenyBlocks(macrosyntenyblocks_pb2_grpc.MacroSyntenyBlocksServicer)
                 chromosome_length,
                 grpc_decode=False,
                 identity=identity,
+                correspondences=correspondences,
             )
         except ValueError as e:
             # Chromosome not found or address not configured

@@ -42,6 +42,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         identity=None,
+        anchors=None,
     ):
         if metrics is None:
             metrics = []
@@ -75,6 +76,9 @@ class RequestHandler:
         # validate identity parameter
         if identity is not None and identity not in ("levenshtein", "jaccard"):
             raise ValueError('identity must be "levenshtein" or "jaccard"')
+        # validate anchors parameter
+        if anchors is not None and anchors not in ("simple", "regular"):
+            raise ValueError('anchors must be "simple" or "regular"')
         return (
             genome_1,
             genome_2,
@@ -85,6 +89,7 @@ class RequestHandler:
             chromosome_genes,
             chromosome_length,
             identity,
+            anchors,
         )
 
     async def _getChromosomeNames(
@@ -245,6 +250,9 @@ class RequestHandler:
         query_chromosome_name,
         query_chromosome_length,
         target_block,
+        query_assembly_name=None,
+        target_assembly_name=None,
+        anchors=None,
     ):
         # Check if target block has enriched chromosomeLength from macro-synteny-blocks
         if hasattr(target_block, 'chromosomeLength') and target_block.chromosomeLength:
@@ -267,6 +275,35 @@ class RequestHandler:
                 for tgt_block in target_block.blocks
             ]
         )
+
+        # If regular anchors mode, extract correspondences as top-level JBrowse-compatible objects
+        if anchors == "regular":
+            jbrowse_objects = []
+            for idx, tgt_block in enumerate(target_block.blocks):
+                if hasattr(tgt_block, 'correspondences') and tgt_block.correspondences:
+                    for corr_idx, corr in enumerate(tgt_block.correspondences):
+                        # Generate unique ID from chromosome names and coordinates
+                        unique_id = f"{query_chromosome_name}:{corr.query_fmin}-{corr.query_fmax}_{target_block.chromosome}:{corr.target_fmin}-{corr.target_fmax}"
+                        jbrowse_obj = {
+                            "uniqueId": unique_id,
+                            "refName": target_block.chromosome,
+                            "start": corr.target_fmin,
+                            "end": corr.target_fmax,
+                            "assemblyName": target_assembly_name,
+                            "strand": tgt_block.orientation,
+                            "mate": {
+                                "refName": query_chromosome_name,
+                                "start": corr.query_fmin,
+                                "end": corr.query_fmax,
+                                "assemblyName": query_assembly_name,
+                            }
+                        }
+                        # Include identity if present on the block
+                        if hasattr(tgt_block, 'identity') and tgt_block.HasField('identity'):
+                            jbrowse_obj["identity"] = tgt_block.identity
+                        jbrowse_objects.append(jbrowse_obj)
+            return jbrowse_objects
+
         return json_objects
 
     def _generate_cache_key(
@@ -281,6 +318,7 @@ class RequestHandler:
         chromosome_length,
         output_format,
         identity=None,
+        anchors=None,
     ):
         """
         Generate a deterministic cache key from request parameters.
@@ -291,15 +329,16 @@ class RequestHandler:
         # Convert metrics list to a stable string representation
         metrics_str = ",".join(sorted(metrics)) if metrics else ""
         identity_str = identity if identity else ""
+        anchors_str = anchors if anchors else ""
         # Create a composite key from all parameters including format
         key_components = (
             f"{genome_1}:{genome_2}:{matched}:{intermediate}:"
-            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}:{identity_str}"
+            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}:{identity_str}:{anchors_str}"
         )
         # Hash to create a fixed-length key
         hash_digest = hashlib.sha256(key_components.encode()).hexdigest()
         # Use a versioned prefix to allow cache invalidation if format changes
-        return f"synteny_cache:v3:{hash_digest}"
+        return f"synteny_cache:v5:{hash_digest}"
 
     async def _computeResults(
         self,
@@ -314,9 +353,14 @@ class RequestHandler:
         grpc_decode,
         output_format,
         identity=None,
+        anchors=None,
+        query_assembly_name=None,
+        target_assembly_name=None,
     ):
         # Use the new ComputeByChromosome endpoint in macro-synteny-blocks
         # This now returns enriched blocks with gene positions and chromosome lengths
+        # Request correspondences from backend when anchors="regular"
+        correspondences = anchors == "regular"
         target_blocks = await computeMacroSyntenyBlocksByChromosome(
             query_chromosome_name,
             matched,
@@ -328,6 +372,7 @@ class RequestHandler:
             chromosome_length,
             self.macrosyntenyblocks_address,
             identity,
+            correspondences,
         )
         # remove the targets that didn't return any blocks
         filtered_target_blocks = list(filter(lambda b: b is not None, target_blocks))
@@ -362,6 +407,9 @@ class RequestHandler:
                         query_chromosome_name,
                         query_chromosome_length,
                         target_block,
+                        query_assembly_name,
+                        target_assembly_name,
+                        anchors=anchors,
                     )
                     for target_block in filtered_target_blocks
                 ]
@@ -380,6 +428,7 @@ class RequestHandler:
         chromosome_genes,
         chromosome_length,
         identity=None,
+        anchors=None,
         grpc_decode=False,
         output_format="json",
     ):
@@ -397,6 +446,7 @@ class RequestHandler:
                 chromosome_length,
                 output_format,
                 identity,
+                anchors,
             )
 
             try:
@@ -433,6 +483,9 @@ class RequestHandler:
                     grpc_decode,
                     output_format,
                     identity,
+                    anchors,
+                    query_assembly_name=genome_1,
+                    target_assembly_name=genome_2,
                 )
                 for chr1_name in genome_1_chrs
             ]

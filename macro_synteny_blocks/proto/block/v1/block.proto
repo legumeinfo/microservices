@@ -11,6 +11,15 @@ message Blocks {
   optional uint32 chromosomeLength = 5;  // Length of target chromosome in base pairs
 }
 
+message Correspondence {
+  uint32 query_index = 1;
+  uint32 target_index = 2;
+  uint32 target_fmin = 3;  // Target gene start position (bp)
+  uint32 target_fmax = 4;  // Target gene end position (bp)
+  optional uint32 query_fmin = 5;  // Query gene start position (bp), if enriched
+  optional uint32 query_fmax = 6;  // Query gene end position (bp), if enriched
+}
+
 message Block {
   uint32 i = 1;
   uint32 j = 2;
@@ -22,4 +31,5 @@ message Block {
   optional uint32 queryGeneFmin = 8;  // Query gene start position
   optional uint32 queryGeneFmax = 9;  // Query gene end position
   optional float identity = 10;  // Identity score (0.0-1.0) if requested
+  repeated Correspondence correspondences = 11;  // Gene pair correspondences within the block
 }
