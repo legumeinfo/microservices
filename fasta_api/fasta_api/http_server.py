@@ -13,15 +13,17 @@ async def http_help(request):
     resources = [str(resource) for resource in request.app.router.resources()]
     return web.json_response(resources)
 
-async def http_request(request, fasta_func, match_info=[]):
+async def http_request(request, fasta_func, match_info=[], query_info={}):
     request_func_args = (lambda ml: [
         int(request.match_info.get(m)) if m in ["start", "stop", "end"] else request.match_info.get(m) for m in ml
     ])(match_info)
+    # Extract query parameters with defaults
+    query_args = [request.query.get(k, v) for k, v in query_info.items()]
     url = request.match_info.get("url", "")
     handler = request.app["handler"]
     if hasattr(handler, fasta_func):
         request_func = getattr(handler, fasta_func)
-        fasta_result = request_func(url, *request_func_args)
+        fasta_result = request_func(url, *request_func_args, *query_args)
         if "error" in fasta_result:
             return web.json_response(fasta_result, status=fasta_result["status"])
         return web.json_response(fasta_result)
@@ -57,6 +59,13 @@ async def http_vcf_features(request):
 
 async def http_vcf_samples(request):
     return await http_request(request, "vcf_samples")
+
+async def http_vcf_alleles(request):
+    return await http_request(
+        request, "vcf_alleles",
+        ["seqid", "start", "end"],
+        {"samples": None, "encoding": "hap"}
+    )
 
 async def http_alignment_references(request):
     return await http_request(request, "alignment_references")

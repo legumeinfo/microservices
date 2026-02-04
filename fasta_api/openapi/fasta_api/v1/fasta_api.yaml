@@ -345,6 +345,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Samples'
+  /vcf/alleles/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Extract alleles for samples in a genomic region
+      description: |
+        Returns genotype data for specified samples within a chromosomal region.
+        Supports HapMap (AA, AT) and VCF (0/0, 0/1) encoding formats.
+      operationId: http_vcf_alleles
+      parameters:
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chromosome or contig identifier
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Start position (1-based coordinates)
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: End position (1-based coordinates, inclusive)
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+          description: URL-encoded path to VCF file
+        - name: samples
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of sample names (defaults to all samples)
+        - name: encoding
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [hap, vcf]
+            default: hap
+          description: Genotype encoding format
+      responses:
+        '200':
+          description: Allele data for the specified region and samples
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlleleResponse'
+        '400':
+          description: Invalid request (bad coordinates, unknown samples, etc.)
+        '403':
+          description: URL not in allowlist
   /alignment/references/{url}:
     get:
       summary: Get Alignment References
@@ -853,4 +910,46 @@ components:
         samples:
           type: array
           items:
+            type: string
+    AlleleResponse:
+      type: object
+      properties:
+        region:
+          type: object
+          properties:
+            chromosome:
+              type: string
+            start:
+              type: integer
+            end:
+              type: integer
+        encoding:
+          type: string
+          enum: [hap, vcf]
+        samples:
+          type: array
+          items:
+            type: string
+        invalid_samples:
+          type: array
+          items:
+            type: string
+        variant_count:
+          type: integer
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlleleVariant'
+    AlleleVariant:
+      type: object
+      properties:
+        position:
+          type: integer
+        ref:
+          type: string
+        alt:
+          type: string
+        genotypes:
+          type: object
+          additionalProperties:
             type: string

@@ -192,11 +192,131 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return { "samples": list(pysam.VariantFile(url).header.samples) }
+            return {"samples": list(pysam.VariantFile(url).header.samples)}
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
         except KeyError as e:
             return self.send_400_resp(f"Unable to find feature: {e}")
+
+    def format_vcf_genotype(self, genotype):
+        """Format genotype as VCF string (e.g., '0/1', '1/1').
+
+        Args:
+            genotype: Tuple of allele indices from pysam (e.g., (0, 1))
+
+        Returns:
+            VCF-style genotype string, or './.' for missing data
+        """
+        if genotype is None or None in genotype:
+            return "./."
+        return "/".join(str(g) for g in genotype)
+
+    def format_hapmap_genotype(self, ref, alts, genotype):
+        """Format genotype as HapMap string (e.g., 'AA', 'AT').
+
+        Args:
+            ref: Reference allele string
+            alts: List of alternate allele strings
+            genotype: Tuple of allele indices from pysam
+
+        Returns:
+            HapMap-style allele string, or 'NN' for missing data
+        """
+        if genotype is None or None in genotype:
+            return "NN"
+
+        all_alleles = [ref] + list(alts) if alts else [ref]
+        try:
+            return "".join(all_alleles[g] for g in genotype if g < len(all_alleles))
+        except (IndexError, TypeError):
+            return "NN"
+
+    def vcf_alleles(
+        self, url: str, seqid: str, start: int, end: int,
+        samples: str = None, encoding: str = "hap"
+    ):
+        """Extract alleles for specified samples in a genomic region.
+
+        Args:
+            url: URL-encoded path to VCF file
+            seqid: Chromosome/contig identifier
+            start: Start position (1-based)
+            end: End position (1-based, inclusive)
+            samples: Comma-separated sample names (optional, defaults to all)
+            encoding: Output format - 'hap', 'vcf', or 'both'
+
+        Returns:
+            JSON object with variants and formatted genotypes
+        """
+        url = self.check_url(url)
+        if isinstance(url, dict):
+            return url
+
+        # Validate encoding parameter
+        if encoding not in ("hap", "vcf"):
+            return self.send_400_resp(
+                f"Invalid encoding '{encoding}'. Use 'hap' or 'vcf'."
+            )
+
+        try:
+            with pysam.VariantFile(url) as vcf:
+                # Determine which samples to include
+                available_samples = set(vcf.header.samples)
+
+                if samples:
+                    requested = [s.strip() for s in samples.split(",")]
+                    valid_samples = [s for s in requested if s in available_samples]
+                    invalid_samples = [s for s in requested if s not in available_samples]
+                else:
+                    valid_samples = list(vcf.header.samples)
+                    invalid_samples = []
+
+                if not valid_samples:
+                    return self.send_400_resp(
+                        f"No valid samples found. Available: {', '.join(sorted(available_samples))}"
+                    )
+
+                # Extract variants
+                variants = []
+                for record in vcf.fetch(seqid, start - 1, end):  # pysam uses 0-based
+                    ref = record.ref
+                    alts = list(record.alts) if record.alts else []
+
+                    genotypes = {}
+                    for sample_name in valid_samples:
+                        gt = record.samples[sample_name]["GT"]
+
+                        if encoding == "vcf":
+                            genotypes[sample_name] = self.format_vcf_genotype(gt)
+                        else:  # hap
+                            genotypes[sample_name] = self.format_hapmap_genotype(
+                                ref, alts, gt
+                            )
+
+                    variants.append({
+                        "position": record.pos,
+                        "ref": ref,
+                        "alt": ",".join(alts) if alts else ".",
+                        "genotypes": genotypes,
+                    })
+
+                return {
+                    "region": {
+                        "chromosome": seqid,
+                        "start": start,
+                        "end": end,
+                    },
+                    "encoding": encoding,
+                    "samples": valid_samples,
+                    "invalid_samples": invalid_samples,
+                    "variant_count": len(variants),
+                    "variants": variants,
+                }
+
+        except OSError as e:
+            return self.send_400_resp(f"Unable to open file: {e}")
+        except ValueError as e:
+            return self.send_400_resp(f"Invalid coordinates or region: {e}")
 
     def alignment_references(self, url: str):
         url = self.check_url(url)
