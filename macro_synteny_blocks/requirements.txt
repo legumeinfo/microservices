@@ -20,11 +20,11 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.76.0
+grpcio>=1.78.0
     # via
     #   grpcio-tools
     #   macro_synteny_blocks (setup.py)
-grpcio-tools==1.76.0
+grpcio-tools>=1.78.0
     # via macro_synteny_blocks (setup.py)
 idna==3.11
     # via yarl

@@ -20,11 +20,11 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.76.0
+grpcio>=1.78.0
     # via
     #   gene_search (setup.py)
     #   grpcio-tools
-grpcio-tools==1.76.0
+grpcio-tools>=1.78.0
     # via gene_search (setup.py)
 idna==3.11
     # via yarl
