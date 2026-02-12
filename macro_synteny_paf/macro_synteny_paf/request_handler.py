@@ -282,6 +282,11 @@ class RequestHandler:
             for idx, tgt_block in enumerate(target_block.blocks):
                 if hasattr(tgt_block, 'correspondences') and tgt_block.correspondences:
                     for corr_idx, corr in enumerate(tgt_block.correspondences):
+                        # Skip self-identity correspondences (same position on query and target)
+                        # These create "vertical lines" that obscure synteny relationships
+                        if (corr.query_fmin == corr.target_fmin and
+                            corr.query_fmax == corr.target_fmax):
+                            continue
                         # Generate unique ID from chromosome names and coordinates
                         unique_id = f"{query_chromosome_name}:{corr.query_fmin}-{corr.query_fmax}_{target_block.chromosome}:{corr.target_fmin}-{corr.target_fmax}"
                         jbrowse_obj = {
