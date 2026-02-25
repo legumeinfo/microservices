@@ -2,4 +2,4 @@ include INSTALL
 include LICENSE
 include MANIFEST.in
 include *.md
-include fasta_api/fasta_api.yaml
+include ds_utilities/ds_utilities.yaml

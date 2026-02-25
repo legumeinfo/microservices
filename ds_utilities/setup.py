@@ -3,6 +3,6 @@
 import setuptools
 import shutil
 
-shutil.copy2("./openapi/fasta_api/v1/fasta_api.yaml", "fasta_api/fasta_api.yaml")
+shutil.copy2("./openapi/ds_utilities/v1/ds_utilities.yaml", "ds_utilities/ds_utilities.yaml")
 
 setuptools.setup(include_package_data=True)

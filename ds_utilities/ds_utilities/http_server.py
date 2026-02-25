@@ -116,8 +116,8 @@ def run_http_server(host, port, handler):
         },
     )
     # Load the YAML file
-    files = resources.files('fasta_api')
-    api_path = files / 'fasta_api.yaml'
+    files = resources.files('ds_utilities')
+    api_path = files / 'ds_utilities.yaml'
     with api_path.open('r') as file:
         spec = yaml.safe_load(file)
 

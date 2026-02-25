@@ -16,13 +16,13 @@ Install pre-commit hooks before developing. The github will force you to subscri
 
 `pre-commit install`
 
-## install fasta_api
+## install ds_utilities
 ```
-$ python3 -m venv fasta_api_env
-$ source ./fasta_api_env/bin/activate
-(fasta_api_env)$ pip install -r requirements.txt
-(fasta_api_env)$ python ./setup.py install
-(fasta_api_env)$ fasta_api
+$ python3 -m venv ds_utilities_env
+$ source ./ds_utilities_env/bin/activate
+(ds_utilities_env)$ pip install -r requirements.txt
+(ds_utilities_env)$ python ./setup.py install
+(ds_utilities_env)$ ds_utilities
 ======== Running on http://0.0.0.0:8080 ========
 (Press CTRL+C to quit)
 ```
@@ -41,7 +41,7 @@ In production, the `ALLOWED_URLS` environment variable can be set to a comma-sep
 If the requested URL begins with any of the URLs in the list, the request will be allowed; otherwise, an HTTP 403 status code will result.
 
 ```
-$ export ALLOWED_URLS='https://data.legumeinfo.org/,https://data.soybase.org/';fasta_api
+$ export ALLOWED_URLS='https://data.legumeinfo.org/,https://data.soybase.org/';ds_utilities
 ```
 
 ## API documentation

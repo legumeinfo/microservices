@@ -11,9 +11,9 @@ import signal
 import uvloop
 
 # module
-import fasta_api
-from fasta_api.http_server import run_http_server
-from fasta_api.request_handler import RequestHandler
+import ds_utilities
+from ds_utilities.http_server import run_http_server
+from ds_utilities.request_handler import RequestHandler
 
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
@@ -41,7 +41,7 @@ class EnvArg(argparse.Action):
 def parseArgs():
     # create the parser
     parser = argparse.ArgumentParser(
-        prog=fasta_api.__name__,
+        prog=ds_utilities.__name__,
         description="""
         A microservice that returns the hyperlink info objects corresponding to the
         given gene id.
@@ -51,7 +51,7 @@ def parseArgs():
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {fasta_api.__version__}",
+        version=f"%(prog)s {ds_utilities.__version__}",
     )
 
     # logging args

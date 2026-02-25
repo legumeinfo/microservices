@@ -1,5 +1,5 @@
 services:
-  fasta_api:
+  ds_utilities:
     build:
       context: .
     environment:

@@ -26,7 +26,7 @@ class RequestHandler:
         return {"error": msg, "status": 400}
 
     def index(self):
-        return "fasta_api"
+        return "ds_utilities"
 
     def fasta_range(self, url: str, seqid: str, start: int = None, end: int = None):
         url = self.check_url(url)

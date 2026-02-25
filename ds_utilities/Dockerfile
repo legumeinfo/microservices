@@ -18,7 +18,7 @@ COPY README.md ./
 COPY setup.cfg ./
 COPY setup.py ./
 COPY requirements.txt ./
-COPY fasta_api ./fasta_api/
+COPY ds_utilities ./ds_utilities/
 COPY openapi ./openapi/
 COPY test.py ./
 
@@ -33,4 +33,4 @@ RUN pip3 install --no-cache-dir .
 
 WORKDIR /
 
-ENTRYPOINT ["python3", "-u", "-m", "fasta_api"]
+ENTRYPOINT ["python3", "-u", "-m", "ds_utilities"]

@@ -1,4 +1,4 @@
 services:
-  fasta_api:
+  ds_utilities:
     environment:
       HTTP_HOST: "0.0.0.0"
