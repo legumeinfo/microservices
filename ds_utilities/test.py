@@ -154,6 +154,78 @@ class TestMainEndpoints(unittest.TestCase):
         response = self.fetch_url(url)
         self.assertEqual(self.response_hash(response), expected_response)
 
+    def test_vcf_alleles_hap_encoding(self):
+        url = "http://localhost:8080/vcf/alleles/cicar.CDCFrontier.gnm1.Ca2:1-10000/https:%2F%2Fdata.legumeinfo.org%2FCicer%2Farietinum%2Fdiversity%2FCDCFrontier.div.vonWettberg_Chang_2018%2Fcicar.CDCFrontier.div.vonWettberg_Chang_2018_sub10k.vcf.gz?samples=Amit,BL&encoding=hap"
+        expected_response = {
+            "region": {
+                "chromosome": "cicar.CDCFrontier.gnm1.Ca2",
+                "start": 1,
+                "end": 10000,
+            },
+            "encoding": "hap",
+            "samples": ["Amit", "BL"],
+            "invalid_samples": [],
+            "variant_count": 1,
+            "variants": [
+                {
+                    "position": 4629,
+                    "ref": "A",
+                    "alt": "T",
+                    "genotypes": {"Amit": "AA", "BL": "AA"},
+                }
+            ],
+        }
+        response = self.fetch_url(url)
+        self.assertEqual(response, expected_response)
+
+    def test_vcf_alleles_vcf_encoding(self):
+        url = "http://localhost:8080/vcf/alleles/cicar.CDCFrontier.gnm1.Ca2:1-10000/https:%2F%2Fdata.legumeinfo.org%2FCicer%2Farietinum%2Fdiversity%2FCDCFrontier.div.vonWettberg_Chang_2018%2Fcicar.CDCFrontier.div.vonWettberg_Chang_2018_sub10k.vcf.gz?samples=Amit,BL&encoding=vcf"
+        expected_response = {
+            "region": {
+                "chromosome": "cicar.CDCFrontier.gnm1.Ca2",
+                "start": 1,
+                "end": 10000,
+            },
+            "encoding": "vcf",
+            "samples": ["Amit", "BL"],
+            "invalid_samples": [],
+            "variant_count": 1,
+            "variants": [
+                {
+                    "position": 4629,
+                    "ref": "A",
+                    "alt": "T",
+                    "genotypes": {"Amit": "0/0", "BL": "0/0"},
+                }
+            ],
+        }
+        response = self.fetch_url(url)
+        self.assertEqual(response, expected_response)
+
+    def test_vcf_alleles_invalid_sample(self):
+        url = "http://localhost:8080/vcf/alleles/cicar.CDCFrontier.gnm1.Ca2:1-10000/https:%2F%2Fdata.legumeinfo.org%2FCicer%2Farietinum%2Fdiversity%2FCDCFrontier.div.vonWettberg_Chang_2018%2Fcicar.CDCFrontier.div.vonWettberg_Chang_2018_sub10k.vcf.gz?samples=Amit,InvalidSample&encoding=hap"
+        expected_response = {
+            "region": {
+                "chromosome": "cicar.CDCFrontier.gnm1.Ca2",
+                "start": 1,
+                "end": 10000,
+            },
+            "encoding": "hap",
+            "samples": ["Amit"],
+            "invalid_samples": ["InvalidSample"],
+            "variant_count": 1,
+            "variants": [
+                {
+                    "position": 4629,
+                    "ref": "A",
+                    "alt": "T",
+                    "genotypes": {"Amit": "AA"},
+                }
+            ],
+        }
+        response = self.fetch_url(url)
+        self.assertEqual(response, expected_response)
+
     def test_alignment_references(self):
         url = "http://localhost:8080/alignment/references/https:%2F%2Fdata.legumeinfo.org%2FArachis%2Fhypogaea%2Fgenome_alignments%2FTifrunner.gnm2.wga.DWM1%2Farahy.Tifrunner.gnm2.x.aradu.V14167.gnm2.DWM1.bam"
         expected_response = (
