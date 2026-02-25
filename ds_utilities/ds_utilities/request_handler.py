@@ -132,11 +132,11 @@ class RequestHandler:
                     itertools.starmap(
                         lambda k, v: (
                             k,
-                            int(v)
-                            if k in ["start", "end", "thickStart", "thickEnd"]
-                            else float(v)
-                            if k == "score"
-                            else v,
+                            (
+                                int(v)
+                                if k in ["start", "end", "thickStart", "thickEnd"]
+                                else float(v) if k == "score" else v
+                            ),
                         ),
                         zip(bedcols, feature),
                     )
@@ -232,8 +232,13 @@ class RequestHandler:
             return "NN"
 
     def vcf_alleles(
-        self, url: str, seqid: str, start: int, end: int,
-        samples: str = None, encoding: str = "hap"
+        self,
+        url: str,
+        seqid: str,
+        start: int,
+        end: int,
+        samples: str = None,
+        encoding: str = "hap",
     ):
         """Extract alleles for specified samples in a genomic region.
 
@@ -266,7 +271,9 @@ class RequestHandler:
                 if samples:
                     requested = [s.strip() for s in samples.split(",")]
                     valid_samples = [s for s in requested if s in available_samples]
-                    invalid_samples = [s for s in requested if s not in available_samples]
+                    invalid_samples = [
+                        s for s in requested if s not in available_samples
+                    ]
                 else:
                     valid_samples = list(vcf.header.samples)
                     invalid_samples = []
@@ -293,12 +300,14 @@ class RequestHandler:
                                 ref, alts, gt
                             )
 
-                    variants.append({
-                        "position": record.pos,
-                        "ref": ref,
-                        "alt": ",".join(alts) if alts else ".",
-                        "genotypes": genotypes,
-                    })
+                    variants.append(
+                        {
+                            "position": record.pos,
+                            "ref": ref,
+                            "alt": ",".join(alts) if alts else ".",
+                            "genotypes": genotypes,
+                        }
+                    )
 
                 return {
                     "region": {
