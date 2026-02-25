@@ -1,0 +1,4 @@
+services:
+  ds_utilities:
+    environment:
+      HTTP_HOST: "0.0.0.0"
