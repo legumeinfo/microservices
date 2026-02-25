@@ -279,8 +279,9 @@ class RequestHandler:
                     invalid_samples = []
 
                 if not valid_samples:
+                    available = ", ".join(sorted(available_samples))
                     return self.send_400_resp(
-                        f"No valid samples found. Available: {', '.join(sorted(available_samples))}"
+                        f"No valid samples found. Available: {available}"
                     )
 
                 # Extract variants
