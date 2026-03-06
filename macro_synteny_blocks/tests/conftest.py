@@ -1,9 +1,10 @@
-import pytest
-import fakeredis.aioredis
-import redis.asyncio as aioredis
 import os
-from unittest.mock import AsyncMock, MagicMock
 from collections import namedtuple
+from unittest.mock import AsyncMock, MagicMock
+
+import fakeredis.aioredis
+import pytest
+import redis.asyncio as aioredis
 
 
 @pytest.fixture
@@ -13,8 +14,7 @@ async def redis_connection():
     redis_port = int(os.getenv("REDIS_PORT", "6379"))
 
     redis_conn = await aioredis.from_url(
-        f"redis://{redis_host}:{redis_port}",
-        decode_responses=True
+        f"redis://{redis_host}:{redis_port}", decode_responses=True
     )
 
     yield redis_conn
@@ -58,21 +58,27 @@ async def redis_with_gene_index(fakeredis_connection):
     for gene_name, family, chromosome, index in test_data:
         # In fakeredis, we need to manually add documents for search
         # This is a simplified version - real implementation would use ft.add
-        await redis.hset(f"gene:{gene_name}", mapping={
-            "name": gene_name,
-            "family": family,
-            "chromosome": chromosome,
-            "index": str(index),
-        })
+        await redis.hset(
+            f"gene:{gene_name}",
+            mapping={
+                "name": gene_name,
+                "family": family,
+                "chromosome": chromosome,
+                "index": str(index),
+            },
+        )
 
     # Create chromosome documents
     for chr_id in ["chr1", "chr2", "chr3"]:
-        await redis.hset(f"chromosome:{chr_id}", mapping={
-            "name": chr_id,
-            "genus": "Test",
-            "species": "species",
-            "length": "10000",
-        })
+        await redis.hset(
+            f"chromosome:{chr_id}",
+            mapping={
+                "name": chr_id,
+                "genus": "Test",
+                "species": "species",
+                "length": "10000",
+            },
+        )
 
     yield redis
 
@@ -97,12 +103,15 @@ async def redis_with_chromosomes(fakeredis_connection):
     }
 
     for chr_id, data in chromosomes.items():
-        await redis.hset(f"chromosome:{chr_id}", mapping={
-            "name": chr_id,
-            "genus": "Test",
-            "species": "species",
-            "length": str(data["length"]),
-        })
+        await redis.hset(
+            f"chromosome:{chr_id}",
+            mapping={
+                "name": chr_id,
+                "genus": "Test",
+                "species": "species",
+                "length": str(data["length"]),
+            },
+        )
 
     yield redis
 
@@ -114,6 +123,7 @@ Gene = namedtuple("Gene", ["name", "fmin", "fmax"])
 @pytest.fixture
 def mock_genes_service():
     """Mock genes microservice gRPC client."""
+
     async def mock_getGenes(gene_names, address):
         # Return mock gene objects with positions
         # Position is based on the gene number in the name (e.g., "gene1" -> index 0, "gene3" -> index 2)
@@ -123,11 +133,9 @@ def mock_genes_service():
             gene_number = int(name.replace("gene", ""))
             # Calculate position based on gene number (gene1 at index 0, gene2 at index 1, etc.)
             gene_index = gene_number - 1
-            genes.append(Gene(
-                name=name,
-                fmin=gene_index * 1000,
-                fmax=gene_index * 1000 + 999
-            ))
+            genes.append(
+                Gene(name=name, fmin=gene_index * 1000, fmax=gene_index * 1000 + 999)
+            )
         return genes
 
     return mock_getGenes
@@ -136,6 +144,7 @@ def mock_genes_service():
 @pytest.fixture
 def mock_chromosome_service():
     """Mock chromosome microservice gRPC client."""
+
     async def mock_getChromosome(chromosome_name, address):
         # Return mock chromosome data: (families, gene_names, length)
         if chromosome_name == "test_chr":
@@ -158,7 +167,18 @@ def mock_chromosome_service():
 @pytest.fixture
 def mock_pairwise_service():
     """Mock pairwise-macro-synteny-blocks gRPC client."""
-    async def mock_computePairwise(chromosome, target, matched, intermediate, mask, metrics, chromosome_genes, chromosome_length, address):
+
+    async def mock_computePairwise(
+        chromosome,
+        target,
+        matched,
+        intermediate,
+        mask,
+        metrics,
+        chromosome_genes,
+        chromosome_length,
+        address,
+    ):
         # Return mock blocks as dicts to allow dynamic attribute assignment
         # This simulates gRPC objects that can have attributes added
         class MockBlock:
@@ -189,7 +209,7 @@ def sample_blocks():
             "blocks": [
                 {"i": 0, "j": 2, "fmin": 0, "fmax": 2999, "orientation": "+"},
                 {"i": 3, "j": 4, "fmin": 3000, "fmax": 4999, "orientation": "-"},
-            ]
+            ],
         },
         {
             "chromosome": "chr2",
@@ -197,7 +217,7 @@ def sample_blocks():
             "species": "species",
             "blocks": [
                 {"i": 1, "j": 3, "fmin": 1000, "fmax": 3999, "orientation": "+"},
-            ]
+            ],
         },
     ]
 

@@ -3,14 +3,19 @@ import asyncio
 import logging
 from collections import defaultdict
 
+from redis.commands.search import reducers
+
 # dependencies
 from redis.commands.search.aggregation import AggregateRequest
 from redis.commands.search.query import Query
-from redis.commands.search import reducers
 
 # module
 from macro_synteny_blocks.aioredisearch import CustomAsyncSearch
-from macro_synteny_blocks.grpc_client import computePairwiseMacroSyntenyBlocks, getChromosome, getGenes
+from macro_synteny_blocks.grpc_client import (
+    computePairwiseMacroSyntenyBlocks,
+    getChromosome,
+    getGenes,
+)
 
 
 class RequestHandler:
@@ -99,7 +104,7 @@ class RequestHandler:
             if c in self.breakpoint_characters:
                 parts.append("\\")
             parts.append(c)
-        return ''.join(parts)
+        return "".join(parts)
 
     def _grpcBlockToDictBlock(self, grpc_block):
         dict_block = {
@@ -147,19 +152,20 @@ class RequestHandler:
         # split families into batches
         family_batches = []
         for i in range(0, len(cleaned_families), BATCH_SIZE):
-            family_batches.append(cleaned_families[i:i + BATCH_SIZE])
+            family_batches.append(cleaned_families[i : i + BATCH_SIZE])
 
         # use FT.AGGREGATE to group genes by chromosome and collect indices
         for batch in family_batches:
             # combine all families in this batch with pipe (OR) operator
             query_string = f"(@family:{{{'|'.join(batch)}}}){targets_query_part}"
 
-            request = AggregateRequest(query_string) \
-                .group_by('@chromosome',
-                          reducers.tolist('@index').alias('indices'),
-                          reducers.count().alias('gene_count'))
+            request = AggregateRequest(query_string).group_by(
+                "@chromosome",
+                reducers.tolist("@index").alias("indices"),
+                reducers.count().alias("gene_count"),
+            )
 
-            pipeline.execute_command('FT.AGGREGATE', 'geneIdx', *request.build_args())
+            pipeline.execute_command("FT.AGGREGATE", "geneIdx", *request.build_args())
 
         aggregate_results = await pipeline.execute()
 
@@ -190,9 +196,9 @@ class RequestHandler:
                     field_name = row[field_idx]
                     field_value = row[field_idx + 1]
 
-                    if field_name == 'chromosome':
+                    if field_name == "chromosome":
                         chrom_name = field_value
-                    elif field_name == 'indices':
+                    elif field_name == "indices":
                         indices_value = field_value
 
                 indices = [int(idx) for idx in indices_value]
@@ -358,9 +364,17 @@ class RequestHandler:
                 if gene_idx < len(query_gene_names):
                     gene_names_to_fetch.add(query_gene_names[gene_idx])
                 # Also collect gene names from correspondences
-                correspondences = block.get("correspondences", []) if is_dict else getattr(block, "correspondences", [])
+                correspondences = (
+                    block.get("correspondences", [])
+                    if is_dict
+                    else getattr(block, "correspondences", [])
+                )
                 for corr in correspondences:
-                    corr_query_idx = corr["query_index"] if isinstance(corr, dict) else corr.query_index
+                    corr_query_idx = (
+                        corr["query_index"]
+                        if isinstance(corr, dict)
+                        else corr.query_index
+                    )
                     if corr_query_idx < len(query_gene_names):
                         gene_names_to_fetch.add(query_gene_names[corr_query_idx])
 
@@ -401,17 +415,27 @@ class RequestHandler:
                     if gene_name in gene_map:
                         gene = gene_map[gene_name]
                         if is_dict:
-                            block["queryGeneFmin"] = min(gene.fmin, block["queryGeneFmin"])
-                            block["queryGeneFmax"] = max(gene.fmax, block["queryGeneFmax"])
+                            block["queryGeneFmin"] = min(
+                                gene.fmin, block["queryGeneFmin"]
+                            )
+                            block["queryGeneFmax"] = max(
+                                gene.fmax, block["queryGeneFmax"]
+                            )
                         else:
                             block.queryGeneFmin = min(gene.fmin, block.queryGeneFmin)
                             block.queryGeneFmax = max(gene.fmax, block.queryGeneFmax)
 
                 # Enrich correspondences with query gene coordinates
-                correspondences = block.get("correspondences", []) if is_dict else getattr(block, "correspondences", [])
+                correspondences = (
+                    block.get("correspondences", [])
+                    if is_dict
+                    else getattr(block, "correspondences", [])
+                )
                 for corr in correspondences:
                     corr_is_dict = isinstance(corr, dict)
-                    corr_query_idx = corr["query_index"] if corr_is_dict else corr.query_index
+                    corr_query_idx = (
+                        corr["query_index"] if corr_is_dict else corr.query_index
+                    )
                     if corr_query_idx < len(query_gene_names):
                         gene_name = query_gene_names[corr_query_idx]
                         if gene_name in gene_map:
@@ -442,7 +466,9 @@ class RequestHandler:
 
         for blocks_obj in blocks:
             # Fetch the chromosome doc to get length
-            doc = await chromosome_index.load_document(f"chromosome:{blocks_obj['chromosome']}")
+            doc = await chromosome_index.load_document(
+                f"chromosome:{blocks_obj['chromosome']}"
+            )
             blocks_obj["chromosomeLength"] = int(doc.length)
 
         return blocks

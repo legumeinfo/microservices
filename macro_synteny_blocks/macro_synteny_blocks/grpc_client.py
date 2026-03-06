@@ -52,7 +52,7 @@ async def getChromosome(chromosome_name, address):
         return (
             list(result.chromosome.track.families),
             list(result.chromosome.track.genes),
-            result.chromosome.length
+            result.chromosome.length,
         )
     except Exception as e:
         logging.error(e)

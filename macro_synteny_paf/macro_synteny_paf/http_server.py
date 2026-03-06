@@ -1,7 +1,8 @@
 # dependencies
+import json
+
 import aiohttp_cors
 from aiohttp import web
-import json
 
 
 async def http_get_handler(request):
@@ -17,8 +18,8 @@ async def http_get_handler(request):
     metrics = metrics_param.split(",") if metrics_param else None
     identity = request.rel_url.query.get("identity", None)
     anchors = request.rel_url.query.get("anchors", None)
-    chromosome_genes = None #data.get("chromosome_genes", None)
-    chromosome_length = None #data.get("chromosome_length", None)
+    chromosome_genes = None  # data.get("chromosome_genes", None)
+    chromosome_length = None  # data.get("chromosome_length", None)
     handler = request.app["handler"]
 
     if format_type not in ["json", "paf"]:
@@ -72,14 +73,10 @@ async def http_get_handler(request):
 
     if format_type == "json":
         return web.Response(
-            text=json.dumps(result, indent=2),
-            content_type='application/json'
+            text=json.dumps(result, indent=2), content_type="application/json"
         )
     else:
-        return web.Response(
-            text=result,
-            content_type='text/plain'
-        )
+        return web.Response(text=result, content_type="text/plain")
 
 
 async def run_http_server(host, port, handler):

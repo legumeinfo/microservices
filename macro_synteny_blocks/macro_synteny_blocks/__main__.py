@@ -303,8 +303,10 @@ def main():
         handler = RequestHandler(
             redis_connection,
             args.pairwiseaddr,
-            chromosome_address=args.chromosomeaddr if hasattr(args, 'chromosomeaddr') else None,
-            genes_address=args.genesaddr if hasattr(args, 'genesaddr') else None
+            chromosome_address=(
+                args.chromosomeaddr if hasattr(args, "chromosomeaddr") else None
+            ),
+            genes_address=args.genesaddr if hasattr(args, "genesaddr") else None,
         )
         # start the HTTP server
         if not args.nohttp:

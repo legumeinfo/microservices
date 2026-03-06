@@ -28,7 +28,10 @@ from grpc.experimental import aio
 from macro_synteny_paf import proto  # noqa: F401
 from genes_service.v1 import genes_pb2, genes_pb2_grpc
 from chromosome_service.v1 import chromosome_pb2, chromosome_pb2_grpc
-from macrosyntenyblocks_service.v1 import macrosyntenyblocks_pb2, macrosyntenyblocks_pb2_grpc
+from macrosyntenyblocks_service.v1 import (
+    macrosyntenyblocks_pb2,
+    macrosyntenyblocks_pb2_grpc,
+)
 
 # isort: on
 
@@ -52,6 +55,7 @@ async def getGenes(
         logging.error(e)
         return None
 
+
 async def getChromosome(
     chromosome_name,
     address,
@@ -71,6 +75,7 @@ async def getChromosome(
         logging.error(e)
         return None
 
+
 async def getChromosomeLength(
     chromosome_name,
     address,
@@ -89,6 +94,7 @@ async def getChromosomeLength(
     except Exception as e:
         logging.error(e)
         return None
+
 
 async def computeMacroSyntenyBlocks(
     chromosome,
@@ -126,6 +132,7 @@ async def computeMacroSyntenyBlocks(
     except Exception as e:
         logging.error(e)
         return None
+
 
 async def computeMacroSyntenyBlocksByChromosome(
     chromosome_name,

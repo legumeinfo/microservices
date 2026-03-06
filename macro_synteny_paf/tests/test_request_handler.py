@@ -1,8 +1,10 @@
-import pytest
 import hashlib
 import json
-from macro_synteny_paf.request_handler import RequestHandler
 from collections import namedtuple
+
+import pytest
+
+from macro_synteny_paf.request_handler import RequestHandler
 
 
 @pytest.mark.unit
@@ -14,7 +16,7 @@ class TestGenerateCacheKey:
             redis_connection=None,
             chromosome_address="localhost:8081",
             genes_address="localhost:8082",
-            macrosyntenyblocks_address="localhost:8083"
+            macrosyntenyblocks_address="localhost:8083",
         )
 
     def test_deterministic_key(self):
@@ -112,15 +114,23 @@ class TestBlockToPafRow:
             redis_connection=None,
             chromosome_address="localhost:8081",
             genes_address="localhost:8082",
-            macrosyntenyblocks_address="localhost:8083"
+            macrosyntenyblocks_address="localhost:8083",
         )
 
     async def test_paf_format_with_enrichment(self):
         """Test PAF row generation with enriched gene info."""
-        Block = namedtuple("Block", ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"])
+        Block = namedtuple(
+            "Block",
+            ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],
+        )
         block = Block(
-            i=0, j=2, fmin=0, fmax=2999, orientation="+",
-            queryGeneFmin=100, queryGeneFmax=2500
+            i=0,
+            j=2,
+            fmin=0,
+            fmax=2999,
+            orientation="+",
+            queryGeneFmin=100,
+            queryGeneFmax=2500,
         )
 
         paf_row = await self.handler._blockToPafRow(
@@ -128,7 +138,7 @@ class TestBlockToPafRow:
             query_chromosome_length=10000,
             target_chromosome_name="target_chr",
             target_chromosome_length=8000,
-            target_block=block
+            target_block=block,
         )
 
         # PAF format: qname qlen qstart qend strand tname tlen tstart tend matches alen mapq
@@ -147,10 +157,18 @@ class TestBlockToPafRow:
 
     async def test_paf_reverse_orientation(self):
         """Test PAF row with reverse orientation."""
-        Block = namedtuple("Block", ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"])
+        Block = namedtuple(
+            "Block",
+            ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],
+        )
         block = Block(
-            i=0, j=2, fmin=0, fmax=2999, orientation="-",
-            queryGeneFmin=100, queryGeneFmax=2500
+            i=0,
+            j=2,
+            fmin=0,
+            fmax=2999,
+            orientation="-",
+            queryGeneFmin=100,
+            queryGeneFmax=2500,
         )
 
         paf_row = await self.handler._blockToPafRow(
@@ -158,7 +176,7 @@ class TestBlockToPafRow:
             query_chromosome_length=10000,
             target_chromosome_name="target_chr",
             target_chromosome_length=8000,
-            target_block=block
+            target_block=block,
         )
 
         fields = paf_row.strip().split("\t")
@@ -175,15 +193,23 @@ class TestBlockToJson:
             redis_connection=None,
             chromosome_address="localhost:8081",
             genes_address="localhost:8082",
-            macrosyntenyblocks_address="localhost:8083"
+            macrosyntenyblocks_address="localhost:8083",
         )
 
     async def test_json_format_with_enrichment(self):
         """Test JSON object generation with enriched gene info."""
-        Block = namedtuple("Block", ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"])
+        Block = namedtuple(
+            "Block",
+            ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],
+        )
         block = Block(
-            i=0, j=2, fmin=0, fmax=2999, orientation="+",
-            queryGeneFmin=100, queryGeneFmax=2500
+            i=0,
+            j=2,
+            fmin=0,
+            fmax=2999,
+            orientation="+",
+            queryGeneFmin=100,
+            queryGeneFmax=2500,
         )
 
         json_obj = await self.handler._blockToJson(
@@ -191,7 +217,7 @@ class TestBlockToJson:
             query_chromosome_length=10000,
             target_chromosome_name="target_chr",
             target_chromosome_length=8000,
-            target_block=block
+            target_block=block,
         )
 
         # Verify JSON structure
@@ -221,10 +247,18 @@ class TestBlockToJson:
 
     async def test_json_format_reverse_orientation(self):
         """Test JSON object with reverse orientation."""
-        Block = namedtuple("Block", ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"])
+        Block = namedtuple(
+            "Block",
+            ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],
+        )
         block = Block(
-            i=0, j=2, fmin=0, fmax=2999, orientation="-",
-            queryGeneFmin=100, queryGeneFmax=2500
+            i=0,
+            j=2,
+            fmin=0,
+            fmax=2999,
+            orientation="-",
+            queryGeneFmin=100,
+            queryGeneFmax=2500,
         )
 
         json_obj = await self.handler._blockToJson(
@@ -232,7 +266,7 @@ class TestBlockToJson:
             query_chromosome_length=10000,
             target_chromosome_name="target_chr",
             target_chromosome_length=8000,
-            target_block=block
+            target_block=block,
         )
 
         assert json_obj["strand"] == "-"
@@ -248,26 +282,37 @@ class TestBlocksToPafRows:
             redis_connection=None,
             chromosome_address="localhost:8081",
             genes_address="localhost:8082",
-            macrosyntenyblocks_address="localhost:8083"
+            macrosyntenyblocks_address="localhost:8083",
         )
 
     async def test_paf_rows_with_enriched_chromosome_length(self):
         """Test that enriched chromosomeLength is used."""
-        Block = namedtuple("Block", ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"])
+        Block = namedtuple(
+            "Block",
+            ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],
+        )
         Blocks = namedtuple("Blocks", ["chromosome", "blocks", "chromosomeLength"])
 
         target_block = Blocks(
             chromosome="target_chr",
             chromosomeLength=8000,  # Enriched
             blocks=[
-                Block(i=0, j=2, fmin=0, fmax=2999, orientation="+", queryGeneFmin=100, queryGeneFmax=2500),
-            ]
+                Block(
+                    i=0,
+                    j=2,
+                    fmin=0,
+                    fmax=2999,
+                    orientation="+",
+                    queryGeneFmin=100,
+                    queryGeneFmax=2500,
+                ),
+            ],
         )
 
         paf_rows = await self.handler._blocksToPafRows(
             query_chromosome_name="query_chr",
             query_chromosome_length=10000,
-            target_block=target_block
+            target_block=target_block,
         )
 
         # Should use enriched chromosomeLength, not call chromosome service

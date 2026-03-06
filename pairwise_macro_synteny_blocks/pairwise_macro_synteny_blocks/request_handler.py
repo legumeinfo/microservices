@@ -319,7 +319,9 @@ class RequestHandler:
         # If correspondences requested, fetch target gene coordinates for each pair
         if correspondences and any("correspondences" in block for block in blocks):
             corr_pipeline = self.redis_connection.pipeline()
-            corr_counts = []  # Track correspondence count per block for offset calculation
+            corr_counts = (
+                []
+            )  # Track correspondence count per block for offset calculation
             for block in blocks:
                 if "correspondences" in block:
                     path = block["correspondences"]
@@ -337,14 +339,18 @@ class RequestHandler:
             for block, count in zip(blocks, corr_counts):
                 if count > 0:
                     enriched = []
-                    for i, (target_idx, query_idx) in enumerate(block["correspondences"]):
+                    for i, (target_idx, query_idx) in enumerate(
+                        block["correspondences"]
+                    ):
                         idx = offset + i * 2
-                        enriched.append({
-                            "query_index": query_idx,
-                            "target_index": target_idx,
-                            "target_fmin": int(corr_locations[idx]),
-                            "target_fmax": int(corr_locations[idx + 1]),
-                        })
+                        enriched.append(
+                            {
+                                "query_index": query_idx,
+                                "target_index": target_idx,
+                                "target_fmin": int(corr_locations[idx]),
+                                "target_fmax": int(corr_locations[idx + 1]),
+                            }
+                        )
                     block["correspondences"] = enriched
                     offset += count * 2
 

@@ -108,15 +108,17 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
                 proto_block.identity = b["identity"]
             if "correspondences" in b:
                 # Each correspondence is a dict with query_index, target_index, target_fmin, target_fmax
-                proto_block.correspondences.extend([
-                    block_pb2.Correspondence(
-                        query_index=corr["query_index"],
-                        target_index=corr["target_index"],
-                        target_fmin=corr["target_fmin"],
-                        target_fmax=corr["target_fmax"],
-                    )
-                    for corr in b["correspondences"]
-                ])
+                proto_block.correspondences.extend(
+                    [
+                        block_pb2.Correspondence(
+                            query_index=corr["query_index"],
+                            target_index=corr["target_index"],
+                            target_fmin=corr["target_fmin"],
+                            target_fmax=corr["target_fmax"],
+                        )
+                        for corr in b["correspondences"]
+                    ]
+                )
             return proto_block
 
         block_messages = list(map(block_to_proto, blocks))

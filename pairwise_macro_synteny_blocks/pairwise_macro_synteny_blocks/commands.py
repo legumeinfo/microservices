@@ -25,8 +25,8 @@ process.
 
 import os
 import sys
-
 from importlib.resources import files as resource_files
+
 import setuptools
 
 

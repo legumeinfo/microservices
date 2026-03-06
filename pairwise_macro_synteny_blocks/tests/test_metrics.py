@@ -3,7 +3,9 @@ Unit tests for distance metrics used in synteny block analysis.
 
 Tests Jaccard distance and Levenshtein distance calculations.
 """
+
 import pytest
+
 from pairwise_macro_synteny_blocks.metrics import jaccard, levenshtein
 
 
@@ -54,7 +56,7 @@ class TestJaccardDistance:
         # Intersection: {(fam1,fam2)} = 1
         # Union: {(fam1,fam2), (fam2,fam3), (fam2,fam4)} = 3
         # Distance = 1 - 1/3 = 2/3
-        assert abs(distance - 2/3) < 0.001
+        assert abs(distance - 2 / 3) < 0.001
 
     def test_with_3grams(self):
         """Test with n=3 (trigrams)."""
@@ -68,7 +70,7 @@ class TestJaccardDistance:
         # Intersection: {(fam1,fam2,fam3)} = 1
         # Union: 3
         # Distance = 1 - 1/3 = 2/3
-        assert abs(distance - 2/3) < 0.001
+        assert abs(distance - 2 / 3) < 0.001
 
     def test_n_larger_than_sequence(self):
         """When n > sequence length, should return 1."""
@@ -79,7 +81,6 @@ class TestJaccardDistance:
 
         # n=5 but sequences only have 2 elements
         assert distance == 1
-
 
     def test_with_reversals_bigrams(self):
         """Test reversals with n=2."""

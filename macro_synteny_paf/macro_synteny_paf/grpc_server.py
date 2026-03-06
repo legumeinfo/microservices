@@ -104,9 +104,7 @@ async def run_grpc_server(host, port, handler):
     server = aio.server()
     server.add_insecure_port(f"{host}:{port}")
     servicer = MacroSyntenyPaf(handler)
-    macrosyntenypaf_pb2_grpc.add_MacroSyntenyPafServicer_to_server(
-        servicer, server
-    )
+    macrosyntenypaf_pb2_grpc.add_MacroSyntenyPafServicer_to_server(servicer, server)
     await server.start()
     await server.wait_for_termination()
     # TODO: what about teardown? server.stop(None)

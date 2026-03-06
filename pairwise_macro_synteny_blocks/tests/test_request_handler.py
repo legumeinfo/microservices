@@ -1,4 +1,5 @@
 import pytest
+
 from pairwise_macro_synteny_blocks.request_handler import RequestHandler
 
 
@@ -30,16 +31,13 @@ class TestChromosomesToIndexPairs:
         query = ["fam1", "fam1", "fam1", "fam2"]
         target = ["fam1", "fam2"]
 
-        pairs, masked = self.handler._chromosomesToIndexPairs(
-            query, target, mask=2
-        )
+        pairs, masked = self.handler._chromosomesToIndexPairs(query, target, mask=2)
 
         # fam1 appears 3 times in query (exceeds mask=2), so should be masked
         assert "fam1" in masked
         # Only fam2 should match
         assert len(pairs) == 1
         assert (1, 3) in pairs
-
 
     def test_duplicate_families_in_target(self):
         """Test handling of duplicated families on target chromosome."""
@@ -62,9 +60,7 @@ class TestChromosomesToIndexPairs:
         query = ["fam1", "fam2"]
         target = ["fam1", "fam1", "fam1", "fam2"]
 
-        pairs, masked = self.handler._chromosomesToIndexPairs(
-            query, target, mask=2
-        )
+        pairs, masked = self.handler._chromosomesToIndexPairs(query, target, mask=2)
 
         # fam1 appears 3 times in target (exceeds mask=2)
         # So no fam1 pairs should be created
@@ -84,9 +80,9 @@ class TestIndexPairsToIndexBlocks:
         # Perfect forward diagonal: (0,0), (1,1), (2,2), (3,3)
         pairs = [(0, 0), (1, 1), (2, 2), (3, 3)]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=3
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=3)
+        )
 
         assert len(blocks) == 1
         begin, end, path = blocks[0]
@@ -97,9 +93,9 @@ class TestIndexPairsToIndexBlocks:
         # Reverse diagonal: (0,3), (1,2), (2,1), (3,0)
         pairs = [(0, 3), (1, 2), (2, 1), (3, 0)]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=3
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=3)
+        )
 
         assert len(blocks) == 1
         begin, end, path = blocks[0]
@@ -110,9 +106,9 @@ class TestIndexPairsToIndexBlocks:
         # Two separate blocks with large gap
         pairs = [(0, 0), (1, 1), (10, 10), (11, 11)]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=2, matched=2
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=2, matched=2)
+        )
 
         # Should form 2 separate blocks due to gap
         assert len(blocks) == 2
@@ -125,9 +121,9 @@ class TestIndexPairsToIndexBlocks:
         # Small blocks that don't meet matched requirement
         pairs = [(0, 0), (1, 1), (10, 10)]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=3
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=3)
+        )
 
         # No blocks meet the matched=3 requirement
         assert len(blocks) == 0
@@ -136,13 +132,18 @@ class TestIndexPairsToIndexBlocks:
         """Test detection of multiple independent synteny blocks."""
         # Two forward blocks separated by a gap
         pairs = [
-            (0, 0), (1, 1), (2, 2),  # Block 1
-            (10, 10), (11, 11), (12, 12), (13, 13)  # Block 2
+            (0, 0),
+            (1, 1),
+            (2, 2),  # Block 1
+            (10, 10),
+            (11, 11),
+            (12, 12),
+            (13, 13),  # Block 2
         ]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=3
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=3)
+        )
 
         assert len(blocks) == 2
         endpoints = [(b[0], b[1]) for b in blocks]
@@ -153,13 +154,17 @@ class TestIndexPairsToIndexBlocks:
         """Test that forward and reverse blocks are detected independently."""
         # One forward block and one reverse block
         pairs = [
-            (0, 0), (1, 1), (2, 2),     # Forward
-            (10, 20), (11, 19), (12, 18)  # Reverse
+            (0, 0),
+            (1, 1),
+            (2, 2),  # Forward
+            (10, 20),
+            (11, 19),
+            (12, 18),  # Reverse
         ]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=3
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=3)
+        )
 
         assert len(blocks) == 2
         endpoints = [(b[0], b[1]) for b in blocks]
@@ -176,9 +181,9 @@ class TestIndexPairsToIndexBlocks:
         # (1,1) -> (2,2) [score 2]
         pairs = [(0, 0), (1, 1), (2, 2), (3, 3)]
 
-        blocks = list(self.handler._indexPairsToIndexBlocks(
-            pairs, intermediate=1, matched=2
-        ))
+        blocks = list(
+            self.handler._indexPairsToIndexBlocks(pairs, intermediate=1, matched=2)
+        )
 
         # Should select the longest block (0,0) -> (3,3)
         # The shorter overlapping block (1,1) -> (2,2) can't be selected
@@ -203,9 +208,11 @@ class TestIndexPathTraceback:
         pointers = {node3: node2, node2: node1}
         scores = {node1: 1, node2: 2, node3: 3}
 
-        blocks = list(self.handler._indexBlocksViaIndexPathTraceback(
-            path_ends, pointers, scores, matched=3
-        ))
+        blocks = list(
+            self.handler._indexBlocksViaIndexPathTraceback(
+                path_ends, pointers, scores, matched=3
+            )
+        )
 
         assert len(blocks) == 1
         begin, end, path = blocks[0]
@@ -228,9 +235,11 @@ class TestIndexPathTraceback:
         }
         scores = {node1: 1, node2: 4, node3: 1, node4: 2}
 
-        blocks = list(self.handler._indexBlocksViaIndexPathTraceback(
-            path_ends, pointers, scores, matched=2
-        ))
+        blocks = list(
+            self.handler._indexBlocksViaIndexPathTraceback(
+                path_ends, pointers, scores, matched=2
+            )
+        )
 
         # Both blocks meet matched requirement
         assert len(blocks) == 2
@@ -256,9 +265,11 @@ class TestIndexPathTraceback:
         }
         scores = {node1: 1, shared_node: 2, node3: 3}
 
-        blocks = list(self.handler._indexBlocksViaIndexPathTraceback(
-            path_ends, pointers, scores, matched=2
-        ))
+        blocks = list(
+            self.handler._indexBlocksViaIndexPathTraceback(
+                path_ends, pointers, scores, matched=2
+            )
+        )
 
         # Only the first (higher score) block should be selected
         # The second block can't be formed because shared_node is consumed

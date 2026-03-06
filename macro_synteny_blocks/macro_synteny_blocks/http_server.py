@@ -140,7 +140,9 @@ async def run_http_server(host, port, handler):
     route = app.router.add_post("/", http_post_handler)
     cors.add(route)
     # Add the new chromosome-based endpoint
-    route_by_chromosome = app.router.add_post("/by-chromosome", http_post_by_chromosome_handler)
+    route_by_chromosome = app.router.add_post(
+        "/by-chromosome", http_post_by_chromosome_handler
+    )
     cors.add(route_by_chromosome)
     # run the app
     runner = web.AppRunner(app)

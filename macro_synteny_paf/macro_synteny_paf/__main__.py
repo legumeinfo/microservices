@@ -247,7 +247,7 @@ def parseArgs():
         dest="cache_enabled",
         action=EnvArg,
         envvar=cache_enabled_envvar,
-        type=lambda x: x.lower() in ('true', '1', 'yes'),
+        type=lambda x: x.lower() in ("true", "1", "yes"),
         default=True,
         help=f"""
         Enable result caching in Redis (can also be specified using the

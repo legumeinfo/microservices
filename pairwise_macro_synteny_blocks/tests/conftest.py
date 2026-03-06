@@ -1,5 +1,5 @@
-import pytest
 import fakeredis.aioredis
+import pytest
 
 
 @pytest.fixture
@@ -17,12 +17,15 @@ async def redis_with_chromosome(fakeredis_connection):
 
     # Populate with sample chromosome
     target = "test_chr"
-    await redis.hset(f"chromosome:{target}", mapping={
-        "name": target,
-        "genus": "Test",
-        "species": "species",
-        "length": "10000",
-    })
+    await redis.hset(
+        f"chromosome:{target}",
+        mapping={
+            "name": target,
+            "genus": "Test",
+            "species": "species",
+            "length": "10000",
+        },
+    )
 
     # Gene families on the chromosome
     families = ["fam1", "fam2", "fam3", "fam4", "fam5", "fam6", "fam7", "fam8"]
@@ -50,12 +53,15 @@ async def redis_with_multiple_chromosomes(fakeredis_connection):
 
     # Create two chromosomes with different characteristics
     for chr_id, (length, num_genes) in [("chr1", (10000, 8)), ("chr2", (5000, 4))]:
-        await redis.hset(f"chromosome:{chr_id}", mapping={
-            "name": chr_id,
-            "genus": "Test",
-            "species": "species",
-            "length": str(length),
-        })
+        await redis.hset(
+            f"chromosome:{chr_id}",
+            mapping={
+                "name": chr_id,
+                "genus": "Test",
+                "species": "species",
+                "length": str(length),
+            },
+        )
 
         families = [f"fam{i}" for i in range(1, num_genes + 1)]
         await redis.rpush(f"chromosome:{chr_id}:families", *families)

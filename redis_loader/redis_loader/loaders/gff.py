@@ -108,7 +108,7 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
         gene = {
             "name": gene_id,
             "fmin": row.Start + 1,  # Convert 0-based to 1-based
-            "fmax": row.End,        # End is same in both systems
+            "fmax": row.End,  # End is same in both systems
             "strand": strand_map.get(row.Strand, 0),
             "family": "",
         }

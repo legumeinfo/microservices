@@ -9,7 +9,13 @@ from redis.commands.search import AsyncSearch
 from redis.commands.search.query import Query
 
 # module
-from macro_synteny_paf.grpc_client import getGenes, getChromosome, getChromosomeLength, computeMacroSyntenyBlocks, computeMacroSyntenyBlocksByChromosome
+from macro_synteny_paf.grpc_client import (
+    computeMacroSyntenyBlocks,
+    computeMacroSyntenyBlocksByChromosome,
+    getChromosome,
+    getChromosomeLength,
+    getGenes,
+)
 
 
 class RequestHandler:
@@ -97,7 +103,9 @@ class RequestHandler:
         genome_prefix,
     ):
         # connect to the index
-        chromosome_index = AsyncSearch(self.redis_connection, index_name="chromosomeIdx")
+        chromosome_index = AsyncSearch(
+            self.redis_connection, index_name="chromosomeIdx"
+        )
         # replace RediSearch breakpoint characters with spaces
         cleaned_name = ""
         for c in genome_prefix:
@@ -111,7 +119,13 @@ class RequestHandler:
         result = await chromosome_index.search(query)
         num_chromosomes = result.total
         # then get the chromosomes
-        query = Query(cleaned_name).in_order().limit_fields("name").return_fields("name").paging(0, num_chromosomes)
+        query = (
+            Query(cleaned_name)
+            .in_order()
+            .limit_fields("name")
+            .return_fields("name")
+            .paging(0, num_chromosomes)
+        )
         result = await chromosome_index.search(query)
         chromosome_names = list(map(lambda d: d.name, result.docs))
         return chromosome_names
@@ -125,19 +139,19 @@ class RequestHandler:
         target_chromosome_length,
         target_block,
         # default values for PAF columns that are not available from the microservices
-        num_residue_matches = 1,
-        alignment_block_length = 1,
-        mapping_quality = 255, # denotes 'missing'
+        num_residue_matches=1,
+        alignment_block_length=1,
+        mapping_quality=255,  # denotes 'missing'
     ):
         # Check if block has enriched gene information from macro-synteny-blocks
-        if hasattr(target_block, 'queryGeneFmin') and target_block.queryGeneFmin:
+        if hasattr(target_block, "queryGeneFmin") and target_block.queryGeneFmin:
             # Use pre-fetched gene positions from enriched blocks
             query_start = target_block.queryGeneFmin
             query_end = target_block.queryGeneFmax
         else:
             # Fallback: get gene information from the genes microservice
             # This path is used when macro-synteny-blocks doesn't have genes_address configured
-            gene_names = [ list(query_chromosome.track.genes)[target_block.i] ]
+            gene_names = [list(query_chromosome.track.genes)[target_block.i]]
             genes = await getGenes(gene_names, self.genes_address)
             filtered_genes = list(filter(lambda d: d is not None, genes))
             # there should be only one match (index 0)
@@ -145,14 +159,14 @@ class RequestHandler:
             query_end = filtered_genes[0].fmax
 
         # PAF format is defined here: https://github.com/lh3/miniasm/blob/master/PAF.md
-        paf_row = f'{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}'
+        paf_row = f"{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}"
 
         # Add optionalMetrics as PAF tag if present (om:B:f,value1,value2,...)
-        if hasattr(target_block, 'optionalMetrics') and target_block.optionalMetrics:
-            metrics_str = ','.join(str(m) for m in target_block.optionalMetrics)
-            paf_row += f'\tom:B:f,{metrics_str}'
+        if hasattr(target_block, "optionalMetrics") and target_block.optionalMetrics:
+            metrics_str = ",".join(str(m) for m in target_block.optionalMetrics)
+            paf_row += f"\tom:B:f,{metrics_str}"
 
-        return paf_row + '\n'
+        return paf_row + "\n"
 
     # returns JSON object for a single macro-synteny block
     async def _blockToJson(
@@ -163,16 +177,16 @@ class RequestHandler:
         target_chromosome_length,
         target_block,
         # default values for PAF columns that are not available from the microservices
-        num_residue_matches = 1,
-        alignment_block_length = 1,
-        mapping_quality = 255, # denotes 'missing'
+        num_residue_matches=1,
+        alignment_block_length=1,
+        mapping_quality=255,  # denotes 'missing'
     ):
         # Check if block has enriched gene information from macro-synteny-blocks
-        if hasattr(target_block, 'queryGeneFmin') and target_block.queryGeneFmin:
+        if hasattr(target_block, "queryGeneFmin") and target_block.queryGeneFmin:
             query_start = target_block.queryGeneFmin
             query_end = target_block.queryGeneFmax
         else:
-            gene_names = [ list(query_chromosome.track.genes)[target_block.i] ]
+            gene_names = [list(query_chromosome.track.genes)[target_block.i]]
             genes = await getGenes(gene_names, self.genes_address)
             filtered_genes = list(filter(lambda d: d is not None, genes))
             # there should be only one match (index 0)
@@ -184,30 +198,34 @@ class RequestHandler:
                 "name": query_chromosome_name,
                 "length": query_chromosome_length,
                 "start": query_start,
-                "end": query_end
+                "end": query_end,
             },
             "target": {
                 "name": target_chromosome_name,
                 "length": target_chromosome_length,
                 "start": target_block.fmin,
-                "end": target_block.fmax
+                "end": target_block.fmax,
             },
             "strand": target_block.orientation,
             "numResidueMatches": num_residue_matches,
             "alignmentBlockLength": alignment_block_length,
-            "mappingQuality": mapping_quality
+            "mappingQuality": mapping_quality,
         }
         # Include identity if present
-        if hasattr(target_block, 'identity') and target_block.HasField('identity'):
+        if hasattr(target_block, "identity") and target_block.HasField("identity"):
             result["identity"] = target_block.identity
         # Include optionalMetrics if present
-        if hasattr(target_block, 'optionalMetrics'):
+        if hasattr(target_block, "optionalMetrics"):
             metrics_list = list(target_block.optionalMetrics)
-            logging.debug(f"Block has optionalMetrics: {metrics_list}, length: {len(metrics_list)}")
+            logging.debug(
+                f"Block has optionalMetrics: {metrics_list}, length: {len(metrics_list)}"
+            )
             if metrics_list:
                 result["optionalMetrics"] = metrics_list
         else:
-            logging.debug(f"Block does not have optionalMetrics attribute. Block attributes: {dir(target_block)}")
+            logging.debug(
+                f"Block does not have optionalMetrics attribute. Block attributes: {dir(target_block)}"
+            )
         return result
 
     # returns PAF rows for a target block object (containing multiple macro-synteny blocks)
@@ -218,7 +236,7 @@ class RequestHandler:
         target_block,
     ):
         # Check if target block has enriched chromosomeLength from macro-synteny-blocks
-        if hasattr(target_block, 'chromosomeLength') and target_block.chromosomeLength:
+        if hasattr(target_block, "chromosomeLength") and target_block.chromosomeLength:
             # Use pre-fetched chromosome length from enriched blocks
             target_chromosome_length = target_block.chromosomeLength
         else:
@@ -242,7 +260,7 @@ class RequestHandler:
                 for tgt_block in target_block.blocks
             ]
         )
-        return ''.join(paf_rows)
+        return "".join(paf_rows)
 
     # returns JSON array for a target block object (containing multiple macro-synteny blocks)
     async def _blocksToJson(
@@ -255,7 +273,7 @@ class RequestHandler:
         anchors=None,
     ):
         # Check if target block has enriched chromosomeLength from macro-synteny-blocks
-        if hasattr(target_block, 'chromosomeLength') and target_block.chromosomeLength:
+        if hasattr(target_block, "chromosomeLength") and target_block.chromosomeLength:
             target_chromosome_length = target_block.chromosomeLength
         else:
             target_chromosome_length = await getChromosomeLength(
@@ -280,12 +298,14 @@ class RequestHandler:
         if anchors == "regular":
             jbrowse_objects = []
             for idx, tgt_block in enumerate(target_block.blocks):
-                if hasattr(tgt_block, 'correspondences') and tgt_block.correspondences:
+                if hasattr(tgt_block, "correspondences") and tgt_block.correspondences:
                     for corr_idx, corr in enumerate(tgt_block.correspondences):
                         # Skip self-identity correspondences (same position on query and target)
                         # These create "vertical lines" that obscure synteny relationships
-                        if (corr.query_fmin == corr.target_fmin and
-                            corr.query_fmax == corr.target_fmax):
+                        if (
+                            corr.query_fmin == corr.target_fmin
+                            and corr.query_fmax == corr.target_fmax
+                        ):
                             continue
                         # Generate unique ID from chromosome names and coordinates
                         unique_id = f"{query_chromosome_name}:{corr.query_fmin}-{corr.query_fmax}_{target_block.chromosome}:{corr.target_fmin}-{corr.target_fmax}"
@@ -301,10 +321,12 @@ class RequestHandler:
                                 "start": corr.query_fmin,
                                 "end": corr.query_fmax,
                                 "assemblyName": query_assembly_name,
-                            }
+                            },
                         }
                         # Include identity if present on the block
-                        if hasattr(tgt_block, 'identity') and tgt_block.HasField('identity'):
+                        if hasattr(tgt_block, "identity") and tgt_block.HasField(
+                            "identity"
+                        ):
                             jbrowse_obj["identity"] = tgt_block.identity
                         jbrowse_objects.append(jbrowse_obj)
             return jbrowse_objects
@@ -386,7 +408,9 @@ class RequestHandler:
         # NOTE: If blocks are enriched, we could optimize this by getting it from
         # the chromosome service call inside macro-synteny-blocks, but that would
         # require passing it back in the response
-        query_chromosome = await getChromosome(query_chromosome_name, self.chromosome_address)
+        query_chromosome = await getChromosome(
+            query_chromosome_name, self.chromosome_address
+        )
         query_chromosome_length = query_chromosome.length
 
         if output_format == "paf":
@@ -402,7 +426,7 @@ class RequestHandler:
                     for target_block in filtered_target_blocks
                 ]
             )
-            return ''.join(paf_rows)
+            return "".join(paf_rows)
         else:
             # Return JSON format (list of alignment objects)
             json_arrays = await asyncio.gather(
@@ -470,8 +494,8 @@ class RequestHandler:
         # Cache miss or caching disabled - compute the result
         genome_1_chrs = await self._getChromosomeNames(genome_1)
         genome_2_chrs = await self._getChromosomeNames(genome_2)
-        iter(genome_1_chrs) # TypeError if not iterable
-        iter(genome_2_chrs) # TypeError if not iterable
+        iter(genome_1_chrs)  # TypeError if not iterable
+        iter(genome_2_chrs)  # TypeError if not iterable
 
         results = await asyncio.gather(
             *[
@@ -498,7 +522,7 @@ class RequestHandler:
 
         # Combine results based on format
         if output_format == "paf":
-            result = ''.join(results)
+            result = "".join(results)
         else:
             all_alignments = [item for sublist in results for item in sublist]
             result = {"alignments": all_alignments}
@@ -513,9 +537,7 @@ class RequestHandler:
 
                 # Store with TTL
                 await self.redis_connection.setex(
-                    cache_key,
-                    self.cache_ttl,
-                    cache_value
+                    cache_key, self.cache_ttl, cache_value
                 )
             except Exception as e:
                 # Log cache storage errors but don't fail the request
