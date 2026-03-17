@@ -215,6 +215,30 @@ def parseArgs():
         using the {pairwiseaddr_envvar} environment variable).
         """,
     )
+    chromosomeaddr_envvar = "CHROMOSOME_ADDR"
+    parser.add_argument(
+        "--chromosomeaddr",
+        action=EnvArg,
+        envvar=chromosomeaddr_envvar,
+        type=str,
+        help=f"""
+        The address of the chromosome microservice (can also be specified
+        using the {chromosomeaddr_envvar} environment variable). Optional - enables
+        ComputeByChromosome endpoint if provided.
+        """,
+    )
+    genesaddr_envvar = "GENES_ADDR"
+    parser.add_argument(
+        "--genesaddr",
+        action=EnvArg,
+        envvar=genesaddr_envvar,
+        type=str,
+        help=f"""
+        The address of the genes microservice (can also be specified
+        using the {genesaddr_envvar} environment variable). Optional - enables
+        gene position enrichment in ComputeByChromosome endpoint if provided.
+        """,
+    )
 
     return parser.parse_args()
 
@@ -276,7 +300,14 @@ def main():
             connectToRedis(args.rhost, args.rport, args.rdb, args.rpassword)
         )
         # create the request handler
-        handler = RequestHandler(redis_connection, args.pairwiseaddr)
+        handler = RequestHandler(
+            redis_connection,
+            args.pairwiseaddr,
+            chromosome_address=(
+                args.chromosomeaddr if hasattr(args, "chromosomeaddr") else None
+            ),
+            genes_address=args.genesaddr if hasattr(args, "genesaddr") else None,
+        )
         # start the HTTP server
         if not args.nohttp:
             loop.create_task(run_http_server(args.hhost, args.hport, handler))

@@ -27,6 +27,8 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
+        correspondences=None,
     ):
         iter(chromosome)  # TypeError if not iterable
         if target is None:
@@ -66,6 +68,12 @@ class RequestHandler:
             name, args = self._parseMetric(metric)
             if name not in METRICS:
                 raise ValueError(f'"{metric}" is not a valid metric')
+        # validate identity parameter
+        if identity is not None and identity not in ("levenshtein", "jaccard"):
+            raise ValueError('identity must be "levenshtein" or "jaccard"')
+        # validate correspondences parameter
+        if correspondences is not None and not isinstance(correspondences, bool):
+            raise ValueError("correspondences must be a boolean")
         return (
             chromosome,
             target,
@@ -75,6 +83,8 @@ class RequestHandler:
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
+            correspondences,
         )
 
     # given a query chromosome and a target chromosome as ordered lists of
@@ -118,12 +128,17 @@ class RequestHandler:
             if end in pointers:  # note: singletons aren't in pointers
                 if scores[end] < matched:
                     break
-                begin = end
-                while begin in pointers:
-                    begin = pointers.pop(begin)
+                # Collect the full path during traceback
+                path = [end]
+                current = end
+                while current in pointers:
+                    current = pointers.pop(current)
+                    path.append(current)
+                path.reverse()  # Start to end order
+                begin = path[0]
                 length = scores[end] - scores[begin] + 1
                 if length >= matched:
-                    yield (begin, end)
+                    yield (begin, end, path)
 
     # "constructs" a DAG using the index pairs as nodes and computes longest
     # forward (f_) and reverse (r_) oriented paths (blocks) using a recurrence
@@ -190,6 +205,8 @@ class RequestHandler:
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity=None,
+        correspondences=None,
     ):
         # connect to the indexes
         chromosome_index = AsyncSearch(
@@ -239,7 +256,7 @@ class RequestHandler:
         # convert the index blocks into output blocks
         blocks = []
         pipeline = self.redis_connection.pipeline()
-        for begin_pair, end_pair in index_blocks:
+        for begin_pair, end_pair, path in index_blocks:
             # determine the query start/stop indexes and block orientation based on
             # the query index values
             query_start_index, query_stop_index, orientation = (
@@ -261,9 +278,8 @@ class RequestHandler:
                 "j": query_stop_index,
                 "orientation": orientation,
             }
-            # compute optional metrics on the block
-            if metrics:
-                block["optionalMetrics"] = []
+            # prepare gene families if metrics or identity is requested
+            if metrics or identity:
                 query_families = list(
                     filter(
                         maskFilter,
@@ -278,10 +294,20 @@ class RequestHandler:
                 )
                 if orientation == "-":
                     target_families = target_families[::-1]
-                for metric in metrics:
-                    name, args = self._parseMetric(metric)
-                    value = METRICS[name](query_families, target_families, *args)
-                    block["optionalMetrics"].append(value)
+                # compute optional metrics on the block
+                if metrics:
+                    block["optionalMetrics"] = []
+                    for metric in metrics:
+                        name, args = self._parseMetric(metric)
+                        value = METRICS[name](query_families, target_families, *args)
+                        block["optionalMetrics"].append(value)
+                # compute identity if requested
+                if identity:
+                    identity_func = METRICS[f"{identity}_identity"]
+                    block["identity"] = identity_func(query_families, target_families)
+            # add correspondences if requested
+            if correspondences:
+                block["correspondences"] = path
             blocks.append(block)
         locations = await pipeline.execute()
         for i, block in enumerate(blocks):
@@ -289,5 +315,43 @@ class RequestHandler:
             start_fmin, start_fmax, end_fmin, end_fmax = locations[n : n + 4]
             block["fmin"] = min(int(start_fmin), int(start_fmax))
             block["fmax"] = max(int(end_fmin), int(end_fmax))
+
+        # If correspondences requested, fetch target gene coordinates for each pair
+        if correspondences and any("correspondences" in block for block in blocks):
+            corr_pipeline = self.redis_connection.pipeline()
+            corr_counts = (
+                []
+            )  # Track correspondence count per block for offset calculation
+            for block in blocks:
+                if "correspondences" in block:
+                    path = block["correspondences"]
+                    for target_idx, query_idx in path:
+                        corr_pipeline.lindex(f"{target_doc_id}:fmins", target_idx)
+                        corr_pipeline.lindex(f"{target_doc_id}:fmaxs", target_idx)
+                    corr_counts.append(len(path))
+                else:
+                    corr_counts.append(0)
+
+            corr_locations = await corr_pipeline.execute()
+
+            # Enrich correspondences with target coordinates
+            offset = 0
+            for block, count in zip(blocks, corr_counts):
+                if count > 0:
+                    enriched = []
+                    for i, (target_idx, query_idx) in enumerate(
+                        block["correspondences"]
+                    ):
+                        idx = offset + i * 2
+                        enriched.append(
+                            {
+                                "query_index": query_idx,
+                                "target_index": target_idx,
+                                "target_fmin": int(corr_locations[idx]),
+                                "target_fmax": int(corr_locations[idx + 1]),
+                            }
+                        )
+                    block["correspondences"] = enriched
+                    offset += count * 2
 
         return blocks

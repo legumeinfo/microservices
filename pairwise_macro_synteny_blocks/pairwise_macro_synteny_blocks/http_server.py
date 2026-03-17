@@ -16,6 +16,8 @@ async def http_post_handler(request):
     metrics = data.get("optionalMetrics", None)
     chromosome_genes = data.get("chromosomeGenes", None)
     chromosome_length = data.get("chromosomeLength", None)
+    identity = data.get("identity", None)
+    correspondences = data.get("correspondences", None)
     handler = request.app["handler"]
     try:
         (
@@ -27,6 +29,8 @@ async def http_post_handler(request):
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
+            correspondences,
         ) = handler.parseArguments(
             chromosome,
             target,
@@ -36,6 +40,8 @@ async def http_post_handler(request):
             metrics,
             chromosome_genes,
             chromosome_length,
+            identity,
+            correspondences,
         )
     except Exception:
         return web.HTTPBadRequest(
@@ -50,6 +56,8 @@ async def http_post_handler(request):
         metrics,
         chromosome_genes,
         chromosome_length,
+        identity,
+        correspondences,
     )
     if blocks is None:
         return web.HTTPNotFound(text="Chromosome not found")
