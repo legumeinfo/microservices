@@ -7,7 +7,7 @@ from collections import defaultdict
 from urllib.request import urlopen, urlparse
 
 # dependencies
-import pyranges as pr
+import pyranges1 as pr
 
 
 def _open_gff_source(source):
