@@ -38,7 +38,7 @@ propcache==0.3.2
     #   yarl
 protobuf==6.32.0
     # via grpcio-tools
-redis==6.4.0
+redis==7.0.1
     # via gene_search (setup.py)
 uvloop==0.21.0
     # via gene_search (setup.py)
