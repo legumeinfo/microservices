@@ -354,12 +354,10 @@ class RediSearchLoader(object):
             try:
                 gene_index.info()  # will throw an error if index doesn't exist
                 chromosome_index.info()  # ditto
-                print(
-                    f"""
+                print(f"""
                     found existing GCV database without schema version; assuming version
                     {default_version}
-                """
-                )
+                """)
                 existing_version = default_version
             except redis.RedisError:
                 pass

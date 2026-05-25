@@ -21,7 +21,6 @@
 Provides distutils command classes for the micro-synteny search Python setup process.
 """
 
-
 import os
 import sys
 
