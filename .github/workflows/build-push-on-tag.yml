@@ -7,6 +7,7 @@ on:
       - 'chromosome_region@v[0-9]+.[0-9]+.[0-9]+'
       - 'chromosome_search@v[0-9]+.[0-9]+.[0-9]+'
       - 'dscensor@v[0-9]+.[0-9]+.[0-9]+'
+      - 'ds_utilities@v[0-9]+.[0-9]+.[0-9]+'
       - 'gene_search@v[0-9]+.[0-9]+.[0-9]+'
       - 'genes@v[0-9]+.[0-9]+.[0-9]+'
       - 'linkouts@v[0-9]+.[0-9]+.[0-9]+'
