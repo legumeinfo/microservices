@@ -257,6 +257,135 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedFeature'
+  /bed/lookup/{gene_id}/{url}:
+    get:
+      summary: Look up BED rows by gene ID (full scan)
+      description: |
+        Returns rows from a seven-column LIS `gene_models_main.bed.gz` whose
+        gene-ID (column 7) matches the supplied gene ID. Scans the entire
+        file. Use the region-scoped variant when the gene's coordinates are
+        known — the full scan is cheap for small per-annotation BEDs but
+        downloads the whole file over HTTP.
+      operationId: http_bed_lookup_gene
+      parameters:
+        - name: gene_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gene ID to match against BED column 7.
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+          description: URL-encoded path to a gene_models_main.bed.gz file.
+        - name: longest
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [true, false]
+            default: false
+          description: |
+            When `true`, return a one-element list containing the longest
+            matching mRNA row (deterministic tie-break: first-in-file wins).
+            When no matches exist in this mode the endpoint returns 404 so
+            the caller can distinguish "no such gene" from a legitimate
+            empty multi-variant response.
+      responses:
+        '200':
+          description: Matching BED rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedGeneLookup'
+        '400':
+          description: |
+            Invalid request — unopenable file, missing tabix index, invalid
+            `longest` value, or a malformed BED row encountered during scan.
+        '403':
+          description: URL not in allowlist
+        '404':
+          description: |
+            `longest=true` was requested but no rows matched gene_id.
+  /bed/lookup/{gene_id}/{seqid}:{start}-{end}/{url}:
+    get:
+      summary: Look up BED rows by gene ID (tabix-scoped)
+      description: |
+        Returns rows from a seven-column LIS `gene_models_main.bed.gz` whose
+        gene-ID (column 7) matches the supplied gene ID, scanning only the
+        supplied tabix region. Use this when the gene's coordinates are
+        already known (e.g. from a prior `genes`-service call) — avoids
+        downloading the whole BED.
+      operationId: http_bed_lookup_gene_region
+      parameters:
+        - name: gene_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gene ID to match against BED column 7.
+        - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chromosome or contig identifier.
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: |
+            Region start, 0-based half-open per the tabix/BED convention.
+            Matches the existing `/bed/fetch` / `/gff/fetch` semantics;
+            note that `/vcf/alleles` documents 1-based for historical
+            reasons.
+        - name: end
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: |
+            Region end (exclusive), 0-based half-open per the tabix/BED
+            convention.
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+          description: URL-encoded path to a gene_models_main.bed.gz file.
+        - name: longest
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [true, false]
+            default: false
+          description: |
+            When `true`, return a one-element list containing the longest
+            matching mRNA row (deterministic tie-break: first-in-file wins).
+            When no matches exist in this mode the endpoint returns 404 so
+            the caller can distinguish "no such gene" from a legitimate
+            empty multi-variant response.
+      responses:
+        '200':
+          description: Matching BED rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedGeneLookup'
+        '400':
+          description: |
+            Invalid request — unopenable file, missing tabix index, invalid
+            `longest` value, or a malformed BED row encountered during scan.
+        '403':
+          description: URL not in allowlist
+        '404':
+          description: |
+            `longest=true` was requested but no rows matched gene_id in the
+            queried region.
   /vcf/contigs/{url}:
     get:
       summary: Get VCF Contigs
@@ -785,6 +914,25 @@ components:
           blockSizes:
             type: string
           blockStarts:
+            type: string
+    BedGeneLookup:
+      type: array
+      items:
+        type: object
+        properties:
+          molecule:
+            type: string
+          start:
+            type: integer
+          end:
+            type: integer
+          mrna_id:
+            type: string
+          score:
+            type: integer
+          strand:
+            type: string
+          gene_id:
             type: string
     VcfFeature:
       type: array

@@ -68,6 +68,24 @@ async def http_bed_features(request):
     return await http_request(request, "bed_features", ["seqid", "start", "end"])
 
 
+async def http_bed_lookup_gene(request):
+    return await http_request(
+        request,
+        "bed_lookup_gene",
+        ["gene_id"],
+        {"longest": "false"},
+    )
+
+
+async def http_bed_lookup_gene_region(request):
+    return await http_request(
+        request,
+        "bed_lookup_gene_region",
+        ["gene_id", "seqid", "start", "end"],
+        {"longest": "false"},
+    )
+
+
 async def http_vcf_contigs(request):
     return await http_request(request, "vcf_contigs")
 

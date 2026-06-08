@@ -41,6 +41,20 @@ async def list_gene_models(request):
     return web.json_response(gene_model_list)
 
 
+@operations.register("getFilesForPrefix")
+async def files_for_prefix(request):
+    handler = request.app["handler"]
+    with openapi_context(request) as context:
+        prefix = context.parameters.path["prefix"]
+    files = handler.files_for_prefix(prefix)
+    if files is None:
+        return web.json_response(
+            {"error": f"no annotation found for prefix '{prefix}'"},
+            status=404,
+        )
+    return web.json_response(files)
+
+
 async def run_http_server(host, port, handler):
     # make the app
     parent = Path(__file__).parent.parent

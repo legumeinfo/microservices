@@ -97,6 +97,37 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/GeneModelsMain"
+  /files/{prefix}:
+    get:
+      summary: Get canonical FASTA URLs for a given annotation prefix
+      description: |
+        Returns protein / CDS / genome FASTA URLs for the annotation matching
+        the supplied full-yuck prefix (e.g. `glyma.Wm82.gnm2.ann1`). Protein
+        and CDS URLs are derived by suffix substitution from the annotation's
+        GFF URL; the genome URL is taken from the parent `genome_main` node
+        via the `derived_from` edge. Any URL may be `null` if it cannot be
+        determined from the catalog.
+      parameters:
+        - in: path
+          name: prefix
+          schema:
+            type: string
+          description: Full-yuck annotation prefix
+          required: true
+      operationId: getFilesForPrefix
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesResponse"
+        "404":
+          description: "No annotation found for prefix"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -195,3 +226,34 @@ components:
           type: integer
         total_buscos:
           type: integer
+
+    FilesResponse:
+      type: object
+      properties:
+        protein_url:
+          type: string
+          nullable: true
+        cds_url:
+          type: string
+          nullable: true
+        bed_url:
+          type: string
+          nullable: true
+        genome_url:
+          type: string
+          nullable: true
+        genus:
+          type: string
+          nullable: true
+        species:
+          type: string
+          nullable: true
+        infraspecies:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
