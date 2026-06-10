@@ -1,5 +1,5 @@
 # http_server.py
-from importlib import resources
+from pathlib import Path
 
 import aiohttp_cors
 import yaml
@@ -16,16 +16,17 @@ async def http_help(request):
 
 
 async def http_request(request, fasta_func, match_info=[], query_info={}):
-    request_func_args = (
-        lambda ml: [
-            (
-                int(request.match_info.get(m))
-                if m in ["start", "stop", "end"]
-                else request.match_info.get(m)
-            )
-            for m in ml
-        ]
-    )(match_info)
+    # A handler is registered against multiple route patterns (with and without
+    # coordinates); match_info only has start/end when the coord-bearing route
+    # fired, so skip the int cast when the slot is absent rather than calling
+    # int(None) and 500-ing.
+    def _coerce(name):
+        val = request.match_info.get(name)
+        if val is not None and name in ("start", "stop", "end"):
+            return int(val)
+        return val
+
+    request_func_args = [_coerce(m) for m in match_info]
     # Extract query parameters with defaults
     query_args = [request.query.get(k, v) for k, v in query_info.items()]
     url = request.match_info.get("url", "")
@@ -153,7 +154,7 @@ async def http_alignment_reference_lengths(request):
     return await http_request(request, "alignment_reference_lengths", ["reference"])
 
 
-def run_http_server(host, port, handler):
+async def run_http_server(host, port, handler):
     # make the app
     app = web.Application()
     app["handler"] = handler
@@ -168,10 +169,11 @@ def run_http_server(host, port, handler):
             )
         },
     )
-    # Load the YAML file
-    files = resources.files("ds_utilities")
-    api_path = files / "ds_utilities.yaml"
-    with api_path.open("r") as file:
+    # Load the YAML file from the openapi/ tree that ships next to the
+    # package (MANIFEST.in includes it). Matches dscensor's pattern — one
+    # source of truth, no install-time copy step.
+    api_path = Path(__file__).parent.parent / "openapi/ds_utilities/v1/ds_utilities.yaml"
+    with open(api_path, "r") as file:
         spec = yaml.safe_load(file)
 
     # Iterate through the paths and add routes
@@ -182,5 +184,11 @@ def run_http_server(host, port, handler):
                 if operation_id:
                     route = app.router.add_get(path, globals()[operation_id])
                     cors.add(route)
-    # run the app
-    web.run_app(app)
+    # AppRunner + TCPSite respects the host/port args and lets the surrounding
+    # uvloop in __main__.py keep running; web.run_app() would spawn its own
+    # event loop and ignore both. Matches the genes / chromosome / gene_search
+    # pattern used by the rest of the microservices.
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()

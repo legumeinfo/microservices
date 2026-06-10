@@ -136,3 +136,11 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# pysam / htslib local caches of remote index files (BED / FASTA / VCF /
+# BAM). These land in the service's cwd whenever a handler opens a remote
+# URL and the sibling index is fetched on demand.
+*.tbi
+*.fai
+*.gzi
+*.csi

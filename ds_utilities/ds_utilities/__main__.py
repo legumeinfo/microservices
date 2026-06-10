@@ -84,27 +84,27 @@ def parseArgs():
     )
 
     # Async HTTP args
-    hhost_envvar = "HTTP_HOST"
+    host_envvar = "HTTP_HOST"
     parser.add_argument(
-        "--hhost",
+        "--host",
         action=EnvArg,
-        envvar=hhost_envvar,
+        envvar=host_envvar,
         type=str,
         default="127.0.0.1",
         help=f"""
-        The HTTP server host (can also be specified using the {hhost_envvar} environment
+        The HTTP server host (can also be specified using the {host_envvar} environment
         variable).
         """,
     )
-    hport_envvar = "HTTP_PORT"
+    port_envvar = "HTTP_PORT"
     parser.add_argument(
-        "--hport",
+        "--port",
         action=EnvArg,
-        envvar=hport_envvar,
-        type=str,
-        default="8880",
+        envvar=port_envvar,
+        type=int,
+        default=8080,
         help=f"""
-        The HTTP server port (can also be specified using the {hport_envvar} environment
+        The HTTP server port (can also be specified using the {port_envvar} environment
         variable).
         """,
     )
@@ -145,12 +145,6 @@ def handleException(loop, context):
     asyncio.create_task(shutdown(loop))
 
 
-# the main coroutine that starts the various program tasks
-def main_coroutine(args):
-    handler = RequestHandler()
-    run_http_server(args.hhost, args.hport, handler)
-
-
 def main():
     # parse the command line arguments / environment variables
     args = parseArgs()
@@ -177,9 +171,13 @@ def main():
         )
     loop.set_exception_handler(handleException)
 
-    # run the program
+    # run the program — mirrors the genes / chromosome / gene_search shape:
+    # build the handler, schedule the HTTP server on the running loop, and
+    # block on run_forever() until a signal handler tears it down.
     try:
-        main_coroutine(args)
+        handler = RequestHandler()
+        loop.create_task(run_http_server(args.host, args.port, handler))
+        loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:
         context = {"exception": e, "message": str(e)}
