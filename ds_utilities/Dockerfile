@@ -19,7 +19,6 @@ COPY setup.cfg ./
 COPY setup.py ./
 COPY requirements.txt ./
 COPY ds_utilities ./ds_utilities/
-COPY openapi ./openapi/
 COPY test.py ./
 
 # set for most recent pysam, pysam issue #1257

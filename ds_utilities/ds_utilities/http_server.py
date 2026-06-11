@@ -1,5 +1,5 @@
 # http_server.py
-from pathlib import Path
+from importlib import resources
 
 import aiohttp_cors
 import yaml
@@ -169,11 +169,14 @@ async def run_http_server(host, port, handler):
             )
         },
     )
-    # Load the YAML file from the openapi/ tree that ships next to the
-    # package (MANIFEST.in includes it). Matches dscensor's pattern — one
-    # source of truth, no install-time copy step.
-    api_path = Path(__file__).parent.parent / "openapi/ds_utilities/v1/ds_utilities.yaml"
-    with open(api_path, "r") as file:
+    # Resolve the OpenAPI spec via importlib.resources so the file is found
+    # whether the package was installed editable (pip install -e .) or as a
+    # built wheel into site-packages (pip install . / docker image). The
+    # openapi/ tree ships under the package itself, so the same path works
+    # in both cases. The earlier Path(__file__).parent.parent approach only
+    # worked in editable mode and broke installs by raising FileNotFoundError.
+    api_path = resources.files("ds_utilities") / "openapi/ds_utilities/v1/ds_utilities.yaml"
+    with api_path.open("r") as file:
         spec = yaml.safe_load(file)
 
     # Iterate through the paths and add routes

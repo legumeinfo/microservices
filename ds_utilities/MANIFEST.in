@@ -2,4 +2,4 @@ include INSTALL
 include LICENSE
 include MANIFEST.in
 include *.md
-recursive-include openapi/ *.yaml
+recursive-include ds_utilities/openapi/ *.yaml
