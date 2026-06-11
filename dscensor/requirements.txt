@@ -99,5 +99,9 @@ yarl==1.20.1
     #   aiohttp
     #   aiohttp-middlewares
 
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
+# setuptools is normally what pip-compile would flag as "unsafe in a
+# requirements file" (it normally comes pre-installed), but Python 3.13+
+# images no longer ship it by default and our `openapi-spec-validator==0.4.0`
+# transitively imports `pkg_resources` (which lives in setuptools). Without
+# this pin a fresh container fails at startup with ModuleNotFoundError.
+setuptools
