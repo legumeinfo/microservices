@@ -20,10 +20,9 @@ COPY openapi/ ./openapi/
 
 # Python 3.13 base images no longer ship setuptools by default, and
 # rororo→openapi-core→openapi-spec-validator==0.4.0 imports `pkg_resources`
-# at module load — which lives in setuptools. Install it explicitly here
-# as its own layer so a stale `pip install -r requirements.txt` layer
-# cache can't mask the requirement.
-RUN pip3 install --no-cache-dir setuptools
+# at module load. That module was removed in setuptools 81; pin <81 to
+# keep it around. (See requirements.txt for the full rationale.)
+RUN pip3 install --no-cache-dir 'setuptools<81'
 
 # install the package dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt

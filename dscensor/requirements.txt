@@ -99,9 +99,11 @@ yarl==1.20.1
     #   aiohttp
     #   aiohttp-middlewares
 
-# setuptools is normally what pip-compile would flag as "unsafe in a
-# requirements file" (it normally comes pre-installed), but Python 3.13+
-# images no longer ship it by default and our `openapi-spec-validator==0.4.0`
-# transitively imports `pkg_resources` (which lives in setuptools). Without
-# this pin a fresh container fails at startup with ModuleNotFoundError.
-setuptools
+# Python 3.13+ images no longer ship setuptools by default, and our
+# `openapi-spec-validator==0.4.0` transitively imports `pkg_resources`.
+# That module was deprecated and removed from setuptools 81.0.0 — even
+# setuptools itself prints "Refrain from using this package or pin to
+# Setuptools<81" when you try. So we pin <81 until the rororo →
+# openapi-core → openapi-spec-validator chain is upgraded past 0.5.0
+# (which uses importlib.resources instead).
+setuptools<81
