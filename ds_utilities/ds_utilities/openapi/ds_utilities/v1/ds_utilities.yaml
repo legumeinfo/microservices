@@ -27,53 +27,40 @@ paths:
                 type: array
                 items:
                   type: string
-  /fasta/fetch/{seqid}:{start}-{end}/{url}:
+  /fasta/fetch/{seqid}/{url}:
     get:
       summary: Fetch Fasta Range
+      description: |
+        Fetch a FASTA record by `seqid`. When the optional `start` and `end`
+        query parameters are supplied, return only that 0-based half-open
+        slice; otherwise return the whole record. Both must be present
+        together to take effect.
       operationId: http_fasta_range
       parameters:
         - name: seqid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: url
           in: path
           required: true
           schema:
             type: string
         - name: start
-          in: path
-          required: true
+          in: query
+          required: false
           schema:
             type: integer
+            minimum: 0
+          description: Slice start (0-based half-open). Omit for whole record.
         - name: end
-          in: path
-          required: true
+          in: query
+          required: false
           schema:
             type: integer
-        - name: url
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Fasta range data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FastaFeature'
-  /fasta/fetch/{seqid}/{url}:
-    get:
-      summary: Fetch Fasta Range
-      operationId: http_fasta_range
-      parameters:
-        - name: seqid
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: url
-          in: path
-          required: true
-          schema:
-            type: string
+            minimum: 0
+          description: Slice end (0-based half-open). Omit for whole record.
       responses:
         '200':
           description: Fasta range data
