@@ -23,7 +23,7 @@ class TestMainEndpoints(unittest.TestCase):
         ).hexdigest()
 
     def test_fasta_range(self):
-        url = "http://localhost:8080/fasta/fetch/lotja.MG20.gnm3.Lj0:1-100/https:%2F%2Fdata.legumeinfo.org%2FLotus%2Fjaponicus%2Fgenomes%2FMG20.gnm3.QPGB%2Flotja.MG20.gnm3.QPGB.genome_main.fna.gz"
+        url = "http://localhost:8080/fasta/fetch/lotja.MG20.gnm3.Lj0/https:%2F%2Fdata.legumeinfo.org%2FLotus%2Fjaponicus%2Fgenomes%2FMG20.gnm3.QPGB%2Flotja.MG20.gnm3.QPGB.genome_main.fna.gz?start=1&end=100"
         expected_response = {
             "sequence": "ATCCTTTTTCAAACGATCAGATTTCATTATCAAAACCGTTGAGCAAACCTACAAGCTCAGATCTGATGATGAAGAAATCCATCTGCTTTCCGAGAAAAG"
         }

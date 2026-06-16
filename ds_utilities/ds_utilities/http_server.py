@@ -15,20 +15,31 @@ async def http_help(request):
     return web.json_response(resources)
 
 
-async def http_request(request, fasta_func, match_info=[], query_info={}):
-    # A handler is registered against multiple route patterns (with and without
-    # coordinates); match_info only has start/end when the coord-bearing route
-    # fired, so skip the int cast when the slot is absent rather than calling
-    # int(None) and 500-ing.
-    def _coerce(name):
-        val = request.match_info.get(name)
-        if val is not None and name in ("start", "stop", "end"):
-            return int(val)
-        return val
+# Coordinate-shaped parameter names that get int-coerced wherever they appear
+# (path or query). Listed centrally so adding e.g. /vcf/alleles or a future
+# range-shaped endpoint doesn't need to rediscover the convention.
+_INT_PARAMS = frozenset({"start", "stop", "end"})
 
-    request_func_args = [_coerce(m) for m in match_info]
-    # Extract query parameters with defaults
-    query_args = [request.query.get(k, v) for k, v in query_info.items()]
+
+def _coerce_int(name, raw, default=None):
+    """Best-effort int-coerce; return default for None or empty-string."""
+    if raw is None or raw == "":
+        return default
+    if name in _INT_PARAMS:
+        return int(raw)
+    return raw
+
+
+async def http_request(request, fasta_func, match_info=[], query_info={}):
+    # match_info only carries start/end when the coord-bearing route fired, so
+    # skip the int cast when the slot is absent rather than calling int(None).
+    request_func_args = [_coerce_int(m, request.match_info.get(m)) for m in match_info]
+    # Query params with their declared defaults; coordinate-named ones also
+    # get int-coerced so handlers can receive them as the int type their
+    # pysam calls require.
+    query_args = [
+        _coerce_int(k, request.query.get(k), default=v) for k, v in query_info.items()
+    ]
     url = request.match_info.get("url", "")
     handler = request.app["handler"]
     if hasattr(handler, fasta_func):
@@ -42,7 +53,19 @@ async def http_request(request, fasta_func, match_info=[], query_info={}):
 
 
 async def http_fasta_range(request):
-    return await http_request(request, "fasta_range", ["seqid", "start", "end"])
+    # start/end now live in the query string. Two reasons: (1) embedding `:` /
+    # `-` as in-segment separators (the old /fasta/fetch/{seqid}:{start}-{end}
+    # form) clashes with clients that run encodeURIComponent on the region —
+    # the encoded `%3A` doesn't match aiohttp's pattern matcher, falling
+    # through to the no-coord route with the whole "seqid:start-end" string
+    # treated as the contig name. (2) Optional integer ranges are the
+    # canonical use-case for query parameters anyway.
+    return await http_request(
+        request,
+        "fasta_range",
+        ["seqid"],
+        {"start": None, "end": None},
+    )
 
 
 async def http_fasta_references(request):
@@ -175,7 +198,9 @@ async def run_http_server(host, port, handler):
     # openapi/ tree ships under the package itself, so the same path works
     # in both cases. The earlier Path(__file__).parent.parent approach only
     # worked in editable mode and broke installs by raising FileNotFoundError.
-    api_path = resources.files("ds_utilities") / "openapi/ds_utilities/v1/ds_utilities.yaml"
+    api_path = (
+        resources.files("ds_utilities") / "openapi/ds_utilities/v1/ds_utilities.yaml"
+    )
     with api_path.open("r") as file:
         spec = yaml.safe_load(file)
 
