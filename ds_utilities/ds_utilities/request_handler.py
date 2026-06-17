@@ -3,16 +3,9 @@ import itertools
 import json
 import os
 import urllib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 import pysam
-
-from ds_utilities.bed_lookup import (
-    LIS_BED_COLS,
-    LIS_BED_INT_COLS,
-    BedRow,
-    select_longest,
-)
 
 ALLOWED_URLS = os.environ.get("ALLOWED_URLS", "").split(",")
 
@@ -119,98 +112,6 @@ class RequestHandler:
         except ValueError as e:
             return self.send_400_resp(f"Unable to find index: {e}")
 
-    def bed_lookup_gene(
-        self,
-        url: str,
-        gene_id: str,
-        longest: str = "false",
-    ) -> Union[List[BedRow], Dict[str, Any]]:
-        return self._bed_lookup_gene(url, gene_id, None, None, None, longest)
-
-    def bed_lookup_gene_region(
-        self,
-        url: str,
-        gene_id: str,
-        seqid: str,
-        start: int,
-        end: int,
-        longest: str = "false",
-    ) -> Union[List[BedRow], Dict[str, Any]]:
-        return self._bed_lookup_gene(url, gene_id, seqid, start, end, longest)
-
-    def _bed_lookup_gene(
-        self,
-        url: str,
-        gene_id: str,
-        seqid: Optional[str],
-        start: Optional[int],
-        end: Optional[int],
-        longest: str,
-    ) -> Union[List[BedRow], Dict[str, Any]]:
-        """Filter a seven-column LIS gene_models_main BED by gene-ID (col 7).
-
-        Returns matching rows as a list of typed dicts. With ``longest=true``,
-        returns a one-element list containing the longest match or a 404 dict
-        when nothing matches — distinguishes "no such gene" from a legitimate
-        zero-result multi-variant call, so the web component can render the
-        two cases differently. A region (seqid+start+end) scopes the tabix
-        query when the caller already knows the gene's coordinates; without
-        one the whole file is scanned.
-        """
-        # Validate before any I/O — a typo in the query string would otherwise
-        # be silently treated as "false" and ship a confusing result set.
-        if longest not in ("true", "false"):
-            return self.send_400_resp(
-                f"Invalid longest='{longest}'. Use 'true' or 'false'."
-            )
-        url = self.check_url(url)
-        if isinstance(url, dict):
-            return url
-        matches: List[BedRow] = []
-        try:
-            # `with` closes the tabix handle even on early return; matches
-            # are materialized inside the block because pysam fetch iterators
-            # hold a reference to the open file. pysam.asBed mirrors the
-            # existing bed_features handler — pysam does the BGZF + tabix +
-            # column-split work, this loop only adapts each parsed row into
-            # the LIS JSON shape and filters by column 7 (gene-ID).
-            with pysam.TabixFile(url) as tabix:
-                if seqid is not None:
-                    rows_iter = tabix.fetch(seqid, start, end, parser=pysam.asBed())
-                else:
-                    rows_iter = tabix.fetch(parser=pysam.asBed())
-                for row in rows_iter:
-                    fields = tuple(row)
-                    if len(fields) < 7:
-                        # Surface schema corruption rather than truncate; LIS
-                        # guarantees 7 columns and shorter rows would silently
-                        # drop the gene-ID we filter on.
-                        raise ValueError(
-                            f"LIS BED row has {len(fields)} columns, "
-                            f"expected at least 7: {fields!r}"
-                        )
-                    if fields[6] != gene_id:
-                        continue
-                    matches.append(
-                        {
-                            col: int(val) if col in LIS_BED_INT_COLS else val
-                            for col, val in zip(LIS_BED_COLS, fields)
-                        }
-                    )
-        except OSError as e:
-            return self.send_400_resp(f"Unable to open file: {e}")
-        except ValueError as e:
-            # ValueError covers both pysam-side issues (missing index, bad
-            # coords) and the schema check above; both are caller / data
-            # errors that warrant a 400 rather than a 500.
-            return self.send_400_resp(str(e))
-
-        if longest == "true":
-            chosen = select_longest(matches)
-            if chosen is None:
-                return self.send_404_resp(f"No mRNA rows found for gene_id '{gene_id}'")
-            return [chosen]
-        return matches
 
     def bed_features(self, url: str, seqid: str, start: int = None, end: int = None):
         url = self.check_url(url)
