@@ -236,9 +236,6 @@ components:
         cds_url:
           type: string
           nullable: true
-        bed_url:
-          type: string
-          nullable: true
         genome_url:
           type: string
           nullable: true
