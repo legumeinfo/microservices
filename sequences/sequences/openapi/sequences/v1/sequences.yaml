@@ -1,0 +1,117 @@
+openapi: 3.0.0
+info:
+  title: Sequences
+  version: 1.0.0
+  description: |
+    Takes a list of gene IDs (full yucks, e.g.
+    `glyma.Wm82.gnm2.ann1.Glyma.08G002000`) and returns their protein, CDS, or
+    genomic sequences assembled into a single FASTA file.
+
+    This is an orchestration service: it resolves each gene's canonical FASTA
+    URLs from `dscensor`, resolves genomic coordinates and strand from `genes`
+    (gRPC) for the `genome` type, fetches the bytes from `ds_utilities`
+    `/fasta/fetch`, and (for minus-strand genome records) reverse-complements
+    the result. Any single unresolved gene fails the whole request.
+paths:
+  /:
+    get:
+      summary: Index
+      operationId: http_index
+      responses:
+        '200':
+          description: Service name
+          content:
+            text/plain:
+              schema:
+                type: string
+  /seq/{yucks}:
+    get:
+      summary: Retrieve sequences for a comma-separated list of gene IDs
+      operationId: http_seq_get
+      parameters:
+        - name: yucks
+          in: path
+          required: true
+          description: Comma-separated list of gene IDs (full yucks).
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          description: Sequence type to retrieve. Defaults to `protein`.
+          schema:
+            type: string
+            enum: [protein, cds, genome]
+            default: protein
+        - name: up
+          in: query
+          required: false
+          description: |
+            Bases of upstream flank to include (genome type only; 0..10000).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: down
+          in: query
+          required: false
+          description: |
+            Bases of downstream flank to include (genome type only; 0..10000).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        '200':
+          description: A FASTA file containing one record per requested gene.
+          content:
+            text/x-fasta:
+              schema:
+                type: string
+        '400':
+          description: Invalid request (bad type, malformed gene ID, etc.)
+        '404':
+          description: A requested gene, file, or location could not be resolved.
+  /seq:
+    post:
+      summary: Retrieve sequences for a list of gene IDs (JSON body)
+      operationId: http_seq_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [yucks]
+              properties:
+                yucks:
+                  type: array
+                  items:
+                    type: string
+                type:
+                  type: string
+                  enum: [protein, cds, genome]
+                  default: protein
+                up:
+                  type: integer
+                  minimum: 0
+                  maximum: 10000
+                  default: 0
+                down:
+                  type: integer
+                  minimum: 0
+                  maximum: 10000
+                  default: 0
+      responses:
+        '200':
+          description: A FASTA file containing one record per requested gene.
+          content:
+            text/x-fasta:
+              schema:
+                type: string
+        '400':
+          description: Invalid request (bad type, malformed gene ID, etc.)
+        '404':
+          description: A requested gene, file, or location could not be resolved.

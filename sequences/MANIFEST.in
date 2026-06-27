@@ -1,0 +1,6 @@
+include INSTALL
+include LICENSE
+include MANIFEST.in
+include *.md
+recursive-include proto/ *.proto
+recursive-include sequences/openapi/ *.yaml

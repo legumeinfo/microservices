@@ -1,0 +1,5 @@
+aiohttp
+aiohttp-cors
+grpcio
+grpcio-tools
+uvloop

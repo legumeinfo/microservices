@@ -1,0 +1,10 @@
+services:
+  sequences:
+    build:
+      context: .
+    environment:
+      GENES_ADDR: "${GENES_ADDR:-host.docker.internal:8081}"
+      DSCENSOR_URL: "${DSCENSOR_URL:-http://host.docker.internal:8765}"
+      DS_UTILITIES_URL: "${DS_UTILITIES_URL:-http://host.docker.internal:8080}"
+    ports:
+      - "${PORT:-8082}:8080"

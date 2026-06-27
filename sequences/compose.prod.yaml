@@ -1,0 +1,10 @@
+services:
+  sequences:
+    image: ghcr.io/legumeinfo/microservices-sequences:1.0.0
+    environment:
+      GENES_ADDR: "${GENES_ADDR}"
+      DSCENSOR_URL: "${DSCENSOR_URL}"
+      DS_UTILITIES_URL: "${DS_UTILITIES_URL}"
+    ports:
+      - "${PORT:-8082}:8080"
+    restart: always
