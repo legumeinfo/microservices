@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import signal
+from concurrent.futures import ThreadPoolExecutor
 
 # dependencies
 import uvloop
@@ -120,6 +121,21 @@ def parseArgs():
         specified using the {allowed_urls_envvar} environment variable).
         """,
     )
+    maxworkers_envvar = "MAX_WORKERS"
+    parser.add_argument(
+        "--max-workers",
+        dest="max_workers",
+        action=EnvArg,
+        envvar=maxworkers_envvar,
+        type=int,
+        default=16,
+        help=f"""
+        Maximum number of worker threads used to run the blocking pysam file I/O
+        off the event loop. Also bounds the number of concurrent datastore
+        connections (can also be specified using the {maxworkers_envvar}
+        environment variable).
+        """,
+    )
     return parser.parse_args()
 
 
@@ -171,12 +187,18 @@ def main():
         )
     loop.set_exception_handler(handleException)
 
+    # thread pool for the blocking pysam I/O; bounded so concurrent fetches
+    # don't open an unbounded number of datastore connections.
+    executor = ThreadPoolExecutor(
+        max_workers=args.max_workers, thread_name_prefix="pysam"
+    )
+
     # run the program — mirrors the genes / chromosome / gene_search shape:
     # build the handler, schedule the HTTP server on the running loop, and
     # block on run_forever() until a signal handler tears it down.
     try:
         handler = RequestHandler()
-        loop.create_task(run_http_server(args.host, args.port, handler))
+        loop.create_task(run_http_server(args.host, args.port, handler, executor))
         loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:
@@ -184,6 +206,7 @@ def main():
         loop.call_exception_handler(context)
     # finalize the shutdown
     finally:
+        executor.shutdown(wait=False)
         loop.close()
         logging.info("Successfully shutdown.")
 

@@ -1,4 +1,5 @@
 # http_server.py
+import asyncio
 from importlib import resources
 
 import aiohttp_cors
@@ -44,7 +45,20 @@ async def http_request(request, fasta_func, match_info=[], query_info={}):
     handler = request.app["handler"]
     if hasattr(handler, fasta_func):
         request_func = getattr(handler, fasta_func)
-        fasta_result = request_func(url, *request_func_args, *query_args)
+        # pysam is synchronous and each call is dominated by remote index/data
+        # I/O (opening a remote file re-downloads its index over HTTPS). Run it
+        # in a thread so it doesn't block the event loop and concurrent requests
+        # actually overlap — htslib releases the GIL during I/O. The handler is
+        # stateless and opens its own file handle per call, so no locking is
+        # needed; the pool size bounds concurrent datastore connections.
+        loop = asyncio.get_running_loop()
+        fasta_result = await loop.run_in_executor(
+            request.app["executor"],
+            request_func,
+            url,
+            *request_func_args,
+            *query_args,
+        )
         if "error" in fasta_result:
             return web.json_response(fasta_result, status=fasta_result["status"])
         return web.json_response(fasta_result)
@@ -159,10 +173,12 @@ async def http_alignment_reference_lengths(request):
     return await http_request(request, "alignment_reference_lengths", ["reference"])
 
 
-async def run_http_server(host, port, handler):
+async def run_http_server(host, port, handler, executor):
     # make the app
     app = web.Application()
     app["handler"] = handler
+    # thread pool the blocking pysam calls are offloaded to (see http_request)
+    app["executor"] = executor
     # define the route and enable CORS
     cors = aiohttp_cors.setup(
         app,
