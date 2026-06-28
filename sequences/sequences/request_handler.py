@@ -163,6 +163,9 @@ class RequestHandler:
             start=fetch_start,
             end=fetch_end,
         )
+        # pysam silently truncates a fetch whose end runs past the reference so
+        # report the span we actually got rather than the one we asked for
+        fetch_end = fetch_start + len(sequence)
         # ds_utilities serves plus-strand reference bases; flip minus-strand genes
         # so the record reads 5'->3' along the transcribed strand.
         if strand == -1:

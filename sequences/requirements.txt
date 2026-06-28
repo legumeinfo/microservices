@@ -38,6 +38,8 @@ propcache==0.3.2
     #   yarl
 protobuf==6.32.0
     # via grpcio-tools
+pyyaml==6.0.3
+    # via -r requirements.in
 uvloop==0.21.0
     # via -r requirements.in
 yarl==1.20.1

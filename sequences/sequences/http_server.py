@@ -1,4 +1,7 @@
+from importlib import resources
+
 import aiohttp_cors
+import yaml
 from aiohttp import web
 
 from sequences.request_handler import RequestError
@@ -68,9 +71,15 @@ async def run_http_server(host, port, handler):
             )
         },
     )
-    cors.add(app.router.add_get("/", http_index))
-    cors.add(app.router.add_get("/seq/{yucks}", http_seq_get))
-    cors.add(app.router.add_post("/seq", http_seq_post))
+    api_path = resources.files("sequences") / "openapi/sequences/v1/sequences.yaml"
+    with api_path.open("r") as file:
+        spec = yaml.safe_load(file)
+    add_route = {"get": app.router.add_get, "post": app.router.add_post}
+    for path, methods in spec["paths"].items():
+        for method, details in methods.items():
+            operation_id = details.get("operationId")
+            if method in add_route and operation_id:
+                cors.add(add_route[method](path, globals()[operation_id]))
     # run the app
     runner = web.AppRunner(app)
     await runner.setup()

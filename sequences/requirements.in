@@ -2,4 +2,5 @@ aiohttp
 aiohttp-cors
 grpcio
 grpcio-tools
+pyyaml
 uvloop
