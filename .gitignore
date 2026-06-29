@@ -144,3 +144,11 @@ cython_debug/
 *.fai
 *.gzi
 *.csi
+*.bai
+*.crai
+
+# Generated gRPC stubs. Built into each service's package proto dir at install
+# time (setup.py BuildProtos) or locally via grpc_tools.protoc; never committed
+# — the .proto sources under proto/ are the source of truth.
+*_pb2.py
+*_pb2_grpc.py

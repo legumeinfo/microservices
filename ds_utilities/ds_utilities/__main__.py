@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import signal
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 # dependencies
@@ -136,6 +137,37 @@ def parseArgs():
         environment variable).
         """,
     )
+    indexcache_envvar = "INDEX_CACHE_DIR"
+    parser.add_argument(
+        "--index-cache-dir",
+        dest="index_cache_dir",
+        action=EnvArg,
+        envvar=indexcache_envvar,
+        type=str,
+        default=os.path.join(tempfile.gettempdir(), "ds_utilities-index-cache"),
+        help=f"""
+        Directory in which to cache remote FASTA index files (.fai/.gzi) so they
+        are downloaded once and reused, instead of re-fetched on every open. Set
+        to an empty string to disable caching (can also be specified using the
+        {indexcache_envvar} environment variable).
+        """,
+    )
+    indexttl_envvar = "INDEX_CACHE_TTL"
+    parser.add_argument(
+        "--index-cache-ttl",
+        dest="index_cache_ttl",
+        action=EnvArg,
+        envvar=indexttl_envvar,
+        type=int,
+        default=86400,
+        help=f"""
+        Maximum age in seconds of a cached FASTA index file. A background sweep
+        deletes older entries (they are re-downloaded on next use) so the cache
+        stays bounded over a long-running process. Default 86400 (24h); set to 0
+        to disable pruning (can also be specified using the {indexttl_envvar}
+        environment variable).
+        """,
+    )
     return parser.parse_args()
 
 
@@ -151,6 +183,19 @@ async def shutdown(loop, signal=None):
     await asyncio.gather(*tasks, return_exceptions=True)
     # stop the asyncio loop
     loop.stop()
+
+
+# periodically evict cached FASTA index files older than the TTL so the cache
+# stays bounded; the blocking filesystem work runs in the same pool as the
+# pysam I/O so it never stalls the event loop.
+async def run_index_cache_pruner(handler, ttl, executor):
+    loop = asyncio.get_running_loop()
+    while True:
+        await asyncio.sleep(ttl)
+        try:
+            await loop.run_in_executor(executor, handler.prune_index_cache, ttl)
+        except Exception as e:
+            logging.warning(f"Index cache prune failed: {e}")
 
 
 # the asyncio exception handler that will initiate a shutdown
@@ -197,8 +242,12 @@ def main():
     # build the handler, schedule the HTTP server on the running loop, and
     # block on run_forever() until a signal handler tears it down.
     try:
-        handler = RequestHandler()
+        handler = RequestHandler(index_cache_dir=args.index_cache_dir or None)
         loop.create_task(run_http_server(args.host, args.port, handler, executor))
+        if args.index_cache_dir and args.index_cache_ttl > 0:
+            loop.create_task(
+                run_index_cache_pruner(handler, args.index_cache_ttl, executor)
+            )
         loop.run_forever()
     # catch exceptions not handled by asyncio
     except Exception as e:

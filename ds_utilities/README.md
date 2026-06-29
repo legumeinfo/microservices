@@ -44,6 +44,23 @@ If the requested URL begins with any of the URLs in the list, the request will b
 $ export ALLOWED_URLS='https://data.legumeinfo.org/,https://data.soybase.org/';ds_utilities
 ```
 
+## Performance tuning
+
+pysam's file I/O is synchronous and, for remote files, dominated by network
+round-trips. Two knobs keep concurrent requests from serializing:
+
+- `--max-workers` / `MAX_WORKERS` (default `16`) — size of the thread pool the
+  blocking pysam calls are offloaded to. htslib releases the GIL during I/O, so
+  this also bounds the number of concurrent connections to the datastore.
+- `--index-cache-dir` / `INDEX_CACHE_DIR` (default a `ds_utilities-index-cache`
+  directory under the system temp dir) — where remote FASTA index siblings
+  (`.fai`/`.gzi`) are cached. Opening a remote FASTA otherwise re-downloads its
+  index (a protein/CDS `.fai` can be several MB) on every request; caching it
+  once and reusing it via pysam's `filepath_index` makes repeated opens of the
+  same file cheap. Set to an empty string to disable. The cache assumes the
+  datastore files are immutable (their indexes never change) and is not
+  size-bounded, so point it at ephemeral storage or clear it periodically.
+
 ## API documentation
 
 See `localhost:8080/help` for routes.

@@ -74,19 +74,24 @@ async def get_gene_locations(names, address):
 async def get_files_for_prefix(session, base_url, prefix):
     """Fetch dscensor's canonical FASTA URLs for a full-yuck annotation prefix."""
     url = f"{base_url.rstrip('/')}/files/{urllib.parse.quote(prefix, safe='')}"
-    async with session.get(url) as resp:
-        if resp.status == 404:
-            raise ServiceError(
-                f'dscensor has no catalog entry for prefix "{prefix}".',
-                status=404,
-            )
-        if resp.status != 200:
-            raise ServiceError(
-                f"dscensor /files returned HTTP {resp.status} for "
-                f'prefix "{prefix}".',
-                status=502,
-            )
-        return await resp.json()
+    try:
+        async with session.get(url) as resp:
+            if resp.status == 404:
+                raise ServiceError(
+                    f'dscensor has no catalog entry for prefix "{prefix}".',
+                    status=404,
+                )
+            if resp.status != 200:
+                raise ServiceError(
+                    f"dscensor /files returned HTTP {resp.status} for "
+                    f'prefix "{prefix}".',
+                    status=502,
+                )
+            return await resp.json()
+    except aiohttp.ClientError as e:
+        # dscensor unreachable / dropped the connection / bad body — surface a
+        # clean 502 instead of letting the raw client error become a 500.
+        raise ServiceError(f'dscensor request failed for prefix "{prefix}": {e}', 502)
 
 
 async def fetch_fasta(session, base_url, seqid, fasta_url, start=None, end=None):
@@ -100,27 +105,33 @@ async def fetch_fasta(session, base_url, seqid, fasta_url, start=None, end=None)
     params = {}
     if start is not None and end is not None:
         params = {"start": start, "end": end}
-    async with session.get(path, params=params) as resp:
-        if resp.status != 200:
-            message = f"HTTP {resp.status}"
-            try:
-                body = await resp.json()
-                if isinstance(body, dict) and body.get("error"):
-                    message = body["error"]
-            except Exception:
-                pass
-            # ds_utilities surfaces a missing reference as a 400 "Unable to find
-            # feature"; treat any non-200 here as fatal for the whole batch.
-            status = 404 if resp.status in (400, 404) else 502
-            raise ServiceError(
-                f'ds_utilities /fasta/fetch failed for "{seqid}": {message}',
-                status=status,
-            )
-        body = await resp.json()
-        sequence = body.get("sequence")
-        if not isinstance(sequence, str):
-            raise ServiceError(
-                f'ds_utilities /fasta/fetch returned no sequence for "{seqid}".',
-                status=502,
-            )
-        return sequence
+    try:
+        async with session.get(path, params=params) as resp:
+            if resp.status != 200:
+                message = f"HTTP {resp.status}"
+                try:
+                    body = await resp.json()
+                    if isinstance(body, dict) and body.get("error"):
+                        message = body["error"]
+                except Exception:
+                    pass
+                # ds_utilities surfaces a missing reference as a 400 "Unable to
+                # find feature"; treat any non-200 here as fatal for the batch.
+                status = 404 if resp.status in (400, 404) else 502
+                raise ServiceError(
+                    f'ds_utilities /fasta/fetch failed for "{seqid}": {message}',
+                    status=status,
+                )
+            body = await resp.json()
+            sequence = body.get("sequence")
+    except aiohttp.ClientError as e:
+        # ds_utilities unreachable / dropped the connection — clean 502, not 500.
+        raise ServiceError(
+            f'ds_utilities /fasta/fetch failed for "{seqid}": {e}', status=502
+        )
+    if not isinstance(sequence, str):
+        raise ServiceError(
+            f'ds_utilities /fasta/fetch returned no sequence for "{seqid}".',
+            status=502,
+        )
+    return sequence

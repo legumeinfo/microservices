@@ -1,18 +1,109 @@
 # request_handler.py
+import hashlib
 import itertools
 import json
 import os
-import urllib
-from typing import Any, Dict, List
+import shutil
+import threading
+import time
+import urllib.request
+from collections import defaultdict
+from pathlib import Path
+from typing import Any, Dict
 
 import pysam
 
 ALLOWED_URLS = os.environ.get("ALLOWED_URLS", "").split(",")
 
+# Per-socket-operation timeout for index downloads. Bounds a slow/hung datastore
+# so a stuck download can't pin an executor thread (and the per-URL lock it
+# holds) indefinitely; on timeout the open falls back to a plain remote fetch.
+INDEX_DOWNLOAD_TIMEOUT = 30
+
 
 class RequestHandler:
-    def __init__(self):
-        pass
+    def __init__(self, index_cache_dir=None):
+        # Optional on-disk cache of remote FASTA index siblings (.fai/.gzi).
+        # Opening a remote FASTA re-downloads its index over HTTPS every call,
+        # and a protein/CDS .fai can be several MB; caching it once and reusing
+        # it via pysam's filepath_index makes repeated opens of the same file
+        # cheap. None disables caching (pysam fetches the index remotely as
+        # before).
+        self._index_cache_dir = Path(index_cache_dir) if index_cache_dir else None
+        if self._index_cache_dir is not None:
+            self._index_cache_dir.mkdir(parents=True, exist_ok=True)
+        # Per-index locks so a cold-cache burst (e.g. a batch of genes hitting
+        # one FASTA) downloads each index once, not once per concurrent request.
+        self._index_locks_guard = threading.Lock()
+        self._index_locks = defaultdict(threading.Lock)
+
+    def _index_lock(self, key):
+        with self._index_locks_guard:
+            return self._index_locks[key]
+
+    def _local_index(self, url, ext):
+        """Path to a locally cached copy of ``url + ext``, downloaded on first
+        use. Returns None when caching is disabled or the index can't be
+        fetched, in which case the caller lets pysam fetch it remotely as
+        before. The index URL inherits the already-allowlisted base URL, so it
+        needs no separate check_url."""
+        if self._index_cache_dir is None:
+            return None
+        key = hashlib.sha256(url.encode()).hexdigest()[:16] + ext
+        dest = self._index_cache_dir / key
+        if dest.exists():
+            return str(dest)
+        with self._index_lock(key):
+            if dest.exists():  # another thread won the race while we waited
+                return str(dest)
+            tmp = dest.with_name(dest.name + ".tmp")
+            try:
+                # urlopen(timeout=) rather than urlretrieve (which has no timeout)
+                # so a hung datastore can't stall this thread + lock forever.
+                with urllib.request.urlopen(
+                    url + ext, timeout=INDEX_DOWNLOAD_TIMEOUT
+                ) as resp, open(tmp, "wb") as out:
+                    shutil.copyfileobj(resp, out)
+                os.replace(tmp, dest)  # atomic publish
+                return str(dest)
+            except Exception:
+                tmp.unlink(missing_ok=True)
+                return None
+
+    def prune_index_cache(self, max_age_seconds):
+        """Delete cached index files older than max_age_seconds (by mtime, i.e.
+        download time). No-op when caching is disabled. Best-effort: entries that
+        vanish mid-sweep are ignored. A file in active use keeps mtime≈download
+        time, so it is only removed once it is genuinely stale and is then simply
+        re-downloaded on next use."""
+        if self._index_cache_dir is None:
+            return
+        cutoff = time.time() - max_age_seconds
+        for entry in self._index_cache_dir.iterdir():
+            try:
+                if entry.is_file() and entry.stat().st_mtime < cutoff:
+                    entry.unlink()
+            except OSError:
+                pass
+
+    def _open_fasta(self, url):
+        """Open a (possibly remote) FASTA, reusing locally cached index files so
+        the open doesn't re-download the .fai/.gzi every call. Falls back to a
+        plain remote open when the full local index set isn't available, so it
+        never opens in a half-cached state."""
+        kwargs = {}
+        fai = self._local_index(url, ".fai")
+        if fai is not None:
+            if url.endswith(".gz"):
+                # A bgzipped FASTA needs both .fai and .gzi; only use the local
+                # pair when we have both.
+                gzi = self._local_index(url, ".gzi")
+                if gzi is not None:
+                    kwargs["filepath_index"] = fai
+                    kwargs["filepath_index_compressed"] = gzi
+            else:
+                kwargs["filepath_index"] = fai
+        return pysam.FastaFile(url, **kwargs)
 
     def check_url(self, url):
         url = urllib.parse.unquote(url)
@@ -37,7 +128,7 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            seq = pysam.FastaFile(url).fetch(reference=seqid, start=start, end=end)
+            seq = self._open_fasta(url).fetch(reference=seqid, start=start, end=end)
             return {"sequence": seq}
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
@@ -51,7 +142,7 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return {"references": pysam.FastaFile(url).references}
+            return {"references": self._open_fasta(url).references}
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
 
@@ -60,7 +151,7 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return {"lengths": pysam.FastaFile(url).lengths}
+            return {"lengths": self._open_fasta(url).lengths}
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
 
@@ -69,7 +160,7 @@ class RequestHandler:
         if isinstance(url, dict):
             return url
         try:
-            return {"nreferences": pysam.FastaFile(url).nreferences}
+            return {"nreferences": self._open_fasta(url).nreferences}
         except OSError as e:
             return self.send_400_resp(f"Unable to open file: {e}")
 
@@ -111,7 +202,6 @@ class RequestHandler:
             return self.send_400_resp(f"Unable to find feature: {e}")
         except ValueError as e:
             return self.send_400_resp(f"Unable to find index: {e}")
-
 
     def bed_features(self, url: str, seqid: str, start: int = None, end: int = None):
         url = self.check_url(url)

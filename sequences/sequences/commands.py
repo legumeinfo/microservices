@@ -21,8 +21,8 @@
 
 import os
 import sys
+from importlib import resources
 
-import pkg_resources
 import setuptools
 
 
@@ -60,9 +60,10 @@ class BuildProtos(setuptools.Command):
                 if filename.endswith(".proto"):
                     proto_files.append(os.path.abspath(os.path.join(root, filename)))
 
-        well_known_protos_include = pkg_resources.resource_filename(
-            "grpc_tools", "_proto"
-        )
+        # Locate grpc_tools' bundled well-known protos. importlib.resources is
+        # used instead of the deprecated pkg_resources.resource_filename, which
+        # newer setuptools no longer ships in the (PEP 517) build environment.
+        well_known_protos_include = str(resources.files("grpc_tools") / "_proto")
 
         for proto_file in proto_files:
             command = [

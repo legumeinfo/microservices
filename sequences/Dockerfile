@@ -20,8 +20,12 @@ COPY proto/ ./proto/
 # install the package dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# install (and implicitly build) the package
-RUN pip3 install --no-cache-dir .
+# install (and implicitly build) the package. --no-build-isolation makes the
+# proto codegen use the grpcio-tools pinned in requirements.txt instead of the
+# latest one a default isolated build would pull in; otherwise the generated
+# *_pb2 gencode can outrun the pinned protobuf runtime and the service crashes
+# on import with a Protobuf gencode/runtime version error.
+RUN pip3 install --no-cache-dir --no-build-isolation .
 
 WORKDIR /
 
