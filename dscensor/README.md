@@ -7,7 +7,7 @@ Generate a set of DSCensor nodes using LIS-autocontent. This will be in "./autoc
 
 [Generate DSCensor Nodes](https://github.com/legumeinfo/LIS-autocontent)
 
-The "./autocontent" directory will be read by the app when docker compose is run.
+The default output of the `lis-autocontent dscensor` subcommand is the `"./autocontent"` directory. This will be read by the app when docker compose is run.
 
 # Docker
 

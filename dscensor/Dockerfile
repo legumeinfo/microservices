@@ -14,15 +14,16 @@ COPY MANIFEST.in ./
 COPY README.md ./
 COPY setup.cfg ./
 COPY setup.py ./
-COPY requirements.txt ./
+#COPY requirements.txt ./
 COPY dscensor/ ./dscensor/
 COPY openapi/ ./openapi/
 
 # install the package dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
+#RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python ./setup.py install
 
 # install (and implicitly build) the package
-RUN pip3 install --no-cache-dir .
+#RUN pip3 install --no-cache-dir .
 
 WORKDIR /
 
