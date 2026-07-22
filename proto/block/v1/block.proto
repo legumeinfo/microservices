@@ -17,4 +17,6 @@ message Block {
   uint32 fmax = 4;
   string orientation = 5;
   repeated float optionalMetrics = 6;
+  // Fields 7-9 reserved for queryGeneName, queryGeneFmin, queryGeneFmax (used by macro_synteny_blocks)
+  optional float identity = 10;  // Identity score (0.0-1.0) if requested
 }

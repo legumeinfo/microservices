@@ -19,6 +19,8 @@ message PairwiseMacroSyntenyBlocksComputeRequest {
   repeated string optionalMetrics = 6;
   optional uint32 chromosomeGenes = 7;
   optional uint32 chromosomeLength = 8;
+  optional string identity = 9;  // "levenshtein" or "jaccard" - computes identity metric
+  optional bool correspondences = 10;  // If true, include gene pair correspondences within blocks
 }
 
 

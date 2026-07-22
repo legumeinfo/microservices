@@ -1,0 +1,34 @@
+# This file overrides services from
+# github.com/legumeinfo/gcv-docker-compose compose.yml and compose.dev.yml
+#
+# Please use the convenience script:
+#   ./run-tests.sh
+
+services:
+  # Override redis to load test data
+  redis:
+    volumes:
+      # Load test data from dump.rdb
+      # TEST_DATA_DIR is set by run-tests.sh
+      - ${TEST_DATA_DIR}/tests/data/dump.rdb:/data/dump.rdb:ro
+    environment:
+      REDIS_ARGS: ""  # Enable loading from dump.rdb
+      REDISEARCH_ARGS: "MAXSEARCHRESULTS 100000"
+
+  # Add the test container
+  pairwise_macro_synteny_blocks_test:
+    build:
+      # PAIRWISE_MACRO_SYNTENY_BLOCKS_DIR is set by run-tests.sh
+      context: ${PAIRWISE_MACRO_SYNTENY_BLOCKS_DIR:-.}
+      dockerfile: Dockerfile.test
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # Service connection configuration
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    volumes:
+      # Mount test results for coverage reports
+      - ${PAIRWISE_MACRO_SYNTENY_BLOCKS_DIR:-.}/htmlcov:/app/htmlcov:rw
+    profiles: []  # Always run, no profile required
