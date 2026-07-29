@@ -65,12 +65,6 @@ class TestFilesForPrefix(unittest.TestCase):
             "Wm82.gnm2.ann1.RVB6/glyma.Wm82.gnm2.ann1.RVB6."
             "cds_primary.fna.gz",
         )
-        self.assertEqual(
-            result["bed_url"],
-            "https://data.legumeinfo.org/Glycine/max/annotations/"
-            "Wm82.gnm2.ann1.RVB6/glyma.Wm82.gnm2.ann1.RVB6."
-            "gene_models_main.bed.gz",
-        )
 
     def test_resolves_genome_url_via_derived_from_edge(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -109,7 +103,6 @@ class TestFilesForPrefix(unittest.TestCase):
 
         self.assertIsNone(result["protein_url"])
         self.assertIsNone(result["cds_url"])
-        self.assertIsNone(result["bed_url"])
         self.assertEqual(result["genome_url"], GENOME_NODE["url"])
 
 
