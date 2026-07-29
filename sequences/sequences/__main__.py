@@ -205,7 +205,7 @@ def main():
         )
     loop.set_exception_handler(handleException)
 
-    # run the program — build the handler and schedule the HTTP server on the
+    # run the program: build the handler and schedule the HTTP server on the
     # running loop, then block until a signal handler tears it down.
     try:
         handler = RequestHandler(

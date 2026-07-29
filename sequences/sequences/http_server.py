@@ -1,9 +1,12 @@
+# Python
 from importlib import resources
 
+# dependencies
 import aiohttp_cors
 import yaml
 from aiohttp import web
 
+# module
 from sequences.request_handler import RequestError
 
 
@@ -85,4 +88,6 @@ async def run_http_server(host, port, handler):
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
-    # TODO: what about teardown? runner.cleanup()
+    # No explicit runner.cleanup(): the server runs for the process lifetime and
+    # is torn down when __main__.shutdown() cancels the loop's tasks on a signal
+    # (matches the search / gene_search pattern).

@@ -2,8 +2,8 @@
 # ds_utilities (HTTP). The genome path additionally owns the strand-aware flank
 # math and reverse-complement (which deliberately do NOT live in ds_utilities).
 #
-# Transport lives entirely in clients.py (see § 3.1) — this module stays domain
-# logic and never imports aiohttp/grpc directly.
+# Transport lives entirely in clients.py, so this module stays domain logic and
+# never imports aiohttp/grpc directly.
 #
 # Python
 import asyncio
@@ -49,7 +49,7 @@ class RequestHandler:
         """Resolve every yuck to a sequence and return one assembled FASTA string.
 
         Fails the whole request (raises RequestError) if any yuck can't be
-        resolved — no partial FASTA is returned."""
+        resolved; no partial FASTA is returned."""
         if seq_type not in VALID_TYPES:
             raise RequestError(
                 f"Invalid type '{seq_type}'. Use one of: {', '.join(VALID_TYPES)}.",

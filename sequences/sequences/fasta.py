@@ -1,8 +1,6 @@
-# Pure helpers for assembling FASTA output and the strand-aware coordinate math
-# the genome path needs. Ported from the web-components retrieve-sequence
-# helpers (utils/sequence-fasta.ts) so the logic lives in exactly one place now
-# that orchestration has moved server-side. Kept dependency-free and free of any
-# I/O so it can be unit-tested in isolation.
+# Pure, I/O-free helpers for FASTA assembly and the genome path's strand-aware
+# coordinate math. Ported from web-components (utils/sequence-fasta.ts); this is
+# now the canonical copy. Dependency-free so it unit-tests in isolation.
 
 # Cap on per-side flank length (matches the spec / web component: 10000 bp each).
 MAX_FLANK_BASES = 10000

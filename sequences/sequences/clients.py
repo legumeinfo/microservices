@@ -5,8 +5,7 @@
 #
 # This module is the service's transport-out boundary: it owns the aiohttp
 # session factory and the gRPC channel so request_handler.py can stay free of
-# transport libraries (ARCHITECTURE.md § 3.1), the same way `search` confines
-# its gRPC to grpc_client.py.
+# transport libraries, the same way `search` confines its gRPC to grpc_client.py.
 #
 # Python
 import logging
@@ -39,9 +38,8 @@ class ServiceError(Exception):
 
 
 def make_session():
-    """The aiohttp session for the dscensor/ds_utilities calls. One per request,
-    reused across the batch's fetches; created here so request_handler.py never
-    imports aiohttp directly (ARCHITECTURE.md § 3.1)."""
+    """The aiohttp session for the dscensor/ds_utilities calls: one per request,
+    reused across the batch's fetches."""
     return aiohttp.ClientSession()
 
 
@@ -89,7 +87,7 @@ async def get_files_for_prefix(session, base_url, prefix):
                 )
             return await resp.json()
     except aiohttp.ClientError as e:
-        # dscensor unreachable / dropped the connection / bad body — surface a
+        # dscensor unreachable / dropped the connection / bad body: surface a
         # clean 502 instead of letting the raw client error become a 500.
         raise ServiceError(f'dscensor request failed for prefix "{prefix}": {e}', 502)
 
@@ -125,7 +123,7 @@ async def fetch_fasta(session, base_url, seqid, fasta_url, start=None, end=None)
             body = await resp.json()
             sequence = body.get("sequence")
     except aiohttp.ClientError as e:
-        # ds_utilities unreachable / dropped the connection — clean 502, not 500.
+        # ds_utilities unreachable / dropped the connection: clean 502, not 500.
         raise ServiceError(
             f'ds_utilities /fasta/fetch failed for "{seqid}": {e}', status=502
         )
