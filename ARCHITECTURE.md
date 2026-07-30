@@ -10,6 +10,25 @@
 - **MAY** — discretionary; no policy attached.
 - **AVOID** — pattern present in the tree that is now considered a mistake. Don't propagate it.
 
+**Conventions for this document.**
+- In prose, cross-reference a section by **name as well as number** ("see [§ 3.1](#31-the-three-module-split), *The three-module split*"). Section *numbers* are navigational aids and may shift when the document is reorganized; if you renumber, update the references you moved. The *Quick map* below and the table of contents are lookup indexes — numbers there are fine.
+
+## Quick map
+
+Jump to what you need:
+
+| I want to… | Start at |
+|---|---|
+| Add a new service | [§ 15](#15-adding-a-new-service-checklist) (checklist) → [§ 3](#3-service-layout) (layout) |
+| Understand the module split | [§ 3.1](#31-the-three-module-split); orchestration services [§ 3.2](#32-orchestration-service-layout-the-clientspy-boundary) |
+| Fix a failing gRPC image build | [§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image) (build robustness) |
+| Get the JSON error-response shape right | [§ 7.4](#74-error-response-shape) |
+| Register HTTP routes (spec-driven vs. manual) | [§ 7.3](#73-route-registration) |
+| Handle FASTA / GFF / coordinates / strand | [§ 10](#10-file-io-for-genomics-data) |
+| Package a service (setup.py / MANIFEST / where contracts live) | [§ 4](#4-packaging) |
+| Run a service under compose | [§ 13.2](#132-three-file-compose-pattern) |
+| See what's currently non-conformant | [§ 17](#17-known-deviations-from-this-spec) (known deviations) |
+
 ---
 
 ## 1. Overview
@@ -18,9 +37,9 @@ This repository hosts a family of Python microservices for the Legume Informatio
 
 Three service shapes exist:
 
-1. **File-format proxy services.** Wrap `pysam` over remote indexed files in the LIS datastore. Examples: `ds_utilities`, `linkouts`. HTTP-only, generally stateless. These MUST stay dumb: no calls to sibling services, no domain logic (e.g. `ds_utilities` is strand-agnostic — see § 10.4).
-2. **Query services.** Backed by Redis with the RediSearch module (built by `redis_loader`) or by a static catalog. Examples: `genes`, `gene_search`, `chromosome`, `chromosome_search`, `chromosome_region`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`, `search`, `dscensor`. Most expose both HTTP and gRPC; `dscensor` is the exception — it is HTTP-only (`rororo`), backed by an autocontent digraph rather than Redis, and has no `proto/` or gRPC server.
-3. **Orchestration services.** Own no datastore of their own; they compose other services into a higher-level operation, adding a `clients.py` transport-out module (§ 3.2). Example: `sequences` resolves gene-ID → FASTA by calling `genes` (gRPC, for coordinates/strand), `dscensor` (HTTP, for file URLs), and `ds_utilities` (HTTP, for bytes), and owns the domain logic the leaf services deliberately don't (reverse-complement, flank math, FASTA assembly). Dependencies MUST point downward (orchestration → query/proxy), never the reverse, and an orchestration endpoint's failure MUST be isolated to that endpoint. They are HTTP-only (a FASTA/file response has no natural gRPC analog) and stateless apart from the upstream service addresses they're configured with.
+1. **File-format proxy services.** Wrap `pysam` over remote indexed files in the LIS datastore. Examples: `ds_utilities`, `linkouts`. HTTP-only, generally stateless. These MUST stay dumb: no calls to sibling services, no domain logic (e.g. `ds_utilities` is strand-agnostic — see [§ 10.4](#104-strand-and-coordinate-semantics)).
+2. **Query services.** Backed by Redis with the RediSearch module (built by `redis_loader`) or by a static catalog. Examples: `genes`, `gene_search`, `chromosome`, `chromosome_search`, `chromosome_region`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`, `search`, `dscensor`. Most expose both HTTP and gRPC; `dscensor` is the exception — it is HTTP-only (manual `aiohttp` routing), backed by an autocontent digraph rather than Redis, and has no `proto/` or gRPC server.
+3. **Orchestration services.** Own no datastore of their own; they compose other services into a higher-level operation, adding a `clients.py` transport-out module ([§ 3.2](#32-orchestration-service-layout-the-clientspy-boundary)). Example: `sequences` resolves gene-ID → FASTA by calling `genes` (gRPC, for coordinates/strand), `dscensor` (HTTP, for file URLs), and `ds_utilities` (HTTP, for bytes), and owns the domain logic the leaf services deliberately don't (reverse-complement, flank math, FASTA assembly). Dependencies MUST point downward (orchestration → query/proxy), never the reverse, and an orchestration endpoint's failure MUST be isolated to that endpoint. They are HTTP-only (a FASTA/file response has no natural gRPC analog) and stateless apart from the upstream service addresses they're configured with.
 
 All shapes follow the same packaging / CLI / asyncio / linting conventions detailed below.
 
@@ -52,10 +71,10 @@ None of these live at the repo *root*.
 ### 2.1 New top-level directories
 
 A new top-level directory MUST be one of:
-- A service (per § 3)
+- A service (per [§ 3](#3-service-layout))
 - `data/` content (fixtures, never service-specific runtime state)
 - `tests/` (cross-service fixtures)
-- The repo-root `proto/` — the canonical home of **shared** protobuf *message* types (`gene/v1/gene.proto`, `block/v1/block.proto`, `track/v1/region.proto`, …) that multiple gRPC services reuse. Each consuming service keeps a copy of the message protos it needs under its own `<svc>/proto/` (alongside its service-specific `*_service` proto) and generates stubs from that copy (§ 9.1); the repo-root `proto/` is the source those copies track. The repo-root `openapi/` holds only a README — per-service specs live in the package (§ 4.4).
+- The repo-root `proto/` — the canonical home of **shared** protobuf *message* types (`gene/v1/gene.proto`, `block/v1/block.proto`, `track/v1/region.proto`, …) that multiple gRPC services reuse. Each consuming service keeps a copy of the message protos it needs under its own `<svc>/proto/` (alongside its service-specific `*_service` proto) and generates stubs from that copy ([§ 9.1](#91-proto-sources-and-the-uncommitted-generated-stubs)); the repo-root `proto/` is the source those copies track. The repo-root `openapi/` holds only a README — per-service specs live in the package ([§ 4.4](#44-where-contract-files-live)).
 - Tooling shared across services (e.g. `.github/`, dotfiles)
 
 Anything else (deploys, docs subsites, marketing pages) belongs in a sibling repo.
@@ -106,7 +125,7 @@ This makes the same `request_handler` callable from a script, a test, both trans
 
 ### 3.2 Orchestration-service layout (the `clients.py` boundary)
 
-Orchestration services (§ 1, shape 3 — currently only `sequences`) add one module to the split: **`clients.py`**, the *transport-out* boundary. Because an orchestration service's whole job is calling siblings, `request_handler.py` would otherwise have to import `aiohttp`/`grpc` and violate § 3.1. Instead, every outbound call (gRPC stub calls, `aiohttp` requests, the `aiohttp.ClientSession` factory) lives in `clients.py`, and `request_handler.py` imports *that* — never the transport library directly. This mirrors how `search` (a query service that fans out to other gRPC services) isolates its outbound gRPC in `grpc_client.py`.
+Orchestration services ([§ 1](#1-overview), shape 3 — currently only `sequences`) add one module to the split: **`clients.py`**, the *transport-out* boundary. Because an orchestration service's whole job is calling siblings, `request_handler.py` would otherwise have to import `aiohttp`/`grpc` and violate [§ 3.1](#31-the-three-module-split). Instead, every outbound call (gRPC stub calls, `aiohttp` requests, the `aiohttp.ClientSession` factory) lives in `clients.py`, and `request_handler.py` imports *that* — never the transport library directly. This mirrors how `search` (a query service that fans out to other gRPC services) isolates its outbound gRPC in `grpc_client.py`.
 
 ```
 sequences/
@@ -127,8 +146,8 @@ sequences/
 
 Rules specific to this shape:
 
-- `request_handler.py` MUST NOT import `aiohttp` or `grpc`; it calls `clients.py` helpers (including a `make_session()` factory) so the § 3.1 guarantee holds.
-- `clients.py` MUST translate every upstream failure into a domain exception carrying an HTTP-ish `status` (see § 7.4) — including transport errors. For HTTP siblings, wrap calls in `try/except aiohttp.ClientError` and re-raise as `ServiceError(..., status=502)`; otherwise an unreachable sibling surfaces as a raw aiohttp traceback → HTTP 500 instead of a clean 502. For the gRPC sibling, catch around the stub call.
+- `request_handler.py` MUST NOT import `aiohttp` or `grpc`; it calls `clients.py` helpers (including a `make_session()` factory) so the [§ 3.1](#31-the-three-module-split) guarantee holds.
+- `clients.py` MUST translate every upstream failure into a domain exception carrying an HTTP-ish `status` (see [§ 7.4](#74-error-response-shape)) — including transport errors. For HTTP siblings, wrap calls in `try/except aiohttp.ClientError` and re-raise as `ServiceError(..., status=502)`; otherwise an unreachable sibling surfaces as a raw aiohttp traceback → HTTP 500 instead of a clean 502. For the gRPC sibling, catch around the stub call.
 - The request handler opens **one** `aiohttp.ClientSession` per request (via `make_session()`) and threads it through the fan-out, so the batch's N fetches reuse one connection pool. Per-call `aiohttp.ClientSession()` creation is an AVOID.
 - Fan out independent upstream work with `asyncio.gather`, preserving input order, and **fail the whole request** if any element fails (no partial assembly). Batchable upstreams MUST be called once for the whole batch (e.g. `sequences` resolves all gene coordinates in a single `genes` gRPC call, and resolves `dscensor` file URLs once per distinct annotation prefix, not once per gene).
 
@@ -149,7 +168,7 @@ setuptools.setup()
 
 AVOID running side effects in `setup.py` (file copies, network calls). Put all packaging metadata in `setup.cfg` and shipped-file selection in `MANIFEST.in`.
 
-**Exception — protobuf codegen (gRPC servers and clients).** Services that ship or consume gRPC (`genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`, and the orchestration client `sequences`) MUST generate their `*_pb2.py` / `*_pb2_grpc.py` stubs at build time, because the stubs are deliberately not committed (§ 9). These services use a custom `setup.py` that subclasses `build_py` to run a `BuildProtos` command (in `<svc>/<svc>/commands.py`) after the normal build:
+**Exception — protobuf codegen (gRPC servers and clients).** Services that ship or consume gRPC (`genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`, and the orchestration client `sequences`) MUST generate their `*_pb2.py` / `*_pb2_grpc.py` stubs at build time, because the stubs are deliberately not committed ([§ 9](#9-grpc-conventions)). These services use a custom `setup.py` that subclasses `build_py` to run a `BuildProtos` command (in `<svc>/<svc>/commands.py`) after the normal build:
 
 ```python
 #!/usr/bin/env python
@@ -170,7 +189,7 @@ setuptools.setup(
 )
 ```
 
-This is the *only* sanctioned codegen-in-`setup.py`. It is still subject to the § 9 build-robustness rules (importlib.resources, `--no-build-isolation` in the Dockerfile, gencode/runtime version pinning) — read those before copying this pattern.
+This is the *only* sanctioned codegen-in-`setup.py`. It is still subject to the [§ 9](#9-grpc-conventions) build-robustness rules (importlib.resources, `--no-build-isolation` in the Dockerfile, gencode/runtime version pinning) — read those before copying this pattern.
 
 ### 4.2 `setup.cfg`
 
@@ -217,9 +236,9 @@ console_scripts =
     myservice = myservice.__main__:main
 ```
 
-`install_requires` is per-service, not a fixed list — only `uvloop` (and `aiohttp`/`aiohttp-cors` for HTTP services) is universal. `python_requires` floors vary across the tree (`>=3.5`, `>=3.7`, `>=3.9`); they are cosmetic — the real interpreter is pinned at 3.13 (§ 12), so new services SHOULD use `>=3.9,<4`.
+`install_requires` is per-service, not a fixed list — only `uvloop` (and `aiohttp`/`aiohttp-cors` for HTTP services) is universal. `python_requires` floors vary across the tree (`>=3.5`, `>=3.7`, `>=3.9`); they are cosmetic — the real interpreter is pinned at 3.13 ([§ 12](#12-linting-formatting-pre-commit)), so new services SHOULD use `>=3.9,<4`.
 
-The `console_scripts` entry MUST match the package name. It is wrong in **most** existing services (they register the binary as `chromosome` — see § 17), which is exactly why every Dockerfile invokes `python3 -u -m <svc>` instead of the bare console-script name (§ 13.1). New services MUST get this right.
+The `console_scripts` entry MUST match the package name. It is wrong in **most** existing services (they register the binary as `chromosome` — see [§ 17](#17-known-deviations-from-this-spec)), which is exactly why every Dockerfile invokes `python3 -u -m <svc>` instead of the bare console-script name ([§ 13.1](#131-dockerfile)). New services MUST get this right.
 
 ### 4.3 `MANIFEST.in`
 
@@ -259,11 +278,10 @@ from importlib import resources
 
 async def run_http_server(host, port, handler):
     api_path = resources.files("<svc>") / "openapi/<svc>/v1/<svc>.yaml"
-    # for libraries that take a file path string (e.g. rororo's setup_openapi):
-    #   api_path = str(api_path)
-    # for libraries that accept a Traversable (yaml.safe_load):
+    # load the spec from the Traversable:
     #   with api_path.open("r") as f:
     #       spec = yaml.safe_load(f)
+    # (if a library needs a filesystem path string instead: api_path = str(api_path))
     ...
 ```
 
@@ -285,7 +303,7 @@ recursive-include <svc>/openapi/ *.yaml
 ```
 # Dockerfile — only the package dir needs to be copied; openapi/ rides along
 COPY <svc>/ ./<svc>/
-# do NOT add `COPY openapi/ ./openapi/` — that's the old broken pattern
+# do NOT add `COPY openapi/ ./openapi/` — it doesn't ship the spec into the package
 ```
 
 ---
@@ -425,9 +443,9 @@ Specifically:
 
 A synchronous call that does real I/O or CPU work blocks the *entire* loop — every other in-flight request stalls until it returns. The offender in this codebase is `pysam`: its calls are synchronous C, and opening a remote file is dominated by HTTPS round-trips (seconds). An HTTP handler that calls `pysam` inline serializes all concurrent requests (measured: 6 concurrent FASTA fetches took ~6× one fetch).
 
-Services that make blocking calls from an async handler MUST offload them to a thread pool via `loop.run_in_executor(...)`. This is safe and effective here because `pysam`/htslib **release the GIL during I/O**, so threads run genuinely concurrently (measured: 12 concurrent fetches ~10× faster on a 12-thread pool). The full pattern — a bounded pool, where it's created, and the `request_handler` thread-safety it requires — is in § 10.5.
+Services that make blocking calls from an async handler MUST offload them to a thread pool via `loop.run_in_executor(...)`. This is safe and effective here because `pysam`/htslib **release the GIL during I/O**, so threads run genuinely concurrently (measured: 12 concurrent fetches ~10× faster on a 12-thread pool). The full pattern — a bounded pool, where it's created, and the `request_handler` thread-safety it requires — is in [§ 10.5](#105-offloading-pysam-to-a-thread-pool).
 
-Background maintenance loops (periodic sweeps, cache eviction) follow the same rule: schedule them with `loop.create_task(...)` and run their blocking parts in the executor too (see `ds_utilities`' index-cache pruner, § 10.6).
+Background maintenance loops (periodic sweeps, cache eviction) follow the same rule: schedule them with `loop.create_task(...)` and run their blocking parts in the executor too (see `ds_utilities`' index-cache pruner, [§ 10.6](#106-local-fasta-index-cache)).
 
 ---
 
@@ -443,8 +461,8 @@ async def run_http_server(host: str, port: int, handler) -> None:
 It MUST:
 
 1. Build the `aiohttp.web.Application` and store the handler under `app["handler"]`.
-2. Register CORS via `aiohttp_cors` with permissive defaults (see § 7.2).
-3. Wire routes (manually or from OpenAPI, see § 7.3).
+2. Register CORS via `aiohttp_cors` with permissive defaults (see [§ 7.2](#72-cors)).
+3. Wire routes (manually or from OpenAPI, see [§ 7.3](#73-route-registration)).
 4. Start via `AppRunner` + `TCPSite`:
 
 ```python
@@ -502,16 +520,15 @@ cors.add(route)
 
 CORS configuration MUST NOT be tightened per-route without a written reason; consumers (web-components, dev pages on alternate ports) rely on the permissive default.
 
-### 7.3 Two routing styles, both valid
+### 7.3 Route registration
 
-The codebase has two coexisting patterns:
+Every HTTP service uses **manual `aiohttp` routing** — routes are registered against a `web.Application`, either with `app.router.add_<method>(path, handler_fn)` or a `web.RouteTableDef()` plus `@routes.get(...)` decorators. Services differ only in how tightly the route table is bound to the OpenAPI spec:
 
-- **OpenAPI-driven via `rororo`** (`dscensor`). The YAML is the source of truth; `setup_openapi(app, api_path, operations, ...)` wires routes and validates parameters automatically. Operations are registered via `@operations.register("operationId")`.
-- **Manual aiohttp routing** (`ds_utilities`, `sequences`, `linkouts`, all gRPC-paired services). Routes are added explicitly with `app.router.add_get(path, handler_fn)`. `ds_utilities` and `sequences` still keep the OpenAPI YAML as the source of truth: they load it (`importlib.resources` → `yaml.safe_load`) and iterate `spec["paths"]`, registering each `operationId` (a module-level handler function, looked up via `globals()[operation_id]`) with `app.router.add_<method>` — so the route table can't silently drift from the documented contract. `ds_utilities` registers `get` only; `sequences` registers `get` and `post`. `linkouts` registers routes by hand with no spec.
+- **Spec-driven** (`ds_utilities`, `sequences`) — the strongest form, and the one NEW services SHOULD follow ([§ 8](#8-openapi-conventions)). The YAML is the source of truth: the service loads it (`importlib.resources` → `yaml.safe_load`), iterates `spec["paths"]`, and registers each `operationId` (a module-level handler looked up via `globals()[operation_id]`) with `app.router.add_<method>` — so the route table can't silently drift from the documented contract. `ds_utilities` registers `get` only; `sequences` registers `get` and `post`.
+- **Decorator-registered, spec doc-only** (`dscensor`) — routes are declared with `@routes.get(...)` decorators; the spec exists as documentation but is not loaded at runtime. Tolerable for a small, stable surface, but the spec and the route table can drift — prefer the spec-driven form for anything non-trivial.
+- **No spec** (`linkouts`) — routes registered by hand with no OpenAPI contract at all. An AVOID for new services ([§ 8](#8-openapi-conventions), [§ 17](#17-known-deviations-from-this-spec)).
 
-NEW services SHOULD use rororo when they expose a non-trivial REST surface — the OpenAPI-as-source-of-truth model removes a class of param-parsing bugs. The manual style is acceptable for narrow surfaces (≤3 endpoints, e.g. `sequences`) or services that have evolved organically; if you go manual but have a spec, drive the routes from it as above rather than hand-maintaining a parallel route table.
-
-Whichever pattern you pick, do NOT mix them in the same service.
+Within a single service, pick one registration mechanism; don't mix spec-driven iteration and `@routes` decorators.
 
 ### 7.4 Error response shape
 
@@ -545,21 +562,23 @@ return web.json_response(result)
 
 AVOID raising `aiohttp.web.HTTPBadRequest` from inside `request_handler.py` — that couples the handler to the HTTP transport. The dict-return pattern keeps the handler transport-agnostic.
 
-Orchestration services (§ 1.3) MAY instead raise a **transport-agnostic domain exception** carrying `message` + `status` (e.g. `sequences`' `RequestError`), which the transport layer catches and renders into the same JSON shape. This is allowed — and preferred over dict-return — when a request fans out into many fallible steps (`asyncio.gather` over N records) and any one failure must abort the whole request: threading an error-or-result dict back through the gather is far messier than a fail-fast raise. The rule the AVOID above is really protecting is "no *aiohttp/transport* types in the handler"; a plain `Exception` subclass keeps that guarantee.
+Orchestration services ([§ 1.3](#1-overview)) MAY instead raise a **transport-agnostic domain exception** carrying `message` + `status` (e.g. `sequences`' `RequestError`), which the transport layer catches and renders into the same JSON shape. This is allowed — and preferred over dict-return — when a request fans out into many fallible steps (`asyncio.gather` over N records) and any one failure must abort the whole request: threading an error-or-result dict back through the gather is far messier than a fail-fast raise. The rule the AVOID above is really protecting is "no *aiohttp/transport* types in the handler"; a plain `Exception` subclass keeps that guarantee.
 
 ---
 
 ## 8. OpenAPI conventions
 
-For services that use OpenAPI (`dscensor` via rororo; `ds_utilities` and `sequences` via spec-driven manual routing, § 7.3):
+A service exposing more than a trivial HTTP surface SHOULD ship an OpenAPI spec as the single source of truth for its routes, and — whichever routing style it uses ([§ 7.3](#73-route-registration)) — drive its route table from that spec rather than hand-maintaining a parallel one. Shipping spec-less (as `linkouts` does) is an AVOID for new services.
 
-- Schema lives at `<service>/<service>/openapi/<service>/v1/<service>.yaml`, OpenAPI 3.0. One file per service. The schema MUST be inside the package directory (see § 4.4 for why).
+For services that ship an OpenAPI spec (`ds_utilities` and `sequences` load and drive their routes from it; `dscensor` keeps it as documentation only — [§ 7.3](#73-route-registration)):
+
+- Schema lives at `<service>/<service>/openapi/<service>/v1/<service>.yaml`, OpenAPI 3.0. One file per service. The schema MUST be inside the package directory (see [§ 4.4](#44-where-contract-files-live) for why).
 - Versioned via the `v1` directory; bumping creates `v2/`, not in-place changes that break consumers.
 - Loaded at runtime via `importlib.resources.files("<service>") / "openapi/<service>/v1/<service>.yaml"` — works in both editable and built-wheel installs.
 - `MANIFEST.in` MUST include `recursive-include <service>/openapi/ *.yaml` and `setup.cfg` MUST set `include_package_data = true` plus the corresponding `[options.package_data]` entry so the file actually ships into site-packages.
 - The Dockerfile copies the package directory (which now contains `openapi/`); no separate `COPY openapi/` line.
 
-Path parameter naming MUST match what `aiohttp` / `rororo` expect: `{name}` placeholders, kebab-case for multi-word names. Query parameters use camelCase or snake_case consistently within a service (existing services are inconsistent — pick one per service and stick with it).
+Path parameter naming MUST match what `aiohttp` expects: `{name}` placeholders, kebab-case for multi-word names. Query parameters use camelCase or snake_case consistently within a service (existing services are inconsistent — pick one per service and stick with it).
 
 Schema definitions live under `components.schemas`. Define a schema once and `$ref` it from response shapes — don't inline structures.
 
@@ -567,12 +586,12 @@ Schema definitions live under `components.schemas`. Define a schema once and `$r
 
 ## 9. gRPC conventions
 
-gRPC appears in two roles: **servers** (the query services — `genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`) and **clients** (a query service or orchestration service that calls a gRPC peer — `search` calls the search-family services; `sequences` calls `genes`). `dscensor` is **not** a gRPC service — it is HTTP-only (`rororo`), and despite older revisions of this document, it has no `proto/` tree and no codegen step.
+gRPC appears in two roles: **servers** (the query services — `genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`) and **clients** (a query service or orchestration service that calls a gRPC peer — `search` calls the search-family services; `sequences` calls `genes`). `dscensor` is **not** a gRPC service — it is HTTP-only (manual `aiohttp` routing) and has no `proto/` tree and no codegen step.
 
 ### 9.1 Proto sources and the (uncommitted) generated stubs
 
-- `.proto` sources live at `<svc>/proto/<pkg>/v1/<name>.proto` (proto3) — at the **service root**, a sibling of the package dir. They ship in the sdist via `recursive-include proto/ *.proto` (§ 4.3).
-- The generated `*_pb2.py` / `*_pb2_grpc.py` are **never committed** (the repo `.gitignore` excludes `*_pb2.py` and `*_pb2_grpc.py`). They are generated at **build/install time** by the `BuildProtos` command (§ 4.1) into the *package* proto dir `<svc>/<svc>/proto/...`, so they install into site-packages and ride along in the wheel.
+- `.proto` sources live at `<svc>/proto/<pkg>/v1/<name>.proto` (proto3) — at the **service root**, a sibling of the package dir. They ship in the sdist via `recursive-include proto/ *.proto` ([§ 4.3](#43-manifestin)).
+- The generated `*_pb2.py` / `*_pb2_grpc.py` are **never committed** (the repo `.gitignore` excludes `*_pb2.py` and `*_pb2_grpc.py`). They are generated at **build/install time** by the `BuildProtos` command ([§ 4.1](#41-setuppy)) into the *package* proto dir `<svc>/<svc>/proto/...`, so they install into site-packages and ride along in the wheel.
 - protoc cannot emit relative imports and Python 3 has no implicit relative imports, so generated modules import each other by their *flat* package path (`from genes_service.v1 import genes_pb2`). To make that resolve, the package ships `<svc>/<svc>/proto/__init__.py` which appends its own dir to `sys.path`. Consumers therefore do, verbatim:
 
   ```python
@@ -593,9 +612,9 @@ python -m grpc_tools.protoc -Iproto \
 
 ### 9.2 Build robustness (MUST read before building a gRPC service image)
 
-The codegen build is fragile in three documented ways. New gRPC services MUST handle all three; existing ones are affected and on the migration list (§ 17).
+The codegen build is fragile in three documented ways. New gRPC services MUST handle all three; existing ones are affected and on the migration list ([§ 17](#17-known-deviations-from-this-spec)).
 
-1. **`pkg_resources` is gone in modern setuptools.** The `BuildProtos` command historically located grpc_tools' bundled well-known protos via `pkg_resources.resource_filename("grpc_tools", "_proto")`. setuptools ≥ 80 no longer ships `pkg_resources`, so in a clean build environment (e.g. a Docker build, where pip installs the latest setuptools) `import pkg_resources` raises `ModuleNotFoundError` and the build dies in `get_requires_for_build_wheel`. A local editable install on a box with older setuptools masks this. MUST use the stdlib instead:
+1. **`pkg_resources` is gone in modern setuptools.** Do not locate grpc_tools' bundled well-known protos via `pkg_resources.resource_filename("grpc_tools", "_proto")`: setuptools ≥ 80 no longer ships `pkg_resources`, so in a clean build environment (e.g. a Docker build, where pip installs the latest setuptools) `import pkg_resources` raises `ModuleNotFoundError` and the build dies in `get_requires_for_build_wheel`. A local editable install on a box with older setuptools masks this. Use the stdlib instead:
 
    ```python
    from importlib import resources
@@ -628,7 +647,7 @@ async def run_grpc_server(host: str, port: int, handler) -> None:
 
 ### 9.4 gRPC clients
 
-A service that *calls* gRPC keeps the client in `grpc_client.py` (query services, e.g. `search`) or `clients.py` (orchestration services, e.g. `sequences`, § 3.2) — never in `request_handler.py`. The established convention opens a fresh channel per call to tolerate dynamically-(re)started upstreams, and MUST close it:
+A service that *calls* gRPC keeps the client in `grpc_client.py` (query services, e.g. `search`) or `clients.py` (orchestration services, e.g. `sequences`, [§ 3.2](#32-orchestration-service-layout-the-clientspy-boundary)) — never in `request_handler.py`. The established convention opens a fresh channel per call to tolerate dynamically-(re)started upstreams, and MUST close it:
 
 ```python
 from grpc.experimental import aio
@@ -646,7 +665,7 @@ async def get_gene_locations(names, address):
     return {g.name: {...} for g in reply.genes}
 ```
 
-Note the `async with` (the older `search`/`sequences` code used a bare `aio.insecure_channel(...)` + `await channel.channel_ready()` and never closed it — a per-request channel leak; new code MUST use the context manager). Map any upstream failure to a domain `ServiceError` with an HTTP-ish `status` (§ 7.4).
+Note the `async with`: a bare `aio.insecure_channel(...)` + `await channel.channel_ready()` that is never closed leaks a channel and its resources every request, so code MUST use the context manager. Map any upstream failure to a domain `ServiceError` with an HTTP-ish `status` ([§ 7.4](#74-error-response-shape)).
 
 ---
 
@@ -688,7 +707,7 @@ The conda-built `pysam` wheel links against a libcurl that doesn't trust the sys
 
 For **tabix-indexed** remote files (GFF/BED/VCF via `TabixFile`, BAM `.bai`/`.csi` via `AlignmentFile`), `pysam` downloads the sibling index (`.tbi`/`.csi`/`.bai`) into the **current working directory** and reuses it for the life of the process. The repo `.gitignore` excludes these (`*.tbi`, `*.fai`, `*.gzi`, `*.csi`, `*.bai`, `*.crai`) globally; do not add per-service rules. (This is also why the Dockerfiles run with `WORKDIR /` — a writable cwd for these drop-files.) If you add a handler for a new htslib index type, make sure its drop-file extension is in the global `.gitignore` — `*.bai` was missing for a while and BAM indexes leaked into working trees.
 
-`FastaFile` is the exception, and it matters: opening a **remote FASTA re-downloads its `.fai` (and `.gzi` for bgzipped FASTA) over HTTPS on *every* open** and writes nothing to cwd. A protein/CDS `.fai` is multi-MB (one line per sequence; tens of thousands of sequences), so a cold `FastaFile(url)` open costs seconds while the subsequent `.fetch()` is sub-second. Reusing an already-open handle makes further fetches ~free, but handles are not safe to share across threads (§ 10.5). The sanctioned mitigation is the local FASTA-index cache in § 10.6.
+`FastaFile` is the exception, and it matters: opening a **remote FASTA re-downloads its `.fai` (and `.gzi` for bgzipped FASTA) over HTTPS on *every* open** and writes nothing to cwd. A protein/CDS `.fai` is multi-MB (one line per sequence; tens of thousands of sequences), so a cold `FastaFile(url)` open costs seconds while the subsequent `.fetch()` is sub-second. Reusing an already-open handle makes further fetches ~free, but handles are not safe to share across threads ([§ 10.5](#105-offloading-pysam-to-a-thread-pool)). The sanctioned mitigation is the local FASTA-index cache in [§ 10.6](#106-local-fasta-index-cache).
 
 ### 10.4 Strand and coordinate semantics
 
@@ -706,7 +725,7 @@ One coordinate subtlety the consumer MUST handle: `pysam` **silently truncates**
 
 ### 10.5 Offloading pysam to a thread pool
 
-Per § 6.1, blocking `pysam` calls in an async handler MUST be offloaded so they don't serialize the event loop. The pattern (see `ds_utilities`):
+Per [§ 6.1](#61-never-block-the-event-loop), blocking `pysam` calls in an async handler MUST be offloaded so they don't serialize the event loop. The pattern (see `ds_utilities`):
 
 - `__main__.py` creates one **bounded** `concurrent.futures.ThreadPoolExecutor` and passes it into `run_http_server`, which stores it on `app["executor"]`. The bound is a configurable flag — `--max-workers` / `MAX_WORKERS` (default 16) — and doubles as the cap on concurrent connections to the datastore (be a polite client). Shut it down (`executor.shutdown(wait=False)`) in the `main()` `finally`.
 - The transport layer awaits the handler in the pool: `await loop.run_in_executor(app["executor"], request_func, *args)` (positional args only; no kwargs — wrap with `functools.partial` if you need them).
@@ -715,7 +734,7 @@ Per § 6.1, blocking `pysam` calls in an async handler MUST be offloaded so they
 
 ### 10.6 Local FASTA-index cache
 
-Because a remote `FastaFile` open re-downloads its `.fai`/`.gzi` every time (§ 10.3), a service doing many FASTA opens against the same file SHOULD cache those index siblings on local disk and hand them to `pysam` so the open skips the re-download:
+Because a remote `FastaFile` open re-downloads its `.fai`/`.gzi` every time ([§ 10.3](#103-index-caching-and-what-pysam-does-not-cache)), a service doing many FASTA opens against the same file SHOULD cache those index siblings on local disk and hand them to `pysam` so the open skips the re-download:
 
 ```python
 fh = pysam.FastaFile(url,
@@ -727,10 +746,10 @@ fh = pysam.FastaFile(url,
 
 - **Key by URL** (`sha256(url)`), download the index once, publish it **atomically** (`urllib.request.urlretrieve` to a `*.tmp`, then `os.replace`) so a partial download is never used.
 - **Per-key lock** (`threading.Lock` keyed by the cache filename) so a cold-cache burst — N executor threads all hitting the same file — downloads the index once, not N times.
-- **Thread-safe by construction:** each request still opens its *own* `FastaFile` (reading the shared, read-only index files is fine), so this composes with § 10.5 without handle-sharing or locking on the open path.
+- **Thread-safe by construction:** each request still opens its *own* `FastaFile` (reading the shared, read-only index files is fine), so this composes with [§ 10.5](#105-offloading-pysam-to-a-thread-pool) without handle-sharing or locking on the open path.
 - **Fail open:** if the index can't be fetched, fall back to a plain remote open (degrade to slow, never to broken). For a bgzipped FASTA, use the local pair only if **both** `.fai` and `.gzi` are present — never a half-cached state.
-- **Graceful download SSL:** the cache downloads indexes with stdlib `urllib`, which uses the system CA bundle (so the image MUST have `ca-certificates`, § 13.1) — distinct from the `CURL_CA_BUNDLE` that pysam/libcurl needs (§ 10.2).
-- **Bounding:** the datastore files are immutable, so the cache needs no per-entry validation, but it MUST stay bounded. A background sweep (`--index-cache-ttl` / `INDEX_CACHE_TTL`, default 86400s) deletes entries older than the TTL (re-downloaded on next use); the sweep is an `asyncio` task whose blocking `unlink` work runs in the executor (§ 6.1).
+- **Graceful download SSL:** the cache downloads indexes with stdlib `urllib`, which uses the system CA bundle (so the image MUST have `ca-certificates`, [§ 13.1](#131-dockerfile)) — distinct from the `CURL_CA_BUNDLE` that pysam/libcurl needs ([§ 10.2](#102-ssl-ca-bundle-conda-environments)).
+- **Bounding:** the datastore files are immutable, so the cache needs no per-entry validation, but it MUST stay bounded. A background sweep (`--index-cache-ttl` / `INDEX_CACHE_TTL`, default 86400s) deletes entries older than the TTL (re-downloaded on next use); the sweep is an `asyncio` task whose blocking `unlink` work runs in the executor ([§ 6.1](#61-never-block-the-event-loop)).
 
 Effect (measured, 12-gene batch through `sequences` → `ds_utilities`): ~30s with neither optimization → ~7s with the executor alone → ~2.5s with executor + index cache.
 
@@ -755,7 +774,7 @@ python -m unittest test           # integration (needs running server)
 
 ### 11.1 Unit tests
 
-Unit tests MUST NOT import any module that pulls heavy C extensions (e.g. `pysam`) or transport libraries. Factor the testable logic into a dependency-free pure module and unit-test that in isolation. The canonical example is `sequences/sequences/fasta.py` (reverse-complement, flank math, FASTA assembly), tested by `sequences/test_fasta.py` with no `pysam`, `aiohttp`, or `grpc` import. (An earlier `ds_utilities/ds_utilities/bed_lookup.py` served this role but was removed with the BED-lookup approach; don't look for it.)
+Unit tests MUST NOT import any module that pulls heavy C extensions (e.g. `pysam`) or transport libraries. Factor the testable logic into a dependency-free pure module and unit-test that in isolation. The canonical example is `sequences/sequences/fasta.py` (reverse-complement, flank math, FASTA assembly), tested by `sequences/test_fasta.py` with no `pysam`, `aiohttp`, or `grpc` import.
 
 Use `tempfile.TemporaryDirectory()` for filesystem fixtures (see `dscensor/test.py`).
 
@@ -836,10 +855,10 @@ ENTRYPOINT ["python3", "-u", "-m", "myservice"]
 
 Specifics that are easy to get wrong:
 
-- **ENTRYPOINT is `["python3", "-u", "-m", "myservice"]`, not `["myservice"]`.** The bare console-script name does not work because most services mis-register it as `chromosome` (§ 17); `python -m` sidesteps that, and `-u` keeps stdout/stderr unbuffered so container logs are not lost.
-- **There is no `COPY openapi/ ./openapi/` line.** The OpenAPI YAML lives *inside* the package (§ 4.4) and is copied by `COPY myservice/`. A separate top-level `COPY openapi/` is the old broken pattern (it's what keeps `dscensor`'s latent bug alive — § 17).
-- **pysam services** add the htslib build/runtime libs and `ca-certificates` to `apt-get`, set `CURL_CA_BUNDLE`, and end on `WORKDIR /`. `ca-certificates` is needed both for `CURL_CA_BUNDLE` and for any stdlib `urllib` HTTPS the service does itself (e.g. the FASTA-index cache, § 10.6).
-- **gRPC services** install with `pip3 install --no-cache-dir --no-build-isolation .` so codegen uses the pinned grpcio-tools (§ 9.2). They also `COPY proto/`.
+- **ENTRYPOINT is `["python3", "-u", "-m", "myservice"]`, not `["myservice"]`.** The bare console-script name does not work because most services mis-register it as `chromosome` ([§ 17](#17-known-deviations-from-this-spec)); `python -m` sidesteps that, and `-u` keeps stdout/stderr unbuffered so container logs are not lost.
+- **There is no `COPY openapi/ ./openapi/` line.** The OpenAPI YAML lives *inside* the package ([§ 4.4](#44-where-contract-files-live)) and is copied by `COPY myservice/`. A separate top-level `COPY openapi/` does not ship the spec into the package and MUST NOT be used.
+- **pysam services** add the htslib build/runtime libs and `ca-certificates` to `apt-get`, set `CURL_CA_BUNDLE`, and end on `WORKDIR /`. `ca-certificates` is needed both for `CURL_CA_BUNDLE` and for any stdlib `urllib` HTTPS the service does itself (e.g. the FASTA-index cache, [§ 10.6](#106-local-fasta-index-cache)).
+- **gRPC services** install with `pip3 install --no-cache-dir --no-build-isolation .` so codegen uses the pinned grpcio-tools ([§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image)). They also `COPY proto/`.
 - `dscensor` additionally installs `locales`. Don't expose ports in the Dockerfile — port mapping lives in compose.
 
 ### 13.2 Three-file compose pattern
@@ -897,8 +916,6 @@ The deployment model these env vars assume is a **single shared Docker network**
 
 So a containerized orchestration service's `compose.dev.yaml` simply defaults its peer-address env vars to the siblings' service names; `compose.prod.yaml` leaves them operator-supplied. `search`/`macro_synteny_blocks` go further and ship **no** compose at all — their addresses are entirely supplied by the deployment that runs them.
 
-> Historical note: an earlier draft of `sequences` instead defaulted its peers to `host.docker.internal:<port>` and added `extra_hosts: ["host.docker.internal:host-gateway"]` to make that resolve on Linux. That was an artifact of testing `sequences` in an *isolated* compose project while its deps ran in *separate* projects + a host process — not the architecture. It was removed in favor of the service-name convention above. AVOID reintroducing it.
-
 ### 13.3 Port conventions
 
 | Container internal port | What |
@@ -933,19 +950,26 @@ AVOID logging full URLs or request bodies — they often contain user identifier
 
 ## 15. Adding a new service: checklist
 
-1. **Pick a name.** snake_case, matching the package directory name and the `console_scripts` entry. Get `console_scripts` right (§ 4.2) — do not copy the `chromosome` bug.
-2. **Create the directory skeleton** per § 3 (and § 3.2 for an orchestration service — add `clients.py`).
-3. **Copy a sibling's `setup.cfg`** and rename. Update `description`, `author`, `keywords`, `install_requires` (per-service, § 4.2). Use `python_requires = >=3.9,<4`.
-4. **`setup.py`:** one-liner for HTTP-only services; the `BuildProtos`/`build_py` variant for gRPC servers and clients (§ 4.1), which also need `commands.py`, `proto/`, and the § 9.2 build-robustness measures.
-5. **Write `MANIFEST.in`** per § 4.3.
-6. **Implement the package layout** (`__init__.py` with `__version__`, `__main__.py` per § 6, `request_handler.py` for domain logic, `http_server.py` / `grpc_server.py` for transport, `clients.py` for an orchestration service).
-7. **Write `<service>/openapi/<service>/v1/<service>.yaml`** (inside the package, § 4.4) if using OpenAPI; `proto/<pkg>/v1/<name>.proto` (at the service root, § 9.1) if using gRPC.
-8. **Add `Dockerfile`** per § 13.1 (note the pysam apt deps + `CURL_CA_BUNDLE`, the gRPC `--no-build-isolation`, and the `python3 -u -m` ENTRYPOINT).
-9. **Add compose files** if operationalised. A sibling-calling service takes peer addresses purely from env vars (§ 13.2) — service-name defaults in `compose.dev.yaml`, operator-supplied in `compose.prod.yaml`. No `host.docker.internal`/`extra_hosts`.
-10. **Write tests:** at minimum a `test_<core_logic>.py` unit test over a pysam-/transport-free pure module (§ 11.1); `test.py` integration test once the service is wired.
-11. **Run `pre-commit run --all-files`** before pushing.
-12. **README.md** with: purpose, env vars, ports, curl examples, "running locally" instructions including CA-bundle env vars (§ 10.2) if pysam is used.
+1. **Pick a name.** snake_case, matching the package directory name and the `console_scripts` entry. Get `console_scripts` right ([§ 4.2](#42-setupcfg)) — do not copy the `chromosome` bug.
+2. **Create the directory skeleton** per [§ 3](#3-service-layout) (and [§ 3.2](#32-orchestration-service-layout-the-clientspy-boundary) for an orchestration service — add `clients.py`).
+3. **Copy a sibling's `setup.cfg`** and rename. Update `description`, `author`, `keywords`, `install_requires` (per-service, [§ 4.2](#42-setupcfg)). Use `python_requires = >=3.9,<4`.
+4. **`setup.py`:** one-liner for HTTP-only services; the `BuildProtos`/`build_py` variant for gRPC servers and clients ([§ 4.1](#41-setuppy)), which also need `commands.py`, `proto/`, and the [§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image) build-robustness measures.
+5. **Write `MANIFEST.in`** per [§ 4.3](#43-manifestin).
+6. **Implement the package layout** (`__init__.py` with `__version__`, `__main__.py` per [§ 6](#6-asyncio-and-the-event-loop), `request_handler.py` for domain logic, `http_server.py` / `grpc_server.py` for transport, `clients.py` for an orchestration service).
+7. **Write `<service>/openapi/<service>/v1/<service>.yaml`** (inside the package, [§ 4.4](#44-where-contract-files-live)) if using OpenAPI; `proto/<pkg>/v1/<name>.proto` (at the service root, [§ 9.1](#91-proto-sources-and-the-uncommitted-generated-stubs)) if using gRPC.
+8. **Add `Dockerfile`** per [§ 13.1](#131-dockerfile) (note the pysam apt deps + `CURL_CA_BUNDLE`, the gRPC `--no-build-isolation`, and the `python3 -u -m` ENTRYPOINT).
+9. **Add compose files** if operationalised. A sibling-calling service takes peer addresses purely from env vars ([§ 13.2](#132-three-file-compose-pattern)) — service-name defaults in `compose.dev.yaml`, operator-supplied in `compose.prod.yaml`. No `host.docker.internal`/`extra_hosts`.
+10. **Write tests:** at minimum a `test_<core_logic>.py` unit test over a pysam-/transport-free pure module ([§ 11.1](#111-unit-tests)); `test.py` integration test once the service is wired.
+11. **Verify a clean build.** Build the image from scratch (not just an editable install) — a from-scratch build is what surfaces the [§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image) gRPC packaging traps — then run it and smoke the index route:
+    ```sh
+    docker build -t microservices-<service> .        # clean build surfaces the § 9.2 gRPC traps
+    docker run --rm -p 8080:8080 <env vars> microservices-<service>
+    curl -s http://localhost:8080/ | head            # then exercise the real endpoints
+    ```
+12. **README.md** with: purpose, env vars, ports, curl examples, "running locally" instructions including CA-bundle env vars ([§ 10.2](#102-ssl-ca-bundle-conda-environments)) if pysam is used.
 13. **PR description** notes any deviation from this spec, with rationale.
+
+(Lint and the pre-push routine live in `AGENTS.md`.)
 
 A bare-minimum service that conforms to all of the above is ~400 lines of Python plus configuration. If your draft is much more, you're probably re-implementing something that should live in `request_handler.py` only.
 
@@ -953,20 +977,11 @@ A bare-minimum service that conforms to all of the above is ~400 lines of Python
 
 ## 16. Modifying an existing service: checklist
 
-Before any change:
-
-1. Read this document.
-2. Read the service's `README.md`.
-3. `git log -- <service>/` for recent context.
-4. Check the "Known deviations" table (§ 17) to see if the file you're touching is on the migration list.
-
-For the change itself:
+Pre-flight (read the docs, `git log -- <service>/`, check the *Known deviations* table below) and the pre-push routine (`pre-commit`, `curl`-verify) live in `AGENTS.md`. This section is only what's specific to the change:
 
 - Update `request_handler.py` for domain changes, OpenAPI/proto for contract changes, transport modules only for plumbing.
 - Add or update unit tests in `test_<unit>.py`; add an integration test only when the change is observable over the wire.
 - Bump the version in `<service>/__init__.py` per semver.
-- Run `pre-commit run --all-files`.
-- Verify behavior end-to-end with `curl` against a locally running service.
 
 For cross-cutting changes (touching multiple services), open a tracking issue first. Cross-cutting refactors MUST update this document to keep it accurate.
 
@@ -979,14 +994,14 @@ As of the latest revision, the tree disagrees with this spec in the following pl
 | Service | Deviation | Severity | Migration |
 |---|---|---|---|
 | `linkouts` | `run_http_server` uses `web.run_app(app)`; `--host`/`--port` are silently ignored | medium | Apply the same async + `AppRunner` fix used in `ds_utilities` |
-| `dscensor` | OpenAPI YAML lives at `dscensor/openapi/dscensor/v1/dscensor.yaml` (outside the package), and `http_server.py` loads it via `Path(__file__).parent.parent / "openapi/..."`. Works only in editable installs and inside the current `Dockerfile` (which copies the openapi tree to `/app/openapi/` *and* runs `python -m dscensor` with `WORKDIR=/`). A plain `pip install .` into a venv puts the package in site-packages but leaves `openapi/` behind in the source dir, and the runtime path `Path(__file__).parent.parent / "openapi/..."` resolves to `/usr/local/lib/python3.13/site-packages/openapi/...` which doesn't exist — startup blows up with `FileNotFoundError`. | medium (latent, current Docker workflow happens to mask it) | Apply the same `importlib.resources`-based fix used in `ds_utilities`: `git mv dscensor/openapi dscensor/dscensor/openapi`; switch the runtime path lookup to `str(resources.files("dscensor") / "openapi/dscensor/v1/dscensor.yaml")`; add `[options.package_data]` for `dscensor = openapi/dscensor/v1/*.yaml` (`include_package_data` is already true); change MANIFEST `recursive-include` from `openapi/` to `dscensor/openapi/`; drop `COPY openapi/ ./openapi/` from the `Dockerfile`. See § 4.4 for the full recipe. |
-| Other OpenAPI-using services (none today; `linkouts` and the gRPC family don't use OpenAPI) | n/a — flag here pre-emptively so any future service that adds an OpenAPI YAML lands it in the right place from day one | n/a | Read § 4.4 before adding the YAML |
+| `linkouts` | Registers routes by hand with no OpenAPI spec, so the route table has no source-of-truth contract (an AVOID for new services per [§ 8](#8-openapi-conventions)) | low | Add `linkouts/linkouts/openapi/linkouts/v1/linkouts.yaml` and drive the routes from it (spec-driven, [§ 7.3](#73-route-registration)) |
+| `dscensor` | Keeps its OpenAPI spec *outside* the package (`dscensor/openapi/...`, via MANIFEST `recursive-include openapi/`), contrary to [§ 4.4](#44-where-contract-files-live). The spec is documentation-only — not loaded at runtime (routes are `@routes.get` decorators) — so it can drift from the actual route table. | low | `git mv dscensor/openapi dscensor/dscensor/openapi`; change MANIFEST `recursive-include openapi/` → `dscensor/openapi/`; then drive the routes from the spec (spec-driven, [§ 7.3](#73-route-registration)) per [§ 8](#8-openapi-conventions). |
+| Other OpenAPI-using services (none today; `linkouts` and the gRPC family don't use OpenAPI) | n/a — flag here pre-emptively so any future service that adds an OpenAPI YAML lands it in the right place from day one | n/a | Read [§ 4.4](#44-where-contract-files-live) before adding the YAML |
 | `linkouts`, `genes`, `gene_search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`, `search` | CLI flags are `--hhost`/`--hport`, not `--host`/`--port` | low | Rename to `--host`/`--port`; alias the old names with `--hhost` deprecated for one release |
-| `genes`, `gene_search`, `search`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks` (8 services) | `console_scripts` registers the binary as `chromosome`, not the service name (copy-paste from `chromosome`, the only one where it's coincidentally correct) | medium | Rename the entry to the package name; tag a major version bump (breaking for ops). Masked today because every Dockerfile/ENTRYPOINT uses `python3 -u -m <svc>` (§ 13.1), not the binary |
-| All 9 gRPC services (`genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`) | `commands.py` uses `pkg_resources.resource_filename("grpc_tools", "_proto")`; setuptools ≥ 80 (what a clean Docker build pulls) no longer ships `pkg_resources`, so a from-scratch image build dies in `get_requires_for_build_wheel`. Editable installs on boxes with older setuptools mask it. | high (latent — breaks any clean rebuild) | Replace with `importlib.resources.files("grpc_tools") / "_proto"` (§ 9.2). Already applied in `sequences` |
-| All 9 gRPC services' `Dockerfile` | Install with `pip3 install .` under build isolation, so `setup_requires` pulls the *latest* grpcio-tools and can generate protobuf gencode newer than the pinned runtime `protobuf` → container crashes on import with a gencode/runtime `VersionError`. | high (latent — surfaces when upstream grpcio-tools moves ahead of the pin) | Add `--no-build-isolation` (§ 9.2). Already applied in `sequences` |
-| `search` (and the query-service gRPC clients generally) | `grpc_client.py` opens `aio.insecure_channel(...)` per call but never closes it → a channel leak per request | low | Wrap in `async with aio.insecure_channel(address) as channel:` (§ 9.4). Already applied in `sequences/clients.py` |
-| `dscensor` | Uses `rororo` (OpenAPI-driven) while most others use manual aiohttp routing | none — by design | Codified in § 7.3 as an acceptable alternative pattern |
+| `genes`, `gene_search`, `search`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks` (8 services) | `console_scripts` registers the binary as `chromosome`, not the service name (copy-paste from `chromosome`, the only one where it's coincidentally correct) | medium | Rename the entry to the package name; tag a major version bump (breaking for ops). Masked today because every Dockerfile/ENTRYPOINT uses `python3 -u -m <svc>` ([§ 13.1](#131-dockerfile)), not the binary |
+| All 9 gRPC services (`genes`, `gene_search`, `search`, `chromosome`, `chromosome_region`, `chromosome_search`, `micro_synteny_search`, `macro_synteny_blocks`, `pairwise_macro_synteny_blocks`) | `commands.py` uses `pkg_resources.resource_filename("grpc_tools", "_proto")`; setuptools ≥ 80 (what a clean Docker build pulls) no longer ships `pkg_resources`, so a from-scratch image build dies in `get_requires_for_build_wheel`. Editable installs on boxes with older setuptools mask it. | high (latent — breaks any clean rebuild) | Replace with `importlib.resources.files("grpc_tools") / "_proto"` ([§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image)). Already applied in `sequences` |
+| All 9 gRPC services' `Dockerfile` | Install with `pip3 install .` under build isolation, so `setup_requires` pulls the *latest* grpcio-tools and can generate protobuf gencode newer than the pinned runtime `protobuf` → container crashes on import with a gencode/runtime `VersionError`. | high (latent — surfaces when upstream grpcio-tools moves ahead of the pin) | Add `--no-build-isolation` ([§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image)). Already applied in `sequences` |
+| `search` (and the query-service gRPC clients generally) | `grpc_client.py` opens `aio.insecure_channel(...)` per call but never closes it → a channel leak per request | low | Wrap in `async with aio.insecure_channel(address) as channel:` ([§ 9.4](#94-grpc-clients)). Already applied in `sequences/clients.py` |
 | `dscensor`, `ds_utilities`, `sequences` | Compose files exist; other services have none | none — by design | Compose is per-service; not every service ships as a container |
 
 When this list shrinks to zero, this section gets deleted.
@@ -997,11 +1012,11 @@ When this list shrinks to zero, this section gets deleted.
 
 - **autocontent JSON** — A single JSON object (one per cataloged asset) emitted by the `ds-curate` tooling; the input format for `dscensor`'s digraph.
 - **full-yuck prefix** — A `gensp.infraspecies.gnm<N>.ann<N>` annotation prefix (e.g. `glyma.Wm82.gnm2.ann1`). The leading four dot-tokens of any LIS gene ID. Not "4-dot prefix" — that's not the team's term. ("yuck" is the team's term for a full LIS identifier; a gene yuck is e.g. `glyma.Wm82.gnm2.ann1.Glyma.08G002000`.)
-- **datastore** — The LIS file hosting at `data.legumeinfo.org` (and SoyBase / PeanutBase / etc. equivalents). Read-only, BGZF + tabix indexed, accessed over HTTPS. Files are immutable (content is versioned by path), which is what makes the FASTA-index cache (§ 10.6) safe.
+- **datastore** — The LIS file hosting at `data.legumeinfo.org` (and SoyBase / PeanutBase / etc. equivalents). Read-only, BGZF + tabix indexed, accessed over HTTPS. Files are immutable (content is versioned by path), which is what makes the FASTA-index cache ([§ 10.6](#106-local-fasta-index-cache)) safe.
 - **mine** — An InterMine instance (per organism: SoyMine, ChickpeaMine, ...). Source of truth for cross-gene relationships (pangenes, families, orthology). Accessed via GraphQL.
-- **orchestration service** — A service that owns no datastore and composes siblings into a higher-level operation (shape 3, § 1; only `sequences` today). Adds a `clients.py` transport-out module (§ 3.2).
+- **orchestration service** — A service that owns no datastore and composes siblings into a higher-level operation (shape 3, [§ 1](#1-overview); only `sequences` today). Adds a `clients.py` transport-out module ([§ 3.2](#32-orchestration-service-layout-the-clientspy-boundary)).
 - **RediSearch** — The Redis module providing the secondary indexes (`geneIdx`, `chromosomeIdx`) the query services read. A vanilla `redis` server is insufficient; use a RediSearch-capable build (e.g. `redis/redis-stack-server`). `redis_loader` builds these indexes from GFF or a Chado database.
-- **gencode / runtime (protobuf)** — The protobuf "gencode" version is stamped into generated `*_pb2.py` by `protoc`/grpcio-tools at build time; the "runtime" is the installed `protobuf` package. The runtime MUST be ≥ the gencode or import fails with a `VersionError` — the failure mode § 9.2 guards against.
+- **gencode / runtime (protobuf)** — The protobuf "gencode" version is stamped into generated `*_pb2.py` by `protoc`/grpcio-tools at build time; the "runtime" is the installed `protobuf` package. The runtime MUST be ≥ the gencode or import fails with a `VersionError` — the failure mode [§ 9.2](#92-build-robustness-must-read-before-building-a-grpc-service-image) guards against.
 
 ---
 
@@ -1009,7 +1024,6 @@ When this list shrinks to zero, this section gets deleted.
 
 - [Conventional Commits](https://www.conventionalcommits.org/) — preferred commit message style.
 - [aiohttp web reference](https://docs.aiohttp.org/en/stable/web_reference.html)
-- [rororo OpenAPI integration](https://rororo.readthedocs.io/en/latest/openapi.html)
 - [pysam manual](https://pysam.readthedocs.io/en/latest/)
 - [pre-commit framework](https://pre-commit.com/)
 - [Semantic Versioning 2.0](https://semver.org/)
