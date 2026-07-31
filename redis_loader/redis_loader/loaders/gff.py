@@ -3,7 +3,7 @@ import codecs
 import csv
 import gzip
 from collections import defaultdict
-from urllib.request import urlopen, urlparse
+from urllib.request import Request, urlopen, urlparse
 
 # dependencies
 import gffutils
@@ -84,7 +84,10 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
             gene_lookup[gffgene.id] = gene
             chromosome_genes[chr_name].append(gene)
     # deal with family assignments (for non-orphans) from GFA
-    with open(gfa, "rb") if urlparse(gfa).scheme == "" else urlopen(gfa) as fileobj:
+    gfa_request = Request(gfa, headers={"User-Agent": "NCGR Redis Loader"})
+    with (
+        open(gfa, "rb") if urlparse(gfa).scheme == "" else urlopen(gfa_request)
+    ) as fileobj:
         tsv = gzip.GzipFile(fileobj=fileobj) if gfa.endswith("gz") else fileobj
         for line in csv.reader(codecs.iterdecode(tsv, "utf-8"), delimiter="\t"):
             # skip comment and metadata lines
