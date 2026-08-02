@@ -84,9 +84,10 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
             gene_lookup[gffgene.id] = gene
             chromosome_genes[chr_name].append(gene)
     # deal with family assignments (for non-orphans) from GFA
-    gfa_request = Request(gfa, headers={"User-Agent": "NCGR Redis Loader"})
     with (
-        open(gfa, "rb") if urlparse(gfa).scheme == "" else urlopen(gfa_request)
+        open(gfa, "rb")
+        if urlparse(gfa).scheme == ""
+        else urlopen(Request(gfa, headers={"User-Agent": "NCGR Redis Loader"}))
     ) as fileobj:
         tsv = gzip.GzipFile(fileobj=fileobj) if gfa.endswith("gz") else fileobj
         for line in csv.reader(codecs.iterdecode(tsv, "utf-8"), delimiter="\t"):
