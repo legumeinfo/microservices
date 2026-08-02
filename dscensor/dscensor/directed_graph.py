@@ -59,8 +59,11 @@ class DirectedGraphController:
         children_count = 0
         for name, node in self.all_objects.items():
             logging.debug(node)
-            if name in digraph:  # already added node as parent
-                continue
+            # add_node is idempotent, so re-adding a node already present (it may
+            # have been added earlier as another node's parent) just refreshes its
+            # attrs. Every node MUST be processed here regardless: skipping one
+            # would drop its own derived_from edges, and whether that happens would
+            # depend on glob() load order — making edge resolution nondeterministic.
             digraph.add_node(name, **node)  # add node and **attrs
             parents = node["metadata"]["derived_from"]
             logging.debug(parents)
