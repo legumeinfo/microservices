@@ -34,5 +34,5 @@ pyyaml==6.0.2
     # via linkouts (setup.py)
 uvloop==0.21.0
     # via linkouts (setup.py)
-yarl==1.20.1
+yarl==1.22.0
     # via aiohttp
