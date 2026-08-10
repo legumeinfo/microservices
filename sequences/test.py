@@ -22,11 +22,14 @@ GENE_B = "glyma.Wm82.gnm2.ann1.Glyma.08G003000"
 
 
 class TestSequencesEndpoints(unittest.TestCase):
-    def fetch(self, path, data=None):
-        """Return (status, body_text). data!=None issues a JSON POST."""
+    def fetch(self, path, data=None, accept=None):
+        """Return (status, body_text). data!=None issues a JSON POST; accept sets
+        the Accept header (used to content-negotiate the JSON response)."""
         url = f"{BASE}{path}"
         headers = {}
         body = None
+        if accept is not None:
+            headers["Accept"] = accept
         if data is not None:
             body = json.dumps(data).encode("utf-8")
             headers["Content-Type"] = "application/json"
@@ -68,6 +71,39 @@ class TestSequencesEndpoints(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertFastaWithRecords(text, 2)
+
+    def assertSequenceRecord(self, record, gene, seq_type):
+        self.assertEqual(record["gene"], gene)
+        self.assertEqual(record["type"], seq_type)
+        self.assertTrue(record["residues"], "residues must be non-empty")
+        self.assertEqual(record["length"], len(record["residues"]))
+        self.assertEqual(len(record["md5checksum"]), 32)
+
+    def test_json_via_format_param(self):
+        status, text = self.fetch(f"/seq/{GENE_A},{GENE_B}?type=protein&format=json")
+        self.assertEqual(status, 200)
+        records = json.loads(text)
+        self.assertEqual([r["gene"] for r in records], [GENE_A, GENE_B])
+        for record, gene in zip(records, (GENE_A, GENE_B)):
+            self.assertSequenceRecord(record, gene, "protein")
+
+    def test_json_via_accept_header(self):
+        # The path the GraphQL server uses: Accept: application/json.
+        status, text = self.fetch(f"/seq/{GENE_A}?type=cds", accept="application/json")
+        self.assertEqual(status, 200)
+        records = json.loads(text)
+        self.assertEqual(len(records), 1)
+        self.assertSequenceRecord(records[0], GENE_A, "cds")
+
+    def test_json_post(self):
+        status, text = self.fetch(
+            "/seq",
+            data={"yucks": [GENE_A, GENE_B], "type": "protein"},
+            accept="application/json",
+        )
+        self.assertEqual(status, 200)
+        records = json.loads(text)
+        self.assertEqual(len(records), 2)
 
     def test_unknown_gene_fails_whole_request(self):
         status, _ = self.fetch(

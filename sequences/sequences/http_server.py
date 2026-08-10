@@ -1,4 +1,5 @@
 # Python
+import hashlib
 from importlib import resources
 
 # dependencies
@@ -7,16 +8,48 @@ import yaml
 from aiohttp import web
 
 # module
+from sequences.fasta import format_fasta
 from sequences.request_handler import RequestError
 
 
-async def _respond(handler, yucks, seq_type, upstream, downstream):
+def _wants_json(request):
+    """Content-negotiate the response shape. FASTA is the default; JSON is
+    returned when `?format=json` or an explicit `Accept: application/json` (what
+    the GraphQL server sends). `?format=fasta` forces FASTA regardless of Accept."""
+    fmt = request.query.get("format")
+    if fmt == "json":
+        return True
+    if fmt == "fasta":
+        return False
+    return "application/json" in request.headers.get("Accept", "")
+
+
+def _json_record(record):
+    """Shape one domain record for the JSON response, adding the derived fields a
+    GraphQL `Sequence` maps to (length, md5checksum). md5 is a content checksum,
+    not a security digest."""
+    residues = record["residues"]
+    md5 = hashlib.md5(residues.encode(), usedforsecurity=False).hexdigest()
+    return {
+        "gene": record["gene"],
+        "type": record["type"],
+        "header": record["header"],
+        "residues": residues,
+        "length": len(residues),
+        "md5checksum": md5,
+    }
+
+
+async def _respond(handler, yucks, seq_type, upstream, downstream, want_json):
     try:
-        fasta = await handler.process(yucks, seq_type, upstream, downstream)
+        records = await handler.process(yucks, seq_type, upstream, downstream)
     except RequestError as e:
         return web.json_response(
             {"error": e.message, "status": e.status}, status=e.status
         )
+    if want_json:
+        return web.json_response([_json_record(r) for r in records])
+    fasta = format_fasta((r["header"], r["residues"]) for r in records)
     return web.Response(
         text=fasta,
         content_type="text/x-fasta",
@@ -37,7 +70,9 @@ async def http_seq_get(request):
     # query strings (or None when absent) can be passed straight through.
     upstream = request.query.get("up")
     downstream = request.query.get("down")
-    return await _respond(handler, yucks, seq_type, upstream, downstream)
+    return await _respond(
+        handler, yucks, seq_type, upstream, downstream, _wants_json(request)
+    )
 
 
 async def http_seq_post(request):
@@ -56,7 +91,9 @@ async def http_seq_post(request):
     seq_type = data.get("type", "protein")
     upstream = data.get("up")
     downstream = data.get("down")
-    return await _respond(handler, yucks, seq_type, upstream, downstream)
+    return await _respond(
+        handler, yucks, seq_type, upstream, downstream, _wants_json(request)
+    )
 
 
 async def run_http_server(host, port, handler):

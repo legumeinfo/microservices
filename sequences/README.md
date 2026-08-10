@@ -27,9 +27,22 @@ POST /seq          {"yucks": [...], "type": "genome", "up": 0, "down": 0}
 
 `{yucks}` is a comma-separated list of gene IDs. `type` defaults to `protein`.
 `up` / `down` are upstream / downstream flank lengths in bases (0..10000), and
-only apply to `type=genome`. Both responses return `text/x-fasta` as a file
-download (`Content-Disposition: attachment`). If **any** requested gene can't be
-resolved the whole request fails (4xx) — no partial FASTA is returned.
+only apply to `type=genome`. If **any** requested gene can't be resolved the
+whole request fails (4xx) — no partial result is returned.
+
+### Response format
+
+By default both endpoints return `text/x-fasta` as a file download
+(`Content-Disposition: attachment`). Send `Accept: application/json` (or add
+`?format=json`) to get a JSON array of per-gene records instead — the shape the
+GraphQL server consumes to resolve a gene's sequence field:
+
+```json
+[{"gene": "glyma.Wm82.gnm2.ann1.Glyma.08G002000", "type": "protein",
+  "header": "…", "residues": "MAT…", "length": 412, "md5checksum": "…"}]
+```
+
+Records preserve input order and key back to the request via `gene`.
 
 ## Configuration
 

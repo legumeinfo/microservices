@@ -1,11 +1,14 @@
 openapi: 3.0.0
 info:
   title: Sequences
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Takes a list of gene IDs (full yucks, e.g.
     `glyma.Wm82.gnm2.ann1.Glyma.08G002000`) and returns their protein, CDS, or
-    genomic sequences assembled into a single FASTA file.
+    genomic sequences. The response is a FASTA file by default, or a JSON array
+    of per-gene records when `Accept: application/json` (or `?format=json`) is
+    sent — the JSON shape the GraphQL server consumes to resolve a gene's
+    sequence field.
 
     This is an orchestration service: it resolves each gene's canonical FASTA
     URLs from `dscensor`, resolves genomic coordinates and strand from `genes`
@@ -63,13 +66,31 @@ paths:
             minimum: 0
             maximum: 10000
             default: 0
+        - name: format
+          in: query
+          required: false
+          description: |
+            Response format: `fasta` (default) or `json`. Sending
+            `Accept: application/json` also selects the JSON response.
+          schema:
+            type: string
+            enum: [fasta, json]
+            default: fasta
       responses:
         '200':
-          description: A FASTA file containing one record per requested gene.
+          description: |
+            One record per requested gene. Defaults to a FASTA file
+            (`text/x-fasta`); a JSON array of records is returned when
+            `Accept: application/json` or `?format=json` is used.
           content:
             text/x-fasta:
               schema:
                 type: string
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SequenceRecord'
         '400':
           description: Invalid request (bad type, malformed gene ID, etc.)
         '404':
@@ -106,12 +127,47 @@ paths:
                   default: 0
       responses:
         '200':
-          description: A FASTA file containing one record per requested gene.
+          description: |
+            One record per requested gene. Defaults to a FASTA file
+            (`text/x-fasta`); a JSON array of records is returned when
+            `Accept: application/json` is sent.
           content:
             text/x-fasta:
               schema:
                 type: string
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SequenceRecord'
         '400':
           description: Invalid request (bad type, malformed gene ID, etc.)
         '404':
           description: A requested gene, file, or location could not be resolved.
+components:
+  schemas:
+    SequenceRecord:
+      type: object
+      description: |
+        One resolved sequence. The GraphQL server maps this onto a gene's
+        `Sequence` field (`residues`, `length`, `md5checksum`); `gene` keys the
+        record back to its requested gene ID.
+      properties:
+        gene:
+          type: string
+          description: The requested gene ID (full yuck).
+        type:
+          type: string
+          enum: [protein, cds, genome]
+        header:
+          type: string
+          description: The FASTA header line (without the leading `>`).
+        residues:
+          type: string
+          description: The sequence residues.
+        length:
+          type: integer
+          description: Number of residues.
+        md5checksum:
+          type: string
+          description: MD5 checksum of the residues.

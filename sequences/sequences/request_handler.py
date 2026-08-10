@@ -21,7 +21,6 @@ from sequences.fasta import (
     clamp_flank,
     compute_flank_region,
     extract_full_yuck_prefix,
-    format_fasta,
     reverse_complement,
     strand_sign,
 )
@@ -46,10 +45,12 @@ class RequestHandler:
         self.ds_utilities_url = ds_utilities_url
 
     async def process(self, yucks, seq_type, upstream=0, downstream=0):
-        """Resolve every yuck to a sequence and return one assembled FASTA string.
+        """Resolve every yuck to a sequence record, preserving input order.
 
-        Fails the whole request (raises RequestError) if any yuck can't be
-        resolved; no partial FASTA is returned."""
+        Returns a list of dicts, one per gene: `{gene, type, header, residues}`.
+        The transport serializes these to FASTA or JSON. Fails the whole request
+        (raises RequestError) if any yuck can't be resolved; no partial result is
+        returned."""
         if seq_type not in VALID_TYPES:
             raise RequestError(
                 f"Invalid type '{seq_type}'. Use one of: {', '.join(VALID_TYPES)}.",
@@ -100,7 +101,7 @@ class RequestHandler:
         except ServiceError as e:
             raise RequestError(e.message, status=e.status)
 
-        return format_fasta(records)
+        return records
 
     async def _resolve_files(self, session, prefixes):
         results = await asyncio.gather(
@@ -137,7 +138,12 @@ class RequestHandler:
             )
         reference = f"{yuck}{PRIMARY_MRNA_SUFFIX}"
         sequence = await fetch_fasta(session, self.ds_utilities_url, reference, url)
-        return (f"{reference} {seq_type} gene={yuck}", sequence)
+        return {
+            "gene": yuck,
+            "type": seq_type,
+            "header": f"{reference} {seq_type} gene={yuck}",
+            "residues": sequence,
+        }
 
     async def _fetch_genome(self, session, yuck, files, location, upstream, downstream):
         url = files.get("genome_url")
@@ -175,4 +181,9 @@ class RequestHandler:
             f"gene={yuck} strand={strand_sign(strand)} "
             f"flanks={upstream}/{downstream}"
         )
-        return (header, sequence)
+        return {
+            "gene": yuck,
+            "type": "genome",
+            "header": header,
+            "residues": sequence,
+        }
