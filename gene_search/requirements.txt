@@ -20,7 +20,7 @@ frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.74.0
+grpcio==1.76.0
     # via
     #   gene_search (setup.py)
     #   grpcio-tools
