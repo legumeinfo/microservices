@@ -122,6 +122,22 @@ def parseArgs():
         that contains objects for Cicer.
         """,
     )
+    catalog_envvar = "CATALOG"
+    parser.add_argument(
+        "--catalog",
+        action=EnvArg,
+        envvar=catalog_envvar,
+        type=str,
+        default=None,
+        help=f"""
+        Path to a catalog.json built by `lis-autocontent populate-catalog` (can
+        also be specified using the {catalog_envvar} environment variable).
+
+        The catalog describes every collection in the datastore in one document
+        and powers the /catalog, /collections, /assemblies and /lineage
+        endpoints. Optional: without it the node endpoints are unaffected.
+        """,
+    )
     return parser.parse_args()
 
 
@@ -175,7 +191,7 @@ def main():
 
     # run the program
     try:
-        handler = RequestHandler(args.nodes)
+        handler = RequestHandler(args.nodes, args.catalog)
         loop.create_task(run_http_server(args.host, args.port, handler))
         loop.run_forever()
     # catch exceptions not handled by asyncio

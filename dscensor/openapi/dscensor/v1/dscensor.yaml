@@ -98,6 +98,205 @@ paths:
                 items:
                   $ref: "#/components/schemas/GeneModelsMain"
 
+  /meta:
+    get:
+      summary: Catalog build provenance
+      description: |
+        Reports whether a whole-store catalog is loaded and, if so, when and from
+        which datastore-metadata commit it was built. Always answers, even with no
+        catalog configured, so a client can discover why the other catalog
+        endpoints are unavailable.
+      operationId: getCatalogMeta
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogProvenance"
+  /catalog:
+    get:
+      summary: The whole catalog document
+      description: |
+        Returns every collection in one document, for clients that hold the
+        catalog in memory themselves rather than querying endpoint by endpoint.
+      operationId: getCatalog
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: "No catalog loaded"
+  /collections:
+    get:
+      summary: Catalog collections, filtered
+      operationId: getCollections
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+        - in: query
+          name: species
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+          description: Collection type, e.g. genomes, annotations, diversity, qtl
+        - in: query
+          name: has_doi
+          schema:
+            type: boolean
+          description: Only collections that publish a publication_doi
+        - in: query
+          name: indexed
+          schema:
+            type: boolean
+          description: Only collections holding at least one randomly accessible file
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: "No catalog loaded"
+  /types:
+    get:
+      summary: Collection types available, with counts
+      description: |
+        Answers "what kinds of data exist here", including reporting zero — which
+        a directory listing cannot do.
+      operationId: getTypes
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+        - in: query
+          name: species
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: "No catalog loaded"
+  /species-with:
+    get:
+      summary: Species holding every requested collection type
+      description: |
+        Co-availability across the whole store, e.g. which species have both
+        diversity and expression data. Requires enumerating the store, so it has
+        no equivalent in a crawl.
+      operationId: getSpeciesWith
+      parameters:
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+          description: Repeat or comma-separate, e.g. type=diversity&type=expression
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: "No type parameter supplied"
+        "503":
+          description: "No catalog loaded"
+  /assemblies:
+    get:
+      summary: Genome collections ranked by assembly quality
+      description: |
+        Ordered by BUSCO completeness then contig N50, best first, so a client
+        selects on quality rather than on whatever a listing returned first.
+      operationId: getAssemblies
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+        - in: query
+          name: species
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: "No catalog loaded"
+  /lineage/{identifier}:
+    get:
+      summary: A collection's ancestry and the publications it depends on
+      operationId: getLineage
+      parameters:
+        - in: path
+          name: identifier
+          required: true
+          schema:
+            type: string
+          description: Collection id, e.g. Wm82.gnm4.ann1.T8TQ
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: "No collection with that id"
+        "503":
+          description: "No catalog loaded"
+  /indexed-files:
+    get:
+      summary: Files that can be range-read over HTTP
+      description: |
+        Derived from CHECKSUM, the only enumeration that lists .fai/.tbi index
+        siblings — the datastore's directory index filters them out, so this
+        listing cannot be reproduced by crawling. Collections whose index_status
+        is "unknown" are reported as such rather than omitted.
+      operationId: getIndexedFiles
+      parameters:
+        - in: query
+          name: genus
+          schema:
+            type: string
+        - in: query
+          name: species
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "SUCCESS"
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: "No catalog loaded"
+
 components:
   schemas:
     Genus:
@@ -195,3 +394,23 @@ components:
           type: integer
         total_buscos:
           type: integer
+
+    CatalogProvenance:
+      type: object
+      description: |
+        Build stamp for the loaded catalog. Returned by /meta and enveloped with
+        every catalog query result, so staleness is visible at the point of use.
+      properties:
+        loaded:
+          type: boolean
+        schema:
+          type: integer
+        built_at:
+          type: string
+        source_commit:
+          type: string
+          description: datastore-metadata commit the catalog was built from
+        datastore_url:
+          type: string
+        stats:
+          type: object

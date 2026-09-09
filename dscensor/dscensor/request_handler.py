@@ -1,10 +1,22 @@
 # dependencies
+import logging
+
+from dscensor.catalog import CatalogController, CatalogError
 from dscensor.directed_graph import DirectedGraphController
 
 
 class RequestHandler:
-    def __init__(self, nodes):
+    def __init__(self, nodes, catalog=None):
         self.controller = DirectedGraphController(nodes)
+        # The catalog is optional: without one the node endpoints behave exactly
+        # as before and the catalog endpoints report that none is loaded. A bad
+        # catalog must not take the service down with it.
+        self.catalog = CatalogController()
+        if catalog:
+            try:
+                self.catalog = CatalogController(catalog)
+            except CatalogError as err:
+                logging.error(f"Catalog not loaded: {err}")
 
     def list_genus(self):
         genus_list = {}
