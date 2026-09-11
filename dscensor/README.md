@@ -29,6 +29,6 @@ Install pre-commit hooks before developing. The github will force you to subscri
 
 ## Install DScensor
 
-`python ./setup.py install`
+`pip install .`
 
 `dscensor --help`
