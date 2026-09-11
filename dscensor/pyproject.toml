@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dscensor"
+dynamic = ["version"]
+description = "A Microservice that provides data for the DSCensor Web App"
+readme = "README.md"
+requires-python = ">=3.10,<4"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Connor Cameron", email = "ctc@ncgr.org" },
+]
+keywords = ["genomics", "bioinformatics", "microservices"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "aiohttp",
+    "aiohttp-cors",
+    "networkx",
+    "pyyaml",
+    "uvloop",
+]
+
+[project.urls]
+Homepage = "https://github.com/legumeinfo/microservices"
+Source = "https://github.com/legumeinfo/microservices"
+"Bug Reports" = "https://github.com/legumeinfo/microservices/issues"
+
+[project.scripts]
+dscensor = "dscensor.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "dscensor.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["dscensor*", "openapi*"]
+
+[tool.setuptools.package-data]
+openapi = ["**/*.yaml"]
