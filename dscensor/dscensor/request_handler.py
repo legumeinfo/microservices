@@ -1,71 +1,82 @@
-# dependencies
+"""Query the DSCensor directed graph on behalf of the HTTP routes."""
+
+from __future__ import annotations
+
+from typing import Any, Optional
+
 from dscensor.directed_graph import DirectedGraphController
 
 
 class RequestHandler:
-    def __init__(self, nodes):
+    """Thin query layer over :class:`DirectedGraphController`."""
+
+    def __init__(self, nodes: str):
         self.controller = DirectedGraphController(nodes)
 
-    def list_genus(self):
-        genus_list = {}
-        for node in list(self.controller.digraph.nodes(data=True)):
-            # data part of node tuple with genus key
-            node_genus = node[1]["metadata"]["genus"]
-            genus_list[node_genus] = 1
-        return [genus for genus in genus_list]
+    def _nodes(self):
+        """Yield the ``(name, data)`` tuples of every node in the graph."""
+        return self.controller.digraph.nodes(data=True)
 
-    def list_species(self):
-        species_list = {}
-        for node in list(self.controller.digraph.nodes(data=True)):
-            # data part of node tuple with species key
-            node_species = node[1]["metadata"]["species"]
-            species_list[node_species] = 1
-        return [species for species in species_list]
+    def list_genus(self) -> list[str]:
+        """Return every genus present in the graph, in insertion order."""
+        genus_list: dict[str, None] = {}
+        for _, data in self._nodes():
+            genus_list[data["metadata"]["genus"]] = None
+        return list(genus_list)
 
-    def list_genomes(self, genus="", species=""):
+    def list_species(self, genus: str = "") -> list[str]:
+        """Return every species in the graph, optionally limited to ``genus``.
+
+        :param genus: Case-insensitive genus filter; empty means all genera.
+        """
         genus = genus.lower()
-        species = species.lower()
-        genomes_main = {}
-        for node in list(self.controller.digraph.nodes(data=True)):
-            node_genus = node[1]["metadata"]["genus"].lower()
-            node_species = node[1]["metadata"]["species"].lower()
-            node_canonical_type = node[1]["metadata"]["canonical_type"]
-            if node_canonical_type != "genome_main":
+        species_list: dict[str, None] = {}
+        for _, data in self._nodes():
+            metadata = data["metadata"]
+            if genus and metadata["genus"].lower() != genus:
                 continue
-            # if genus provided only take matching genus
-            if genus:
-                if node_genus != genus:
-                    continue
-                # if genus and species make sure species within genus
-                if species:
-                    if node_species != species:
-                        continue
-            # lets you specify species without genus which is probably stupid
-            if species:
-                if node_species != species:
-                    continue
-            genomes_main[node[0]] = node[1]
-        return [genomes_main[genome] for genome in genomes_main]
+            species_list[metadata["species"]] = None
+        return list(species_list)
 
-    def list_gene_models(self, genus, species):
-        gene_models_main = {}
-        for node in list(self.controller.digraph.nodes(data=True)):
-            node_genus = node[1]["metadata"]["genus"].lower()
-            node_species = node[1]["metadata"]["species"].lower()
-            node_canonical_type = node[1]["metadata"]["canonical_type"]
-            if node_canonical_type != "gene_models_main":
+    def _list_by_type(
+        self,
+        canonical_type: str,
+        genus: str = "",
+        species: str = "",
+        results: Optional[int] = None,
+    ) -> list[dict[str, Any]]:
+        """Return nodes of ``canonical_type`` matching the taxon filters.
+
+        :param canonical_type: e.g. ``genome_main`` or ``gene_models_main``.
+        :param genus: Case-insensitive genus filter; empty means any.
+        :param species: Case-insensitive species filter within ``genus``;
+            ignored unless ``genus`` is also given.
+        :param results: If given, return at most this many nodes.
+        """
+        genus = genus.lower()
+        species = species.lower() if genus else ""
+        matches: list[dict[str, Any]] = []
+        for _, data in self._nodes():
+            metadata = data["metadata"]
+            if metadata["canonical_type"] != canonical_type:
                 continue
-            # if genus provided only take matching genus
-            if genus:
-                if node_genus != genus:
-                    continue
-                # if genus and species make sure species within genus
-                if species:
-                    if node_species != species:
-                        continue
-            # lets you specify species without genus which is probably stupid
-            if species:
-                if node_species != species:
-                    continue
-            gene_models_main[node[0]] = node[1]
-        return [gene_models_main[genome] for genome in gene_models_main]
+            if genus and metadata["genus"].lower() != genus:
+                continue
+            if species and metadata["species"].lower() != species:
+                continue
+            matches.append(data)
+            if results is not None and len(matches) >= results:
+                break
+        return matches
+
+    def list_genomes(
+        self, genus: str = "", species: str = "", results: Optional[int] = None
+    ) -> list[dict[str, Any]]:
+        """Return ``genome_main`` nodes; see :meth:`_list_by_type`."""
+        return self._list_by_type("genome_main", genus, species, results)
+
+    def list_gene_models(
+        self, genus: str = "", species: str = "", results: Optional[int] = None
+    ) -> list[dict[str, Any]]:
+        """Return ``gene_models_main`` nodes; see :meth:`_list_by_type`."""
+        return self._list_by_type("gene_models_main", genus, species, results)
