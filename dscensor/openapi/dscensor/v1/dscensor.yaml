@@ -156,6 +156,134 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
+  /proteins:
+    get:
+      summary: Get list of all protein objects
+      description: |
+        Returns all of the protein objects from the digraph.
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins/{genus}:
+    get:
+      summary: Get all protein objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins/{genus}/{species}:
+    get:
+      summary: Get all protein objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary:
+    get:
+      summary: Get list of all protein_primary objects
+      description: |
+        Returns all of the protein_primary objects from the digraph.
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary/{genus}:
+    get:
+      summary: Get all protein_primary objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary/{genus}/{species}:
+    get:
+      summary: Get all protein_primary objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
 components:
   parameters:
     Genus:
@@ -210,6 +338,22 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/GeneModelsMain"
+    ProteinList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Protein"
+    ProteinPrimaryList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ProteinPrimary"
     BadRequest:
       description: "'results' must be a positive integer"
 
@@ -235,6 +379,26 @@ components:
           $ref: "#/components/schemas/Busco"
 
     GeneModelsMain:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          $ref: "#/components/schemas/Counts"
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    Protein:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          $ref: "#/components/schemas/Counts"
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    ProteinPrimary:
       type: object
       properties:
         metadata:

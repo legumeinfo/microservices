@@ -95,6 +95,46 @@ async def list_gene_models(request: web.Request) -> web.Response:
     return web.json_response(handler.list_gene_models(genus, species, results))
 
 
+@routes.get("/proteins")
+@routes.get("/proteins/limit/{results}")
+@routes.get("/proteins/{genus}")
+@routes.get("/proteins/{genus}/limit/{results}")
+@routes.get("/proteins/{genus}/{species}")
+@routes.get("/proteins/{genus}/{species}/limit/{results}")
+async def list_proteins(request: web.Request) -> web.Response:
+    """Return protein objects filtered by path parameters.
+
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
+    :return: A JSON response containing the protein list.
+    """
+    handler = request.app["handler"]
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_proteins(genus, species, results))
+
+
+@routes.get("/proteins_primary")
+@routes.get("/proteins_primary/limit/{results}")
+@routes.get("/proteins_primary/{genus}")
+@routes.get("/proteins_primary/{genus}/limit/{results}")
+@routes.get("/proteins_primary/{genus}/{species}")
+@routes.get("/proteins_primary/{genus}/{species}/limit/{results}")
+async def list_proteins_primary(request: web.Request) -> web.Response:
+    """Return protein_primary objects filtered by path parameters.
+
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
+    :return: A JSON response containing the protein_primary list.
+    """
+    handler = request.app["handler"]
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_proteins_primary(genus, species, results))
+
+
 def _setup_cors(app: web.Application) -> None:
     """Attach permissive CORS to every registered route.
 

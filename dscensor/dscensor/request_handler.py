@@ -80,3 +80,15 @@ class RequestHandler:
     ) -> list[dict[str, Any]]:
         """Return ``gene_models_main`` nodes; see :meth:`_list_by_type`."""
         return self._list_by_type("gene_models_main", genus, species, results)
+
+    def list_proteins(
+        self, genus: str = "", species: str = "", results: Optional[int] = None
+    ) -> list[dict[str, Any]]:
+        """Return ``protein`` nodes; see :meth:`_list_by_type`."""
+        return self._list_by_type("protein", genus, species, results)
+
+    def list_proteins_primary(
+        self, genus: str = "", species: str = "", results: Optional[int] = None
+    ) -> list[dict[str, Any]]:
+        """Return ``protein_primary`` nodes; see :meth:`_list_by_type`."""
+        return self._list_by_type("protein_primary", genus, species, results)
