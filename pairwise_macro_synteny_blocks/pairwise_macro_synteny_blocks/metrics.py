@@ -83,4 +83,22 @@ def levenshtein(a, b):
     return cost[lb]
 
 
-METRICS = {"jaccard": jaccard, "levenshtein": levenshtein}
+def levenshtein_identity(a, b):
+    # Returns 0.0 for no identity, 1.0 for identical sequences
+    distance = levenshtein(a, b)
+    max_length = max(len(a), len(b))
+    return 1.0 - (distance / max_length)
+
+
+def jaccard_identity(a, b, n=1, reversals=False, multiset=False):
+    # Returns 0.0 for no identity, 1.0 for identical sequences
+    distance = jaccard(a, b, n, reversals, multiset)
+    return 1.0 - distance
+
+
+METRICS = {
+    "jaccard": jaccard,
+    "levenshtein": levenshtein,
+    "levenshtein_identity": levenshtein_identity,
+    "jaccard_identity": jaccard_identity,
+}
