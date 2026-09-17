@@ -1,104 +1,362 @@
 openapi: 3.0.0
 info:
   title: "RESTful API for DSCensor Directed Graph"
-  version: 1.0.0
+  version: 2.0.0
 servers:
   - url: /
 paths:
   /genera:
     get:
       summary: Get list of all Genera
-      operationId: getGenus
       responses:
         "200":
-          description: "SUCCESS"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Genus"
+          $ref: "#/components/responses/GenusList"
+
+  /genera/{genus}/species:
+    get:
+      summary: Get list of all species within a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/SpeciesList"
+
   /species:
     get:
       summary: Get list of all species
-      operationId: getSpecies
       responses:
         "200":
-          description: "SUCCESS"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Species"
+          $ref: "#/components/responses/SpeciesList"
+
   /genomes:
     get:
       summary: Get list of all genome_main objects
       description: |
         Returns all of the genome_main objects from the digraph.
-      parameters:
-        - in: query
-          name: genus
-          schema:
-            type: string
-          description: Return only genomes matching optional genus
-          required: false
-        - in: query
-          name: species
-          schema:
-            type: string
-          description: Return only genomes matching optional species
-          required: false
-        - in: query
-          name: results
-          schema:
-            type: integer
-            minimum: 1
-          description: Return only int genome results at most
-          required: false
-      operationId: getGenomes
       responses:
         "200":
-          description: "SUCCESS"
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Genome"
+          $ref: "#/components/responses/GenomeList"
+
+  /genomes/limit/{results}:
+    get:
+      summary: Get at most {results} genome_main objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenomeList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /genomes/{genus}:
+    get:
+      summary: Get all genome_main objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenomeList"
+
+  /genomes/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} genome_main objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenomeList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /genomes/{genus}/{species}:
+    get:
+      summary: Get all genome_main objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenomeList"
+
+  /genomes/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} genome_main objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenomeList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /annotations:
     get:
       summary: Get list of all gene_models_main objects
       description: |
         Returns all of the gene_models_main objects from the digraph.
-      parameters:
-        - in: query
-          name: genus
-          schema:
-            type: string
-          description: Return only genomes matching optional genus
-          required: false
-        - in: query
-          name: species
-          schema:
-            type: string
-          description: Return only genomes matching optional species
-          required: false
-        - in: query
-          name: results
-          schema:
-            type: integer
-            minimum: 1
-          description: Return only int annotation results at most
-          required: false
-      operationId: getGeneModelsMain
       responses:
         "200":
-          description: "SUCCESS"
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/GeneModelsMain"
+          $ref: "#/components/responses/GeneModelsMainList"
+
+  /annotations/limit/{results}:
+    get:
+      summary: Get at most {results} gene_models_main objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneModelsMainList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /annotations/{genus}:
+    get:
+      summary: Get all gene_models_main objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneModelsMainList"
+
+  /annotations/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} gene_models_main objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneModelsMainList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /annotations/{genus}/{species}:
+    get:
+      summary: Get all gene_models_main objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneModelsMainList"
+
+  /annotations/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} gene_models_main objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneModelsMainList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins:
+    get:
+      summary: Get list of all protein objects
+      description: |
+        Returns all of the protein objects from the digraph.
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins/{genus}:
+    get:
+      summary: Get all protein objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins/{genus}/{species}:
+    get:
+      summary: Get all protein objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+
+  /proteins/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} protein objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary:
+    get:
+      summary: Get list of all protein_primary objects
+      description: |
+        Returns all of the protein_primary objects from the digraph.
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects
+      parameters:
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary/{genus}:
+    get:
+      summary: Get all protein_primary objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/{genus}/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects for a genus
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /proteins_primary/{genus}/{species}:
+    get:
+      summary: Get all protein_primary objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+
+  /proteins_primary/{genus}/{species}/limit/{results}:
+    get:
+      summary: Get at most {results} protein_primary objects for a genus and species
+      parameters:
+        - $ref: "#/components/parameters/Genus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Results"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProteinPrimaryList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
 components:
+  parameters:
+    Genus:
+      in: path
+      name: genus
+      required: true
+      schema:
+        type: string
+      description: Return only objects matching this genus (case-insensitive)
+    Species:
+      in: path
+      name: species
+      required: true
+      schema:
+        type: string
+      description: Return only objects matching this species (case-insensitive)
+    Results:
+      in: path
+      name: results
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Return at most this many objects
+
+  responses:
+    GenusList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Genus"
+    SpeciesList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Species"
+    GenomeList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Genome"
+    GeneModelsMainList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/GeneModelsMain"
+    ProteinList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Protein"
+    ProteinPrimaryList:
+      description: "SUCCESS"
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ProteinPrimary"
+    BadRequest:
+      description: "'results' must be a positive integer"
+
   schemas:
     Genus:
       type: array
@@ -116,20 +374,7 @@ components:
         metadata:
           $ref: "#/components/schemas/CoreObject"
         counts:
-          type: object
-          properties:
-            contigs:
-              type: integer
-            records:
-              type: integer
-            N50:
-              type: integer
-            allbases:
-              type: integer
-            gapbases:
-              type: integer
-            gaps:
-              type: integer
+          $ref: "#/components/schemas/Counts"
         busco:
           $ref: "#/components/schemas/Busco"
 
@@ -139,22 +384,45 @@ components:
         metadata:
           $ref: "#/components/schemas/CoreObject"
         counts:
-          type: object
-          properties:
-            contigs:
-              type: integer
-            records:
-              type: integer
-            N50:
-              type: integer
-            allbases:
-              type: integer
-            gapbases:
-              type: integer
-            gaps:
-              type: integer
+          $ref: "#/components/schemas/Counts"
         busco:
           $ref: "#/components/schemas/Busco"
+
+    Protein:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          $ref: "#/components/schemas/Counts"
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    ProteinPrimary:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/CoreObject"
+        counts:
+          $ref: "#/components/schemas/Counts"
+        busco:
+          $ref: "#/components/schemas/Busco"
+
+    Counts:
+      type: object
+      properties:
+        contigs:
+          type: integer
+        records:
+          type: integer
+        N50:
+          type: integer
+        allbases:
+          type: integer
+        gapbases:
+          type: integer
+        gaps:
+          type: integer
 
     CoreObject:
       type: object

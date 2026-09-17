@@ -11,14 +11,14 @@ routes = web.RouteTableDef()
 
 
 def _parse_results_param(request: web.Request) -> Optional[int]:
-    """Extract and validate the optional ``results`` query parameter.
+    """Extract and validate the optional ``results`` path parameter.
 
     :param request: The incoming aiohttp request.
-    :return: The parsed integer, or ``None`` if the parameter is absent.
+    :return: The parsed integer, or ``None`` if the route has no ``results``.
     :raises aiohttp.web.HTTPBadRequest: If ``results`` is present but is not
         a positive integer.
     """
-    raw = request.query.get("results")
+    raw = request.match_info.get("results")
     if raw is None:
         return None
     try:
@@ -38,56 +38,101 @@ async def list_genus(request: web.Request) -> web.Response:
     :return: A JSON response containing the genus list.
     """
     handler = request.app["handler"]
-    genus_list = handler.list_genus()
-    return web.json_response(genus_list)
+    return web.json_response(handler.list_genus())
 
 
 @routes.get("/species")
+@routes.get("/genera/{genus}/species")
 async def list_species(request: web.Request) -> web.Response:
-    """Return the list of available species.
+    """Return the list of species, optionally limited to one genus.
 
-    :param request: The incoming aiohttp request.
+    :param request: The incoming aiohttp request. An optional ``genus``
+        path parameter narrows the result set.
     :return: A JSON response containing the species list.
     """
     handler = request.app["handler"]
-    species_list = handler.list_species()
-    return web.json_response(species_list)
+    genus = request.match_info.get("genus", "")
+    return web.json_response(handler.list_species(genus))
 
 
 @routes.get("/genomes")
+@routes.get("/genomes/limit/{results}")
+@routes.get("/genomes/{genus}")
+@routes.get("/genomes/{genus}/limit/{results}")
+@routes.get("/genomes/{genus}/{species}")
+@routes.get("/genomes/{genus}/{species}/limit/{results}")
 async def list_genomes(request: web.Request) -> web.Response:
-    """Return genome_main objects filtered by genus/species query parameters.
+    """Return genome_main objects filtered by path parameters.
 
-    :param request: The incoming aiohttp request. Optional ``genus`` and
-        ``species`` query parameters narrow the result set. An optional
-        ``results`` query parameter is validated but not yet forwarded to
-        the handler (see module docstring note).
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
     :return: A JSON response containing the genome list.
     """
     handler = request.app["handler"]
-    genus = request.query.get("genus", "").lower()
-    species = request.query.get("species", "").lower()
-    _parse_results_param(request)  # validate against openAPI spec
-    genomes_list = handler.list_genomes(genus, species)
-    return web.json_response(genomes_list)
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_genomes(genus, species, results))
 
 
 @routes.get("/annotations")
+@routes.get("/annotations/limit/{results}")
+@routes.get("/annotations/{genus}")
+@routes.get("/annotations/{genus}/limit/{results}")
+@routes.get("/annotations/{genus}/{species}")
+@routes.get("/annotations/{genus}/{species}/limit/{results}")
 async def list_gene_models(request: web.Request) -> web.Response:
-    """Return gene_models_main objects filtered by genus/species.
+    """Return gene_models_main objects filtered by path parameters.
 
-    :param request: The incoming aiohttp request. Optional ``genus`` and
-        ``species`` query parameters narrow the result set. An optional
-        ``results`` query parameter is validated but not yet forwarded to
-        the handler (see module docstring note).
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
     :return: A JSON response containing the gene model list.
     """
     handler = request.app["handler"]
-    genus = request.query.get("genus")
-    species = request.query.get("species")
-    _parse_results_param(request)  # spec validation
-    gene_model_list = handler.list_gene_models(genus, species)
-    return web.json_response(gene_model_list)
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_gene_models(genus, species, results))
+
+
+@routes.get("/proteins")
+@routes.get("/proteins/limit/{results}")
+@routes.get("/proteins/{genus}")
+@routes.get("/proteins/{genus}/limit/{results}")
+@routes.get("/proteins/{genus}/{species}")
+@routes.get("/proteins/{genus}/{species}/limit/{results}")
+async def list_proteins(request: web.Request) -> web.Response:
+    """Return protein objects filtered by path parameters.
+
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
+    :return: A JSON response containing the protein list.
+    """
+    handler = request.app["handler"]
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_proteins(genus, species, results))
+
+
+@routes.get("/proteins_primary")
+@routes.get("/proteins_primary/limit/{results}")
+@routes.get("/proteins_primary/{genus}")
+@routes.get("/proteins_primary/{genus}/limit/{results}")
+@routes.get("/proteins_primary/{genus}/{species}")
+@routes.get("/proteins_primary/{genus}/{species}/limit/{results}")
+async def list_proteins_primary(request: web.Request) -> web.Response:
+    """Return protein_primary objects filtered by path parameters.
+
+    :param request: The incoming aiohttp request. Optional ``genus``,
+        ``species`` and ``results`` path parameters narrow the result set.
+    :return: A JSON response containing the protein_primary list.
+    """
+    handler = request.app["handler"]
+    genus = request.match_info.get("genus", "")
+    species = request.match_info.get("species", "")
+    results = _parse_results_param(request)
+    return web.json_response(handler.list_proteins_primary(genus, species, results))
 
 
 def _setup_cors(app: web.Application) -> None:
