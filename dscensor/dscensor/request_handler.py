@@ -8,7 +8,7 @@ from dscensor.directed_graph import DirectedGraphController
 
 
 class RequestHandler:
-    """Thin query layer over :class:`DirectedGraphController`."""
+    """Query layer over :class:`DirectedGraphController`."""
 
     def __init__(self, nodes: str):
         self.controller = DirectedGraphController(nodes)
