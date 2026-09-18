@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: "RESTful API for DSCensor Directed Graph"
-  version: 2.0.0
+  version: 2.0.1
 servers:
   - url: /
 paths:
