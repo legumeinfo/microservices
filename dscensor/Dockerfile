@@ -12,7 +12,6 @@ COPY INSTALL ./
 COPY LICENSE ./
 COPY README.md ./
 COPY pyproject.toml ./
-COPY autocontent ./
 COPY dscensor/ ./dscensor/
 COPY openapi/ ./openapi/
 
