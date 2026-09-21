@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package legumeinfo.microservices.track.v1;
+
+
+message Track {
+  string genus = 2;
+  string species = 3;
+  repeated string genes = 4;
+  repeated string families = 5;
+}
+
+
+message Chromosome {
+  uint32 length = 1;
+  Track track = 2;
+}
+
+
+message MicroTrack {
+  string name = 1;
+  Track track = 2;
+}

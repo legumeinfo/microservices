@@ -20,11 +20,11 @@ frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.74.0
+grpcio>=1.78.0
     # via
     #   grpcio-tools
     #   micro_synteny_search (setup.py)
-grpcio-tools==1.74.0
+grpcio-tools>=1.78.0
     # via micro_synteny_search (setup.py)
 idna==3.10
     # via yarl

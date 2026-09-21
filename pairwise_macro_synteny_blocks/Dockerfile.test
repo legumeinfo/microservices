@@ -1,0 +1,35 @@
+FROM python:3.13.7-slim-trixie
+
+# install gcc and other build requirements
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY INSTALL ./
+COPY LICENSE ./
+COPY MANIFEST.in ./
+COPY README.md ./
+COPY setup.cfg ./
+COPY setup.py ./
+COPY requirements.txt ./
+COPY requirements-test.txt ./
+COPY pairwise_macro_synteny_blocks/ ./pairwise_macro_synteny_blocks/
+COPY proto/ ./proto/
+COPY tests/ ./tests/
+COPY pytest.ini ./
+
+# install the package dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# install test dependencies
+RUN pip3 install --no-cache-dir -r requirements-test.txt
+
+# install (and implicitly build) the package
+RUN pip3 install --no-cache-dir .
+
+# CRITICAL: Remove source directory to ensure tests use installed package
+RUN rm -rf pairwise_macro_synteny_blocks/
+
+CMD ["pytest", "-v", "--tb=short"]

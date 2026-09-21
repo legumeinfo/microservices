@@ -24,8 +24,8 @@ Provides distutils command classes for the macro-synteny blocks Python setup pro
 
 import os
 import sys
+from importlib.resources import files as resource_files
 
-import pkg_resources
 import setuptools
 
 
@@ -63,9 +63,7 @@ class BuildProtos(setuptools.Command):
                 if filename.endswith(".proto"):
                     proto_files.append(os.path.abspath(os.path.join(root, filename)))
 
-        well_known_protos_include = pkg_resources.resource_filename(
-            "grpc_tools", "_proto"
-        )
+        well_known_protos_include = str(resource_files("grpc_tools").joinpath("_proto"))
 
         for proto_file in proto_files:
             command = [
