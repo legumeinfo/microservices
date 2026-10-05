@@ -21,7 +21,6 @@
 Provides distutils command classes for the macro-synteny blocks Python setup process.
 """
 
-
 import os
 import sys
 
