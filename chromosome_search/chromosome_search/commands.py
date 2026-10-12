@@ -19,7 +19,6 @@
 # limitations under the License.
 """Provides distutils command classes for the chromosome search Python setup process."""
 
-
 import os
 import sys
 

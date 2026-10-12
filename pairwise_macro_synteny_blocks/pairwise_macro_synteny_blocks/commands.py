@@ -22,7 +22,6 @@ Provides distutils command classes for the pairwise macro-synteny blocks Python 
 process.
 """
 
-
 import os
 import sys
 
