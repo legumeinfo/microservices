@@ -3,10 +3,72 @@ import codecs
 import csv
 import gzip
 from collections import defaultdict
+from contextlib import contextmanager
+from urllib.parse import unquote
 from urllib.request import Request, urlopen, urlparse
 
 # dependencies
-import gffutils
+import pysam
+
+
+@contextmanager
+def openFile(path):
+    """
+    Opens a local file or URL for binary reading, decompressing it if gzipped.
+
+    Parameters:
+      path (str): The local path or URL of the file to open.
+
+    Yields:
+      file: A binary file-like object.
+    """
+
+    with (
+        open(path, "rb")
+        if urlparse(path).scheme == ""
+        else urlopen(Request(path, headers={"User-Agent": "NCGR Redis Loader"}))
+    ) as fileobj:
+        yield gzip.GzipFile(fileobj=fileobj) if path.endswith("gz") else fileobj
+
+
+class GFF3Reader:
+    """
+    Adapts a GFF3 stream for pysam.tabix_iterator, which cannot parse a ##FASTA
+    section and requires every line to end with a newline.
+    """
+
+    closed = False
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def readline(self):
+        line = self.fileobj.readline()
+        if line.startswith(b"##FASTA"):
+            return b""
+        if line and not line.endswith(b"\n"):
+            line += b"\n"
+        return line
+
+
+def readFeatures(path, types):
+    """
+    Reads features of the given types from a GFF3 file.
+
+    Parameters:
+      path (str): The local path or URL to the GFF3 file to read.
+      types (set[str]): The feature types (column 3) to read.
+
+    Yields:
+      pysam.libctabixproxies.GFF3Proxy: Each feature of the given types.
+    """
+
+    parser = pysam.asGFF3()
+    parser.set_encoding("utf-8")
+    with openFile(path) as fileobj:
+        for feature in pysam.tabix_iterator(GFF3Reader(fileobj), parser):
+            if feature.feature in types:
+                yield feature
 
 
 def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
@@ -25,20 +87,10 @@ def transferChromosomes(redisearch_loader, genus, species, chromosome_gff):
         loaded.
     """
 
-    # create chromosome SQLLite database from chromosomal GFF file
-    gffchr_db = gffutils.create_db(
-        chromosome_gff,
-        ":memory:",
-        force=True,
-        keep_order=True,
-    )
-
     # index the chromosomes
     chromosome_names = set()
-    for chr in gffchr_db.features_of_type(
-        ("chromosome", "supercontig"), order_by="attributes"
-    ):
-        name = chr.seqid
+    for chr in readFeatures(chromosome_gff, {"chromosome", "supercontig"}):
+        name = chr.contig
         length = chr.end
         chromosome_names.add(name)
         redisearch_loader.indexChromosome(name, length, genus, species)
@@ -60,36 +112,31 @@ def transferGenes(redisearch_loader, gene_gff, gfa, chromosome_names):
         that have been loaded.
     """
 
-    # create gene SQLLite database from gene GFF file
-    gffgene_db = gffutils.create_db(gene_gff, ":memory:", force=True, keep_order=True)
-
-    # index all the genes in the db
+    # index all the genes in the GFF
     gene_lookup = dict()
     chromosome_genes = defaultdict(list)
-    for gffgene in gffgene_db.features_of_type("gene", order_by="attributes"):
-        chr_name = gffgene.seqid
-        if chr_name in chromosome_names:
+    # only "gene" features are loaded; ncRNA_gene, pseudogene, etc. are ignored
+    for gffgene in readFeatures(gene_gff, {"gene"}):
+        chr_name = gffgene.contig
+        # genes without an ID can't be keyed in Redis or matched to the GFA
+        if chr_name in chromosome_names and "ID" in gffgene.keys():
             strand = 0
             if gffgene.strand == "+":
                 strand = 1
             if gffgene.strand == "-":
                 strand = -1
+            # pysam coordinates are 0-based, half-open
             gene = {
-                "name": gffgene.id,
-                "fmin": gffgene.start,
+                "name": unquote(gffgene.ID),
+                "fmin": gffgene.start + 1,
                 "fmax": gffgene.end,
                 "strand": strand,
                 "family": "",
             }
-            gene_lookup[gffgene.id] = gene
+            gene_lookup[gene["name"]] = gene
             chromosome_genes[chr_name].append(gene)
     # deal with family assignments (for non-orphans) from GFA
-    with (
-        open(gfa, "rb")
-        if urlparse(gfa).scheme == ""
-        else urlopen(Request(gfa, headers={"User-Agent": "NCGR Redis Loader"}))
-    ) as fileobj:
-        tsv = gzip.GzipFile(fileobj=fileobj) if gfa.endswith("gz") else fileobj
+    with openFile(gfa) as tsv:
         for line in csv.reader(codecs.iterdecode(tsv, "utf-8"), delimiter="\t"):
             # skip comment and metadata lines
             if line[0].startswith("#") or line[0] == "ScoreMeaning":
