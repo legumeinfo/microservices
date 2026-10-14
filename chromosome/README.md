@@ -18,6 +18,13 @@ All the microservice's dependencies are listed in the `requirements.txt` file, w
     $ . ./venv/bin/activate
     (venv) $ pip install -r requirements.txt
 
+Then generate the gRPC modules from the `.proto` files and install the microservice
+
+    (venv) $ python3 -m grpc_tools.protoc --proto_path=proto \
+          --python_out=chromosome/proto --grpc_python_out=chromosome/proto \
+          $(find proto -name '*.proto')
+    (venv) $ pip install --no-deps -e .
+
 ## Running
 
 The microservice loads data from a RediSearch index and hosts an HTTP and a gRPC server.

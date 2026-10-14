@@ -13,10 +13,6 @@ We recommend installing redis_loader in a [Python Virtual Environment](http://do
 
 To install redis_loader, simply run
 
-    $ python setup.py install
-
-or
-
     $ pip install .
 
 Alternatively, the Docker container can be built with

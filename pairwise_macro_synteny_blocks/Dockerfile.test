@@ -7,12 +7,9 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY INSTALL ./
 COPY LICENSE ./
-COPY MANIFEST.in ./
 COPY README.md ./
-COPY setup.cfg ./
-COPY setup.py ./
+COPY pyproject.toml ./
 COPY requirements.txt ./
 COPY requirements-test.txt ./
 COPY pairwise_macro_synteny_blocks/ ./pairwise_macro_synteny_blocks/
@@ -26,8 +23,14 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # install test dependencies
 RUN pip3 install --no-cache-dir -r requirements-test.txt
 
-# install (and implicitly build) the package
-RUN pip3 install --no-cache-dir .
+# generate the gRPC modules into the package; grpcio-tools, from requirements.txt,
+# supplies protobuf's well-known types itself
+RUN python3 -m grpc_tools.protoc --proto_path=proto \
+      --python_out=pairwise_macro_synteny_blocks/proto --grpc_python_out=pairwise_macro_synteny_blocks/proto \
+      $(find proto -name '*.proto')
+
+# install the package itself; its dependencies are installed above
+RUN pip3 install --no-cache-dir --no-deps .
 
 # CRITICAL: Remove source directory to ensure tests use installed package
 RUN rm -rf pairwise_macro_synteny_blocks/

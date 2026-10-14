@@ -15,6 +15,13 @@ All the microservice's dependencies are listed in the `requirements.txt` file, w
     $ . ./venv/bin/activate
     (venv) $ pip install -r requirements.txt
 
+Then generate the gRPC modules from the `.proto` files and install the microservice
+
+    (venv) $ python3 -m grpc_tools.protoc --proto_path=proto \
+          --python_out=search/proto --grpc_python_out=search/proto \
+          $(find proto -name '*.proto')
+    (venv) $ pip install --no-deps -e .
+
 This microservice depends on the gene search, chromosome search, and chromosome region microservices.
 These services must be running and reachable via gRPC in order for the search microservice to function correctly.
 See the `../gene_search/`, `../chromosome_search/`, and `../chromosome_region/` directories for instructions on setting up and running these microservices.
