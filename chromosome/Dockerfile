@@ -7,12 +7,9 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY INSTALL ./
 COPY LICENSE ./
-COPY MANIFEST.in ./
 COPY README.md ./
-COPY setup.cfg ./
-COPY setup.py ./
+COPY pyproject.toml ./
 COPY requirements.txt ./
 COPY chromosome/ ./chromosome/
 COPY proto/ ./proto/
@@ -20,9 +17,18 @@ COPY proto/ ./proto/
 # install the package dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# install (and implicitly build) the package
-RUN pip3 install --no-cache-dir .
+# generate the gRPC modules into the package; grpcio-tools, from requirements.txt,
+# supplies protobuf's well-known types itself
+RUN python3 -m grpc_tools.protoc --proto_path=proto \
+      --python_out=chromosome/proto --grpc_python_out=chromosome/proto \
+      $(find proto -name '*.proto')
+
+# install the package itself; its dependencies are installed above
+RUN pip3 install --no-cache-dir --no-deps .
 
 WORKDIR /
+
+# fail the build, not the container, if the generated modules don't load
+RUN python3 -c "import chromosome.grpc_server"
 
 ENTRYPOINT ["python3", "-u", "-m", "chromosome"]

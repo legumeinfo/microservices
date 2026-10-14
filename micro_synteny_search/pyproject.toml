@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "micro_synteny_search"
+dynamic = ["version"]
+description = "A Microservice that returns micro-tracks with gene family content similar to the query track"
+readme = "README.md"
+requires-python = ">=3.10,<4"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Alan Cleary", email = "acleary@gncgr.org" },
+]
+keywords = ["genomics", "bioinformatics", "microservices", "redis", "chado", "gff"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "aiohttp",
+    "aiohttp-cors",
+    "grpcio",
+    "protobuf",
+    "redis",
+    "uvloop",
+]
+
+[project.optional-dependencies]
+# protoc, run before the package is built (see Dockerfile). Its generated code
+# requires a protobuf runtime at least as new as itself, so upgrade the two together.
+codegen = ["grpcio-tools==1.78.1"]
+
+[project.urls]
+Homepage = "https://github.com/legumeinfo/microservices"
+Source = "https://github.com/legumeinfo/microservices"
+"Bug Reports" = "https://github.com/legumeinfo/microservices/issues"
+
+[project.scripts]
+micro_synteny_search = "micro_synteny_search.__main__:main"
+
+[tool.hatch.version]
+path = "micro_synteny_search/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["micro_synteny_search"]
+# protoc writes these into the package before it is built; they are ignored by
+# git, not left out of the wheel.
+artifacts = ["micro_synteny_search/proto/**/*_pb2.py", "micro_synteny_search/proto/**/*_pb2_grpc.py"]

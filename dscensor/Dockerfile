@@ -8,14 +8,13 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY INSTALL ./
 COPY LICENSE ./
 COPY README.md ./
 COPY pyproject.toml ./
 COPY dscensor/ ./dscensor/
 COPY openapi/ ./openapi/
 
-# install (and implicitly build) the package pip install .
+# install the package
 RUN pip3 install --no-cache-dir .
 
 WORKDIR /

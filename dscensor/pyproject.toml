@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
 
 [project]
 name = "dscensor"
@@ -22,10 +22,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "aiohttp",
@@ -42,11 +38,8 @@ Source = "https://github.com/legumeinfo/microservices"
 [project.scripts]
 dscensor = "dscensor.__main__:main"
 
-[tool.setuptools.dynamic]
-version = { attr = "dscensor.__version__" }
+[tool.hatch.version]
+path = "dscensor/__init__.py"
 
-[tool.setuptools.packages.find]
-include = ["dscensor*", "openapi*"]
-
-[tool.setuptools.package-data]
-openapi = ["**/*.yaml"]
+[tool.hatch.build.targets.wheel]
+packages = ["dscensor", "openapi"]

@@ -21,7 +21,7 @@ Install pre-commit hooks before developing. The github will force you to subscri
 $ python3 -m venv ds_utilities_env
 $ source ./ds_utilities_env/bin/activate
 (ds_utilities_env)$ pip install -r requirements.txt
-(ds_utilities_env)$ python ./setup.py install
+(ds_utilities_env)$ pip install .
 (ds_utilities_env)$ ds_utilities
 ======== Running on http://0.0.0.0:8080 ========
 (Press CTRL+C to quit)
