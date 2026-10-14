@@ -10,7 +10,6 @@ from redis.commands.search.query import Query
 
 # module
 from macro_synteny_paf.grpc_client import (
-    computeMacroSyntenyBlocks,
     computeMacroSyntenyBlocksByChromosome,
     getChromosome,
     getChromosomeLength,
@@ -142,6 +141,8 @@ class RequestHandler:
         num_residue_matches=1,
         alignment_block_length=1,
         mapping_quality=255,  # denotes 'missing'
+        *,
+        query_genes=(),
     ):
         # Check if block has enriched gene information from macro-synteny-blocks
         if hasattr(target_block, "queryGeneFmin") and target_block.queryGeneFmin:
@@ -150,8 +151,9 @@ class RequestHandler:
             query_end = target_block.queryGeneFmax
         else:
             # Fallback: get gene information from the genes microservice
-            # This path is used when macro-synteny-blocks doesn't have genes_address configured
-            gene_names = [list(query_chromosome.track.genes)[target_block.i]]
+            # This path is used when macro-synteny-blocks doesn't have genes_address
+            # configured
+            gene_names = [query_genes[target_block.i]]
             genes = await getGenes(gene_names, self.genes_address)
             filtered_genes = list(filter(lambda d: d is not None, genes))
             # there should be only one match (index 0)
@@ -159,7 +161,23 @@ class RequestHandler:
             query_end = filtered_genes[0].fmax
 
         # PAF format is defined here: https://github.com/lh3/miniasm/blob/master/PAF.md
-        paf_row = f"{query_chromosome_name}\t{query_chromosome_length}\t{query_start}\t{query_end}\t{target_block.orientation}\t{target_chromosome_name}\t{target_chromosome_length}\t{target_block.fmin}\t{target_block.fmax}\t{num_residue_matches}\t{alignment_block_length}\t{mapping_quality}"
+        paf_row = "\t".join(
+            str(column)
+            for column in (
+                query_chromosome_name,
+                query_chromosome_length,
+                query_start,
+                query_end,
+                target_block.orientation,
+                target_chromosome_name,
+                target_chromosome_length,
+                target_block.fmin,
+                target_block.fmax,
+                num_residue_matches,
+                alignment_block_length,
+                mapping_quality,
+            )
+        )
 
         # Add optionalMetrics as PAF tag if present (om:B:f,value1,value2,...)
         if hasattr(target_block, "optionalMetrics") and target_block.optionalMetrics:
@@ -180,13 +198,15 @@ class RequestHandler:
         num_residue_matches=1,
         alignment_block_length=1,
         mapping_quality=255,  # denotes 'missing'
+        *,
+        query_genes=(),
     ):
         # Check if block has enriched gene information from macro-synteny-blocks
         if hasattr(target_block, "queryGeneFmin") and target_block.queryGeneFmin:
             query_start = target_block.queryGeneFmin
             query_end = target_block.queryGeneFmax
         else:
-            gene_names = [list(query_chromosome.track.genes)[target_block.i]]
+            gene_names = [query_genes[target_block.i]]
             genes = await getGenes(gene_names, self.genes_address)
             filtered_genes = list(filter(lambda d: d is not None, genes))
             # there should be only one match (index 0)
@@ -218,22 +238,28 @@ class RequestHandler:
         if hasattr(target_block, "optionalMetrics"):
             metrics_list = list(target_block.optionalMetrics)
             logging.debug(
-                f"Block has optionalMetrics: {metrics_list}, length: {len(metrics_list)}"
+                "Block has optionalMetrics: %s, length: %d",
+                metrics_list,
+                len(metrics_list),
             )
             if metrics_list:
                 result["optionalMetrics"] = metrics_list
         else:
             logging.debug(
-                f"Block does not have optionalMetrics attribute. Block attributes: {dir(target_block)}"
+                "Block does not have optionalMetrics attribute. Block attributes: %s",
+                dir(target_block),
             )
         return result
 
-    # returns PAF rows for a target block object (containing multiple macro-synteny blocks)
+    # returns PAF rows for a target block object (containing multiple macro-synteny
+    # blocks)
     async def _blocksToPafRows(
         self,
         query_chromosome_name,
         query_chromosome_length,
         target_block,
+        *,
+        query_genes=(),
     ):
         # Check if target block has enriched chromosomeLength from macro-synteny-blocks
         if hasattr(target_block, "chromosomeLength") and target_block.chromosomeLength:
@@ -241,7 +267,8 @@ class RequestHandler:
             target_chromosome_length = target_block.chromosomeLength
         else:
             # Fallback: get target chromosome length from the chromosome microservice
-            # This path is used when macro-synteny-blocks doesn't have enrichment enabled
+            # This path is used when macro-synteny-blocks doesn't have enrichment
+            # enabled
             target_chromosome_length = await getChromosomeLength(
                 target_block.chromosome,
                 self.chromosome_address,
@@ -256,13 +283,15 @@ class RequestHandler:
                     target_block.chromosome,
                     target_chromosome_length,
                     tgt_block,
+                    query_genes=query_genes,
                 )
                 for tgt_block in target_block.blocks
             ]
         )
         return "".join(paf_rows)
 
-    # returns JSON array for a target block object (containing multiple macro-synteny blocks)
+    # returns JSON array for a target block object (containing multiple macro-synteny
+    # blocks)
     async def _blocksToJson(
         self,
         query_chromosome_name,
@@ -271,6 +300,8 @@ class RequestHandler:
         query_assembly_name=None,
         target_assembly_name=None,
         anchors=None,
+        *,
+        query_genes=(),
     ):
         # Check if target block has enriched chromosomeLength from macro-synteny-blocks
         if hasattr(target_block, "chromosomeLength") and target_block.chromosomeLength:
@@ -289,26 +320,33 @@ class RequestHandler:
                     target_block.chromosome,
                     target_chromosome_length,
                     tgt_block,
+                    query_genes=query_genes,
                 )
                 for tgt_block in target_block.blocks
             ]
         )
 
-        # If regular anchors mode, extract correspondences as top-level JBrowse-compatible objects
+        # If regular anchors mode, extract correspondences as top-level
+        # JBrowse-compatible objects
         if anchors == "regular":
             jbrowse_objects = []
             for idx, tgt_block in enumerate(target_block.blocks):
                 if hasattr(tgt_block, "correspondences") and tgt_block.correspondences:
                     for corr_idx, corr in enumerate(tgt_block.correspondences):
-                        # Skip self-identity correspondences (same position on query and target)
-                        # These create "vertical lines" that obscure synteny relationships
+                        # Skip self-identity correspondences (same position on query
+                        # and target). These create "vertical lines" that obscure
+                        # synteny relationships
                         if (
                             corr.query_fmin == corr.target_fmin
                             and corr.query_fmax == corr.target_fmax
                         ):
                             continue
                         # Generate unique ID from chromosome names and coordinates
-                        unique_id = f"{query_chromosome_name}:{corr.query_fmin}-{corr.query_fmax}_{target_block.chromosome}:{corr.target_fmin}-{corr.target_fmax}"
+                        unique_id = (
+                            f"{query_chromosome_name}:{corr.query_fmin}-"
+                            f"{corr.query_fmax}_{target_block.chromosome}:"
+                            f"{corr.target_fmin}-{corr.target_fmax}"
+                        )
                         jbrowse_obj = {
                             "uniqueId": unique_id,
                             "refName": target_block.chromosome,
@@ -360,7 +398,8 @@ class RequestHandler:
         # Create a composite key from all parameters including format
         key_components = (
             f"{genome_1}:{genome_2}:{matched}:{intermediate}:"
-            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:{output_format}:{identity_str}:{anchors_str}"
+            f"{mask}:{metrics_str}:{chromosome_genes}:{chromosome_length}:"
+            f"{output_format}:{identity_str}:{anchors_str}"
         )
         # Hash to create a fixed-length key
         hash_digest = hashlib.sha256(key_components.encode()).hexdigest()
@@ -412,6 +451,9 @@ class RequestHandler:
             query_chromosome_name, self.chromosome_address
         )
         query_chromosome_length = query_chromosome.length
+        # The fallback when a block lacks enriched gene positions looks its gene up
+        # by index in the query chromosome's track.
+        query_genes = list(query_chromosome.track.genes)
 
         if output_format == "paf":
             # Return PAF format (tab-delimited text)
@@ -422,6 +464,7 @@ class RequestHandler:
                         query_chromosome_name,
                         query_chromosome_length,
                         target_block,
+                        query_genes=query_genes,
                     )
                     for target_block in filtered_target_blocks
                 ]
@@ -439,6 +482,7 @@ class RequestHandler:
                         query_assembly_name,
                         target_assembly_name,
                         anchors=anchors,
+                        query_genes=query_genes,
                     )
                     for target_block in filtered_target_blocks
                 ]
