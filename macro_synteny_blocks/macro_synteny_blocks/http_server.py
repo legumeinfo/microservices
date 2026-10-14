@@ -74,7 +74,10 @@ async def http_post_by_chromosome_handler(request):
     # Check if chromosome address is configured
     if handler.chromosome_address is None:
         return web.HTTPServiceUnavailable(
-            text="ComputeByChromosome endpoint is not enabled. Chromosome address not configured."
+            text=(
+                "ComputeByChromosome endpoint is not enabled. Chromosome address not "
+                "configured."
+            )
         )
 
     try:

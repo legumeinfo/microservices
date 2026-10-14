@@ -7,7 +7,6 @@ from redis.commands.search import reducers
 
 # dependencies
 from redis.commands.search.aggregation import AggregateRequest
-from redis.commands.search.query import Query
 
 # module
 from macro_synteny_blocks.aioredisearch import CustomAsyncSearch
@@ -185,7 +184,8 @@ class RequestHandler:
                 row = result[row_idx]
 
                 # rows look like this, indices and gene_count are actually numbers
-                # ['chromosome', <string>, 'indices', <list of strings>, 'gene_count', <string>]
+                # ['chromosome', <string>, 'indices', <list of strings>,
+                #  'gene_count', <string>]
                 chrom_name = None
                 indices_value = None
 
@@ -351,7 +351,8 @@ class RequestHandler:
         if self.genes_address is None:
             return blocks  # Return blocks unchanged if genes address not configured
 
-        # Collect all unique gene names needed (from block endpoints and correspondences)
+        # Collect all unique gene names needed (from block endpoints and
+        # correspondences)
         gene_names_to_fetch = set()
         for blocks_obj in blocks:
             for block in blocks_obj["blocks"]:
@@ -504,7 +505,8 @@ class RequestHandler:
         """
         if self.chromosome_address is None:
             raise ValueError(
-                "Chromosome address is not configured. Cannot use ComputeByChromosome endpoint."
+                "Chromosome address is not configured. Cannot use ComputeByChromosome "
+                "endpoint."
             )
 
         # Fetch chromosome data from the chromosome microservice

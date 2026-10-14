@@ -326,7 +326,8 @@ class TestEnrichBlocksWithGeneInfo:
         """Test enrichment works with gRPC Block objects (not just dicts)."""
         self.handler.genes_address = "localhost:8082"
 
-        # Create mock gRPC-style blocks using a simple class to simulate protobuf objects
+        # Create mock gRPC-style blocks using a simple class to simulate protobuf
+        # objects
         class MockGrpcBlock:
             def __init__(self, i, j, fmin, fmax, orientation):
                 self.i = i
@@ -362,7 +363,8 @@ class TestEnrichBlocksWithGeneInfo:
     async def test_enrichment_with_min_max_calculation(
         self, sample_query_gene_names, mock_genes_service
     ):
-        """Test that fmin uses min and fmax uses max when both terminal genes present."""
+        """Test that fmin uses min and fmax uses max when both terminal genes are
+        present."""
         self.handler.genes_address = "localhost:8082"
 
         # Block with i=0, j=2 (spans from gene1 at index 0 to gene3 at index 2)
@@ -385,8 +387,10 @@ class TestEnrichBlocksWithGeneInfo:
             )
 
             block = enriched[0]["blocks"][0]
-            # gene1 (i=0): fmin=0, fmax=999 (from mock: gene_index=0, so 0*1000 to 0*1000+999)
-            # gene3 (j=2): fmin=2000, fmax=2999 (from mock: gene_index=2, so 2*1000 to 2*1000+999)
+            # gene1 (i=0): fmin=0, fmax=999
+            #   (from mock: gene_index=0, so 0*1000 to 0*1000+999)
+            # gene3 (j=2): fmin=2000, fmax=2999
+            #   (from mock: gene_index=2, so 2*1000 to 2*1000+999)
             # queryGeneFmin should be min(0, 2000) = 0
             # queryGeneFmax should be max(999, 2999) = 2999
             assert block["queryGeneFmin"] == 0
@@ -455,7 +459,8 @@ class TestProcessWithChromosomeName:
                 "macro_synteny_blocks.request_handler.getGenes", new=mock_genes_service
             ):
                 with patch(
-                    "macro_synteny_blocks.request_handler.computePairwiseMacroSyntenyBlocks",
+                    "macro_synteny_blocks.request_handler."
+                    "computePairwiseMacroSyntenyBlocks",
                     new=mock_pairwise_service,
                 ):
                     with patch.object(handler, "_getTargets", return_value=["chr1"]):

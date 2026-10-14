@@ -37,7 +37,8 @@ async def getChromosome(chromosome_name, address):
         address (str): Address of the chromosome microservice.
 
     Returns:
-        tuple: (gene_families list, gene_names list, chromosome_length), or None if not found.
+        tuple: (gene_families list, gene_names list, chromosome_length), or None if
+            not found.
     """
     # fetch channel every time to support dynamic services
     channel = aio.insecure_channel(address)

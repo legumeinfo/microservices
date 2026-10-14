@@ -16,7 +16,8 @@ Blocks = namedtuple(
 
 @pytest.fixture
 def sample_blocks_with_enrichment():
-    """Sample blocks with enrichment (queryGeneFmin, queryGeneFmax, chromosomeLength)."""
+    """Sample blocks with enrichment (queryGeneFmin, queryGeneFmax,
+    chromosomeLength)."""
     Block = namedtuple(
         "Block",
         ["i", "j", "fmin", "fmax", "orientation", "queryGeneFmin", "queryGeneFmax"],

@@ -107,7 +107,8 @@ class PairwiseMacroSyntenyBlocks(pwb_pb2_grpc.PairwiseMacroSyntenyBlocksServicer
             if "identity" in b:
                 proto_block.identity = b["identity"]
             if "correspondences" in b:
-                # Each correspondence is a dict with query_index, target_index, target_fmin, target_fmax
+                # Each correspondence is a dict with query_index, target_index,
+                # target_fmin, target_fmax
                 proto_block.correspondences.extend(
                     [
                         block_pb2.Correspondence(

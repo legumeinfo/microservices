@@ -1,5 +1,3 @@
-import hashlib
-import json
 from collections import namedtuple
 
 import pytest
@@ -141,7 +139,8 @@ class TestBlockToPafRow:
             target_block=block,
         )
 
-        # PAF format: qname qlen qstart qend strand tname tlen tstart tend matches alen mapq
+        # PAF format: qname qlen qstart qend strand tname tlen tstart tend matches alen
+        # mapq
         fields = paf_row.strip().split("\t")
 
         assert len(fields) == 12

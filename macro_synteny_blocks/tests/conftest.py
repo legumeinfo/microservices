@@ -1,6 +1,5 @@
 import os
 from collections import namedtuple
-from unittest.mock import AsyncMock, MagicMock
 
 import fakeredis.aioredis
 import pytest
@@ -126,12 +125,14 @@ def mock_genes_service():
 
     async def mock_getGenes(gene_names, address):
         # Return mock gene objects with positions
-        # Position is based on the gene number in the name (e.g., "gene1" -> index 0, "gene3" -> index 2)
+        # Position is based on the gene number in the name (e.g., "gene1" -> index 0,
+        # "gene3" -> index 2)
         genes = []
         for name in gene_names:
             # Extract the gene number from the name (e.g., "gene1" -> 1, "gene3" -> 3)
             gene_number = int(name.replace("gene", ""))
-            # Calculate position based on gene number (gene1 at index 0, gene2 at index 1, etc.)
+            # Calculate position based on gene number (gene1 at index 0, gene2 at
+            # index 1, etc.)
             gene_index = gene_number - 1
             genes.append(
                 Gene(name=name, fmin=gene_index * 1000, fmax=gene_index * 1000 + 999)
