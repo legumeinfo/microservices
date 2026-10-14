@@ -109,7 +109,7 @@ def parseArgs():
         action=EnvArg,
         envvar=nodes_envvar,
         type=str,
-        default="./autocontent",
+        default="./dscensor_nodes",
         help=f"""
         The path to a directory containing JSON objects created using
         lis-autocontent. (can also be specified using the {nodes_envvar}

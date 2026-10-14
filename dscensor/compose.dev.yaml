@@ -3,8 +3,8 @@ services:
     build:
       context: .
     environment:
-      NODES: "/autocontent"
+      NODES: "/dscensor_nodes"
     ports:
       - "${PORT:-8080}:8080"
-    volumes:
-      - ${DATA:-./autocontent}:/autocontent
+    volumes: 
+      - ${DATA:-./dscensor_nodes}:/dscensor_nodes

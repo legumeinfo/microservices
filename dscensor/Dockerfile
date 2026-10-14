@@ -10,18 +10,12 @@ WORKDIR /app
 
 COPY INSTALL ./
 COPY LICENSE ./
-COPY MANIFEST.in ./
 COPY README.md ./
-COPY setup.cfg ./
-COPY setup.py ./
-COPY requirements.txt ./
+COPY pyproject.toml ./
 COPY dscensor/ ./dscensor/
 COPY openapi/ ./openapi/
 
-# install the package dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# install (and implicitly build) the package
+# install (and implicitly build) the package pip install .
 RUN pip3 install --no-cache-dir .
 
 WORKDIR /
