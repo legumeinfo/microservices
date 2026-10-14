@@ -136,3 +136,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Python modules protoc generates into each gRPC package before it is built
+*_pb2.py
+*_pb2_grpc.py

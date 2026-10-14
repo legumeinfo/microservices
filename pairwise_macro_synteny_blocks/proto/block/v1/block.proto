@@ -8,6 +8,7 @@ message Blocks {
   string genus = 2;
   string species = 3;
   repeated Block blocks = 4;
+  optional uint32 chromosomeLength = 5;  // Length of target chromosome in base pairs
 }
 
 message Correspondence {
@@ -26,7 +27,9 @@ message Block {
   uint32 fmax = 4;
   string orientation = 5;
   repeated float optionalMetrics = 6;
-  // Fields 7-9 reserved for queryGeneName, queryGeneFmin, queryGeneFmax (used by macro_synteny_blocks)
+  optional string queryGeneName = 7;  // Name of query gene at index i
+  optional uint32 queryGeneFmin = 8;  // Query gene start position
+  optional uint32 queryGeneFmax = 9;  // Query gene end position
   optional float identity = 10;  // Identity score (0.0-1.0) if requested
   repeated Correspondence correspondences = 11;  // Gene pair correspondences within the block
 }
