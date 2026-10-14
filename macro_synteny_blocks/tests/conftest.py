@@ -4,17 +4,52 @@ from collections import namedtuple
 import fakeredis.aioredis
 import pytest
 import redis.asyncio as aioredis
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import ResponseError
+
+from macro_synteny_blocks import proto  # noqa: F401
+
+from block.v1 import block_pb2  # isort: skip
+
+# The gene index as redis_loader creates it (redis_loader/loaders/redisearch.py).
+GENE_INDEX_SCHEMA = (
+    "chromosome TAG name TEXT fmin NUMERIC fmax NUMERIC family TAG "
+    "strand NUMERIC index NUMERIC SORTABLE"
+).split()
 
 
 @pytest.fixture
 async def redis_connection():
-    """Real Redis connection for integration tests (from compose.test.yml)."""
+    """Redis Stack for integration tests, with redis_loader's gene index.
+
+    Skips when no Redis is reachable; ./run-tests.sh provides one.
+    """
     redis_host = os.getenv("REDIS_HOST", "redis")
     redis_port = int(os.getenv("REDIS_PORT", "6379"))
 
     redis_conn = await aioredis.from_url(
         f"redis://{redis_host}:{redis_port}", decode_responses=True
     )
+    try:
+        await redis_conn.ping()
+    except RedisConnectionError:
+        await redis_conn.aclose()
+        pytest.skip(f"no Redis Stack at {redis_host}:{redis_port}")
+    try:
+        await redis_conn.execute_command(
+            "FT.CREATE",
+            "geneIdx",
+            "ON",
+            "HASH",
+            "PREFIX",
+            "1",
+            "gene:",
+            "SCHEMA",
+            *GENE_INDEX_SCHEMA,
+        )
+    except ResponseError as e:
+        if "already exists" not in str(e):
+            raise
 
     yield redis_conn
 
@@ -179,20 +214,13 @@ def mock_pairwise_service():
         chromosome_genes,
         chromosome_length,
         address,
+        identity=None,
+        correspondences=None,
     ):
-        # Return mock blocks as dicts to allow dynamic attribute assignment
-        # This simulates gRPC objects that can have attributes added
-        class MockBlock:
-            def __init__(self, i, j, fmin, fmax, orientation):
-                self.i = i
-                self.j = j
-                self.fmin = fmin
-                self.fmax = fmax
-                self.orientation = orientation
-
+        # The pairwise service's own messages, as its gRPC client returns them
         return [
-            MockBlock(i=0, j=2, fmin=0, fmax=2999, orientation="+"),
-            MockBlock(i=3, j=4, fmin=3000, fmax=4999, orientation="+"),
+            block_pb2.Block(i=0, j=2, fmin=0, fmax=2999, orientation="+"),
+            block_pb2.Block(i=3, j=4, fmin=3000, fmax=4999, orientation="+"),
         ]
 
     return mock_computePairwise

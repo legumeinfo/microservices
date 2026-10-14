@@ -68,7 +68,7 @@ class TestGenerateCacheKey:
         )
 
         # Should start with version prefix
-        assert key.startswith("synteny_cache:v2:")
+        assert key.startswith("synteny_cache:v5:")
 
         # Should be followed by SHA256 hash (64 hex chars)
         hash_part = key.split(":")[-1]

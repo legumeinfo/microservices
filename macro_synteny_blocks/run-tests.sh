@@ -49,7 +49,6 @@ ORIGINAL_DIR=$(pwd)
 
 # Export paths for use in compose.test.yml
 export MACRO_SYNTENY_BLOCKS_DIR="$ORIGINAL_DIR"
-export TEST_DATA_DIR="$(dirname "$ORIGINAL_DIR")"  # Parent of macro_synteny_blocks
 
 # Change to GCV docker compose directory for running compose
 cd "$GCV_DOCKER_COMPOSE"

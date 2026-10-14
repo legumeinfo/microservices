@@ -1,9 +1,11 @@
-from collections import namedtuple
 from unittest.mock import patch
 
 import pytest
 
+from macro_synteny_blocks import proto  # noqa: F401
 from macro_synteny_blocks.request_handler import RequestHandler
+
+from block.v1 import block_pb2  # isort: skip
 
 
 @pytest.mark.unit
@@ -539,12 +541,7 @@ class TestGrpcBlockToDictBlock:
 
     def test_basic_conversion(self):
         """Test basic block conversion."""
-        Block = namedtuple(
-            "Block", ["i", "j", "fmin", "fmax", "orientation", "optionalMetrics"]
-        )
-        grpc_block = Block(
-            i=0, j=5, fmin=0, fmax=5000, orientation="+", optionalMetrics=[]
-        )
+        grpc_block = block_pb2.Block(i=0, j=5, fmin=0, fmax=5000, orientation="+")
 
         dict_block = self.handler._grpcBlockToDictBlock(grpc_block)
 
@@ -556,14 +553,12 @@ class TestGrpcBlockToDictBlock:
 
     def test_conversion_with_metrics(self):
         """Test conversion with optional metrics."""
-        Block = namedtuple(
-            "Block", ["i", "j", "fmin", "fmax", "orientation", "optionalMetrics"]
-        )
-        grpc_block = Block(
-            i=0, j=5, fmin=0, fmax=5000, orientation="+", optionalMetrics=[0.5, 0.8]
+        grpc_block = block_pb2.Block(
+            i=0, j=5, fmin=0, fmax=5000, orientation="+", optionalMetrics=[0.5, 0.75]
         )
 
         dict_block = self.handler._grpcBlockToDictBlock(grpc_block)
 
         assert "optionalMetrics" in dict_block
-        assert dict_block["optionalMetrics"] == [0.5, 0.8]
+        # float32 on the wire: values exact in binary, so the comparison is too
+        assert dict_block["optionalMetrics"] == [0.5, 0.75]

@@ -5,14 +5,9 @@
 #   ./run-tests.sh
 
 services:
-  # Override redis to load test data
+  # Redis starts empty; integration tests create the indexes they need
   redis:
-    volumes:
-      # Load test data from dump.rdb
-      # TEST_DATA_DIR is set by run-tests.sh
-      - ${TEST_DATA_DIR}/tests/data/dump.rdb:/data/dump.rdb:ro
     environment:
-      REDIS_ARGS: ""  # Enable loading from dump.rdb
       REDISEARCH_ARGS: "MAXSEARCHRESULTS 100000"
 
   # Add the test container
